@@ -5,12 +5,16 @@ import {
   type CSSProperties,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
+  useState,
 } from "react";
 import { RemoveScroll } from "react-remove-scroll";
 import type { StoreApi } from "zustand";
 import { useStore } from "zustand";
+import { ArrowLeftIcon, XIcon } from "./icons";
 import { useResolvedSide } from "./media";
+import { SheetPanelContext } from "./panel-context";
 import {
   getPanelStyles,
   getSlideFrom,
@@ -28,44 +32,7 @@ import type {
   StacksheetClassNames,
   StacksheetSnapshot,
 } from "./types";
-
-// ── Icons (inline SVG — no external dependency) ─
-
-function ArrowLeftIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      height={16}
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      viewBox="0 0 24 24"
-      width={16}
-    >
-      <path d="M19 12H5M12 19l-7-7 7-7" />
-    </svg>
-  );
-}
-
-function XIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      height={16}
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      viewBox="0 0 24 24"
-      width={16}
-    >
-      <path d="M18 6L6 18M6 6l12 12" />
-    </svg>
-  );
-}
+import { type DragState, useDrag } from "./use-drag";
 
 // ── Default header ──────────────────────────────
 
@@ -141,6 +108,60 @@ function resolveClassNames(cn?: StacksheetClassNames): ResolvedClassNames {
   };
 }
 
+// ── Helpers ──────────────────────────────────────
+
+function selectSpring(
+  isTop: boolean,
+  spring: Record<string, unknown>,
+  stackSpring: Record<string, unknown>
+): Record<string, unknown> {
+  return isTop ? spring : stackSpring;
+}
+
+function buildAriaProps(
+  isTop: boolean,
+  isModal: boolean,
+  isComposable: boolean,
+  ariaLabel: string,
+  panelId: string
+): Record<string, string | undefined> {
+  if (!isTop) {
+    return {};
+  }
+  const props: Record<string, string | undefined> = { role: "dialog" };
+  if (isModal) {
+    props["aria-modal"] = "true";
+  }
+  if (isComposable) {
+    props["aria-labelledby"] = `${panelId}-title`;
+    props["aria-describedby"] = `${panelId}-desc`;
+  } else {
+    props["aria-label"] = ariaLabel;
+  }
+  return props;
+}
+
+// ── Drag offset to CSS transform ────────────────
+
+function getDragTransform(
+  side: Side,
+  offset: number
+): { x?: number; y?: number } {
+  if (offset === 0) {
+    return {};
+  }
+  switch (side) {
+    case "right":
+      return { x: offset };
+    case "left":
+      return { x: -offset };
+    case "bottom":
+      return { y: offset };
+    default:
+      return {};
+  }
+}
+
 // ── SheetPanel ──────────────────────────────────
 
 interface SheetPanelProps {
@@ -157,7 +178,7 @@ interface SheetPanelProps {
   shouldRender: boolean;
   pop: () => void;
   close: () => void;
-  renderHeader?: (props: HeaderRenderProps) => React.ReactNode;
+  renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
   slideFrom: SlideValues;
   slideTarget: SlideValues;
   spring: Record<string, unknown>;
@@ -187,6 +208,10 @@ function SheetPanel({
 }: SheetPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const hasEnteredRef = useRef(false);
+  const [dragState, setDragState] = useState<DragState>({
+    offset: 0,
+    isDragging: false,
+  });
 
   const transform = getStackTransform(depth, config.stacking);
   const panelStyles = getPanelStyles(side, config, depth, index);
@@ -206,18 +231,46 @@ function SheetPanel({
     }
   }, [isTop, config]);
 
+  // Drag-to-dismiss (only on top panel)
+  useDrag(
+    panelRef,
+    {
+      enabled: isTop && config.drag && config.dismissible,
+      closeThreshold: config.closeThreshold,
+      velocityThreshold: config.velocityThreshold,
+      side,
+      onClose: close,
+      onPop: pop,
+      isNested,
+    },
+    setDragState
+  );
+
   // Per-sheet aria-label: check data.__ariaLabel, fall back to config
   const ariaLabel =
     (typeof item.data?.__ariaLabel === "string"
       ? item.data.__ariaLabel
       : undefined) ?? config.ariaLabel;
 
+  // Panel context for composable parts (Sheet.Close, Sheet.Title, etc.)
+  const panelId = `stacksheet-${item.id}`;
+  const panelContext = useMemo(
+    () => ({ close, back: pop, isNested, isTop, panelId, side }),
+    [close, pop, isNested, isTop, panelId, side]
+  );
+
+  // Composable mode: renderHeader === false → no auto header, no scroll wrapper
+  const isComposable = renderHeader === false;
+
   // Panel: use className if provided, strip inline background
   const hasPanelClass = classNames.panel !== "";
+  const dragOffset = getDragTransform(side, dragState.offset);
   const panelStyle: CSSProperties = {
     ...panelStyles,
     boxShadow: isTop ? getShadow(side, false) : getShadow(side, true),
     pointerEvents: isTop ? "auto" : "none",
+    // During drag, disable spring transition for immediate feedback
+    ...(dragState.isDragging ? { transition: "none" } : {}),
     ...(hasPanelClass
       ? {}
       : {
@@ -232,18 +285,34 @@ function SheetPanel({
     onClose: close,
   };
 
+  const isModal = config.modal;
+  const ariaProps = buildAriaProps(
+    isTop,
+    isModal,
+    isComposable,
+    ariaLabel,
+    panelId
+  );
+
+  // Pick transition: immediate during drag, spring otherwise
+  const transition = dragState.isDragging
+    ? { type: "tween" as const, duration: 0 }
+    : selectSpring(isTop, spring, stackSpring);
+
+  // Merge drag offset into the animate target
+  const animateTarget = {
+    ...slideTarget,
+    ...stackOffset,
+    ...dragOffset,
+    scale: transform.scale,
+    opacity: transform.opacity,
+    borderRadius: transform.borderRadius,
+    transition,
+  };
+
   const panelContent = (
     <m.div
-      animate={{
-        ...slideTarget,
-        ...stackOffset,
-        scale: transform.scale,
-        opacity: transform.opacity,
-        borderRadius: transform.borderRadius,
-        transition: isTop ? spring : stackSpring,
-      }}
-      aria-label={isTop ? ariaLabel : undefined}
-      aria-modal={isTop ? "true" : undefined}
+      animate={animateTarget}
       className={classNames.panel || undefined}
       exit={{
         ...slideFrom,
@@ -257,59 +326,111 @@ function SheetPanel({
       key={item.id}
       onAnimationComplete={handleAnimationComplete}
       ref={panelRef}
-      role={isTop ? "dialog" : undefined}
       style={panelStyle}
       tabIndex={isTop ? -1 : undefined}
       transition={spring}
+      {...ariaProps}
     >
-      {/* Header — always rendered to prevent layout shift during push */}
-      {renderHeader ? (
-        renderHeader(headerProps)
+      {isComposable ? (
+        /* Composable mode: content fills panel directly, uses Sheet.* parts */
+        shouldRender &&
+        Content && <Content {...(item.data as Record<string, unknown>)} />
       ) : (
-        <DefaultHeader {...headerProps} />
-      )}
-
-      {/* Content */}
-      {shouldRender && Content && (
-        <div
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: "auto",
-            overscrollBehavior: "contain",
-          }}
-        >
-          <Content {...(item.data as Record<string, unknown>)} />
-        </div>
+        <>
+          {/* Classic mode: auto header + scroll wrapper */}
+          {renderHeader ? (
+            renderHeader(headerProps)
+          ) : (
+            <DefaultHeader {...headerProps} />
+          )}
+          {shouldRender && Content && (
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: "auto",
+                overscrollBehavior: "contain",
+              }}
+            >
+              <Content {...(item.data as Record<string, unknown>)} />
+            </div>
+          )}
+        </>
       )}
     </m.div>
   );
 
+  // Non-modal: skip focus trap
+  if (!isModal) {
+    return (
+      <SheetPanelContext.Provider value={panelContext}>
+        {panelContent}
+      </SheetPanelContext.Provider>
+    );
+  }
+
   return (
-    <FocusTrap
-      active={isTop}
-      focusTrapOptions={{
-        initialFocus: false,
-        returnFocusOnDeactivate: true,
-        escapeDeactivates: false,
-        allowOutsideClick: true,
-        checkCanFocusTrap: () =>
-          new Promise<void>((resolve) =>
-            requestAnimationFrame(() => resolve())
-          ),
-        fallbackFocus: () => {
-          // If no focusable elements exist, focus the panel container itself
-          if (panelRef.current) {
-            return panelRef.current;
-          }
-          // This shouldn't happen, but satisfy the type
-          return document.body;
-        },
-      }}
-    >
-      {panelContent}
-    </FocusTrap>
+    <SheetPanelContext.Provider value={panelContext}>
+      <FocusTrap
+        active={isTop}
+        focusTrapOptions={{
+          initialFocus: false,
+          returnFocusOnDeactivate: true,
+          escapeDeactivates: false,
+          allowOutsideClick: true,
+          checkCanFocusTrap: () =>
+            new Promise<void>((resolve) =>
+              requestAnimationFrame(() => resolve())
+            ),
+          fallbackFocus: () => {
+            if (panelRef.current) {
+              return panelRef.current;
+            }
+            return document.body;
+          },
+        }}
+      >
+        {panelContent}
+      </FocusTrap>
+    </SheetPanelContext.Provider>
   );
+}
+
+// ── Body scale effect ───────────────────────────
+
+function useBodyScale(config: ResolvedConfig, isOpen: boolean) {
+  useEffect(() => {
+    if (!config.shouldScaleBackground) {
+      return;
+    }
+
+    const wrapper = document.querySelector("[data-stacksheet-wrapper]");
+    if (!(wrapper && wrapper instanceof HTMLElement)) {
+      return;
+    }
+
+    if (isOpen) {
+      const scale = config.scaleBackgroundAmount;
+      wrapper.style.transition =
+        "transform 500ms cubic-bezier(0.32, 0.72, 0, 1), border-radius 500ms cubic-bezier(0.32, 0.72, 0, 1)";
+      wrapper.style.transform = `scale(${scale})`;
+      wrapper.style.borderRadius = "8px";
+      wrapper.style.overflow = "hidden";
+      wrapper.style.transformOrigin = "center top";
+      return;
+    }
+
+    wrapper.style.transform = "";
+    wrapper.style.borderRadius = "";
+    // Clean up after transition completes
+    const handleEnd = () => {
+      wrapper.style.transition = "";
+      wrapper.style.overflow = "";
+      wrapper.style.transformOrigin = "";
+    };
+    wrapper.addEventListener("transitionend", handleEnd, { once: true });
+    return () => wrapper.removeEventListener("transitionend", handleEnd);
+  }, [isOpen, config.shouldScaleBackground, config.scaleBackgroundAmount]);
 }
 
 // ── Renderer ────────────────────────────────────
@@ -322,7 +443,7 @@ interface SheetRendererProps<TMap extends Record<string, unknown>> {
   // biome-ignore lint/suspicious/noExplicitAny: heterogeneous component storage
   componentMap: Map<string, ComponentType<any>>;
   classNames?: StacksheetClassNames;
-  renderHeader?: (props: HeaderRenderProps) => React.ReactNode;
+  renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
 }
 
 export function SheetRenderer<TMap extends Record<string, unknown>>({
@@ -341,6 +462,9 @@ export function SheetRenderer<TMap extends Record<string, unknown>>({
   const side = useResolvedSide(config);
   const classNames = resolveClassNames(classNamesProp);
 
+  // Body scale effect
+  useBodyScale(config, isOpen);
+
   // Focus restoration: capture the element that was focused when the stack opens.
   // When the stack fully closes, return focus to that element.
   const triggerRef = useRef<Element | null>(null);
@@ -348,10 +472,8 @@ export function SheetRenderer<TMap extends Record<string, unknown>>({
 
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
-      // Stack just opened — capture the trigger element
       triggerRef.current = document.activeElement;
     } else if (!isOpen && wasOpenRef.current) {
-      // Stack just closed — restore focus to trigger
       const el = triggerRef.current;
       if (el && el instanceof HTMLElement) {
         el.focus();
@@ -363,7 +485,7 @@ export function SheetRenderer<TMap extends Record<string, unknown>>({
 
   // Escape key
   useEffect(() => {
-    if (!(isOpen && config.closeOnEscape)) {
+    if (!(isOpen && config.closeOnEscape && config.dismissible)) {
       return;
     }
 
@@ -380,7 +502,14 @@ export function SheetRenderer<TMap extends Record<string, unknown>>({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, config.closeOnEscape, stack.length, pop, close]);
+  }, [
+    isOpen,
+    config.closeOnEscape,
+    config.dismissible,
+    stack.length,
+    pop,
+    close,
+  ]);
 
   const slideFrom = getSlideFrom(side);
   const slideTarget = getSlideTarget();
@@ -399,13 +528,18 @@ export function SheetRenderer<TMap extends Record<string, unknown>>({
   // Same spring for exit (pop)
   const exitSpring = spring;
 
+  // Non-modal: skip overlay, skip scroll lock
+  const isModal = config.modal;
+  const showOverlay = isModal && config.showOverlay;
+
   // Backdrop: use className if provided, otherwise inline fallback
   const hasBackdropClass = classNames.backdrop !== "";
   const backdropStyle: CSSProperties = {
     position: "fixed",
     inset: 0,
     zIndex: config.zIndex,
-    cursor: config.closeOnBackdrop ? "pointer" : undefined,
+    cursor:
+      config.closeOnBackdrop && config.dismissible ? "pointer" : undefined,
     ...(hasBackdropClass
       ? {}
       : { background: "var(--overlay, rgba(0, 0, 0, 0.2))" }),
@@ -418,13 +552,13 @@ export function SheetRenderer<TMap extends Record<string, unknown>>({
     }
   }, [stack.length, config]);
 
-  // Wrap clip container in RemoveScroll when open + lockScroll
-  const shouldLockScroll = isOpen && config.lockScroll;
+  // Non-modal: don't lock scroll
+  const shouldLockScroll = isOpen && isModal && config.lockScroll;
 
   return (
     <>
       {/* Backdrop — independent AnimatePresence so it fades on its own */}
-      {config.showOverlay && (
+      {showOverlay && (
         <AnimatePresence>
           {isOpen && (
             <m.div
@@ -433,7 +567,9 @@ export function SheetRenderer<TMap extends Record<string, unknown>>({
               exit={{ opacity: 0 }}
               initial={{ opacity: 0 }}
               key="stacksheet-backdrop"
-              onClick={config.closeOnBackdrop ? close : undefined}
+              onClick={
+                config.closeOnBackdrop && config.dismissible ? close : undefined
+              }
               style={backdropStyle}
               transition={spring}
             />

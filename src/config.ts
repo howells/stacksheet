@@ -50,5 +50,12 @@ export function resolveConfig(config: StacksheetConfig = {}): ResolvedConfig {
     ariaLabel: config.ariaLabel ?? "Sheet dialog",
     onOpenComplete: config.onOpenComplete,
     onCloseComplete: config.onCloseComplete,
+    drag: config.drag ?? true,
+    closeThreshold: config.closeThreshold ?? 0.25,
+    velocityThreshold: config.velocityThreshold ?? 0.5,
+    dismissible: config.dismissible ?? true,
+    modal: config.modal ?? true,
+    shouldScaleBackground: config.shouldScaleBackground ?? false,
+    scaleBackgroundAmount: config.scaleBackgroundAmount ?? 0.97,
   };
 }

@@ -99,6 +99,29 @@ export interface StacksheetConfig {
   onOpenComplete?: () => void;
   /** Called when the last panel's exit animation completes (stack fully closed) */
   onCloseComplete?: () => void;
+
+  // ── Drag-to-dismiss ─────────────────────────
+
+  /** Enable drag-to-dismiss. Default: true */
+  drag?: boolean;
+  /** Fraction of panel dimension to trigger close (0-1). Default: 0.25 */
+  closeThreshold?: number;
+  /** Velocity threshold (px/ms) to trigger close. Default: 0.5 */
+  velocityThreshold?: number;
+  /** Allow any form of dismissal (drag, backdrop, escape). Default: true */
+  dismissible?: boolean;
+
+  // ── Modal behavior ──────────────────────────
+
+  /** Modal mode — overlay + scroll lock + focus trap. Default: true */
+  modal?: boolean;
+
+  // ── Body scale effect ───────────────────────
+
+  /** Scale down [data-stacksheet-wrapper] when sheets open. Default: false */
+  shouldScaleBackground?: boolean;
+  /** Scale factor applied to background (0-1). Default: 0.97 */
+  scaleBackgroundAmount?: number;
 }
 
 /** Fully resolved config — all fields required */
@@ -118,6 +141,13 @@ export interface ResolvedConfig {
   ariaLabel: string;
   onOpenComplete?: () => void;
   onCloseComplete?: () => void;
+  drag: boolean;
+  closeThreshold: number;
+  velocityThreshold: number;
+  dismissible: boolean;
+  modal: boolean;
+  shouldScaleBackground: boolean;
+  scaleBackgroundAmount: number;
 }
 
 // ── Content component types ─────────────────────
@@ -252,8 +282,13 @@ export interface StacksheetProviderProps<TMap extends Record<string, unknown>> {
   children: ReactNode;
   /** CSS class overrides for backdrop, panel, and header */
   classNames?: StacksheetClassNames;
-  /** Custom header renderer — replaces the default back/close buttons */
-  renderHeader?: (props: HeaderRenderProps) => ReactNode;
+  /**
+   * Controls the panel header rendering mode.
+   * - `undefined` — renders the default close/back header (classic mode)
+   * - `function` — custom header renderer (classic mode with custom header)
+   * - `false` — no auto header, no auto scroll wrapper (composable mode — use Sheet.* parts)
+   */
+  renderHeader?: false | ((props: HeaderRenderProps) => ReactNode);
 }
 
 export interface StacksheetInstance<TMap extends Record<string, unknown>> {

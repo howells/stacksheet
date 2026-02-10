@@ -1,3 +1,4 @@
+import { Portal } from "@radix-ui/react-portal";
 import { createContext, useContext, useMemo } from "react";
 import type { StoreApi } from "zustand";
 import { useStore } from "zustand";
@@ -64,14 +65,16 @@ export function createStacksheet<TMap extends Record<string, unknown>>(
     return (
       <StoreContext.Provider value={value}>
         {children}
-        <SheetRenderer<TMap>
-          classNames={classNames}
-          componentMap={componentMap}
-          config={resolved}
-          renderHeader={renderHeader}
-          sheets={sheets}
-          store={store}
-        />
+        <Portal asChild={false}>
+          <SheetRenderer<TMap>
+            classNames={classNames}
+            componentMap={componentMap}
+            config={resolved}
+            renderHeader={renderHeader}
+            sheets={sheets}
+            store={store}
+          />
+        </Portal>
       </StoreContext.Provider>
     );
   }
