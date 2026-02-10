@@ -2,7 +2,7 @@
 
 Typed, animated sheet stacking for React. Powered by Zustand and Motion.
 
-Most sheet libraries are component-scoped — you render `<Sheet open={open}>` and manage state locally. Stacksheet gives you a `useSheetStack()` hook that can open, push, and navigate sheets from any component. Need to trigger a sheet outside React? The underlying store works in event handlers, API callbacks, and keyboard shortcuts too.
+Most sheet libraries are component-scoped — you render `<Sheet open={open}>` and manage state locally. Stacksheet gives you a `useSheet()` hook that can open, push, and navigate sheets from any component. Need to trigger a sheet outside React? The underlying store works in event handlers, API callbacks, and keyboard shortcuts too.
 
 ```
 npm install @howells/stacksheet
@@ -15,308 +15,165 @@ Peer dependencies: `react >= 18`, `react-dom >= 18`.
 ## Quick start
 
 ```tsx
-import { createSheetStack } from "@howells/stacksheet";
+import { createStacksheet } from "@howells/stacksheet";
 
-// 1. Create an instance with your sheet types
-const sheets = createSheetStack<{
-  "user-profile": { userId: string };
-}>();
+// 1. Create an instance
+const { StacksheetProvider, useSheet } = createStacksheet();
 
-// 2. Write a content component
-function UserProfile({ data, onClose }: { data: { userId: string }; onClose: () => void }) {
+// 2. Write a sheet — it's just a React component
+function UserProfile({ userId }: { userId: string }) {
+  const { close } = useSheet();
   return (
     <div>
-      <h2>User {data.userId}</h2>
-      <button onClick={onClose}>Done</button>
+      <h2>User {userId}</h2>
+      <button onClick={close}>Done</button>
     </div>
   );
 }
 
-// 3. Wrap your app with the provider
+// 3. Wrap your app
 function App() {
   return (
-    <sheets.SheetStackProvider content={{ "user-profile": UserProfile }}>
+    <StacksheetProvider>
       <YourApp />
-    </sheets.SheetStackProvider>
+    </StacksheetProvider>
   );
 }
 ```
 
-Open a sheet from any component:
+Open a sheet from any component — pass the component and its props:
 
 ```tsx
 function SomeButton() {
-  const { open } = sheets.useSheetStack();
+  const { open } = useSheet();
   return (
-    <button onClick={() => open("user-profile", "user-1", { userId: "u_abc" })}>
+    <button onClick={() => open(UserProfile, { userId: "u_abc" })}>
       View Profile
     </button>
   );
 }
 ```
+
+That's it. No registration, no type map, no config object. The sheet slides in from the right on desktop, from the bottom on mobile, with focus trapping, scroll lock, and keyboard navigation built in.
 
 ---
 
 ## Actions
 
-Use `useSheetStack()` inside any component to get the full set of actions:
+Use `useSheet()` inside any component to get the full set of actions:
 
 ```tsx
 function MyComponent() {
-  const { open, push, replace, navigate, setData, remove, pop, close } = sheets.useSheetStack();
+  const { open, push, replace, navigate, setData, remove, pop, close } = useSheet();
 }
 ```
 
-#### `open(type, id, data)`
-
-```ts
-open<K extends keyof TMap>(type: K, id: string, data: TMap[K]): void
-```
+#### `open(Component, data)`
 
 Replace the stack with a single sheet and open it. Any existing sheets are removed.
 
 ```tsx
-const { open } = useSheetStack();
-
-// Type-map sheet
-open("user-profile", "user-1", { userId: "u_abc" });
-
-// Ad-hoc component (auto-generated id)
+const { open } = useSheet();
 open(UserProfile, { userId: "u_abc" });
 
-// Ad-hoc component (explicit id)
+// With explicit id (for later setData/remove)
 open(UserProfile, "user-1", { userId: "u_abc" });
 ```
 
-#### `push(type, id, data)`
-
-```ts
-push<K extends keyof TMap>(type: K, id: string, data: TMap[K]): void
-```
+#### `push(Component, data)`
 
 Push a new sheet onto the stack. The current top sheet scales down with a depth effect. If the stack is at `maxDepth`, replaces the top instead.
 
 ```tsx
-const { push } = useSheetStack();
-
-// Type-map sheet
-push("settings", "settings-1", { tab: "billing" });
-
-// Ad-hoc component (auto-generated id)
+const { push } = useSheet();
 push(SettingsSheet, { tab: "billing" });
 
-// Ad-hoc component (explicit id for later setData/remove)
+// With explicit id
 push(SettingsSheet, "settings-1", { tab: "billing" });
 ```
 
-#### `replace(type, id, data)`
-
-```ts
-replace<K extends keyof TMap>(type: K, id: string, data: TMap[K]): void
-```
+#### `replace(Component, data)`
 
 Swap the top sheet without changing stack depth. If the stack is empty, opens a new sheet.
 
 ```tsx
-const { replace } = useSheetStack();
-
-// Type-map sheet
-replace("user-profile", "user-2", { userId: "u_xyz" });
-
-// Ad-hoc component
+const { replace } = useSheet();
 replace(UserProfile, { userId: "u_xyz" });
 ```
 
-#### `navigate(type, id, data)`
-
-```ts
-navigate<K extends keyof TMap>(type: K, id: string, data: TMap[K]): void
-```
+#### `navigate(Component, data)`
 
 Smart routing. Looks at the current stack and decides:
 
-| Stack state | Same type on top? | Result |
+| Stack state | Same component on top? | Result |
 |---|---|---|
 | Empty | — | `open()` |
 | Non-empty | Yes | `replace()` |
 | Non-empty | No | `push()` |
 
-For ad-hoc components, "same type" means the same component reference.
-
 ```tsx
-const { navigate } = useSheetStack();
-
-// Type-map sheet
-navigate("settings", "s-1", { tab: "general" });
-
-// Ad-hoc component
+const { navigate } = useSheet();
 navigate(SettingsSheet, { tab: "general" });
 ```
 
-#### `setData(type, id, data)`
-
-```ts
-setData<K extends keyof TMap>(type: K, id: string, data: TMap[K]): void
-```
+#### `setData(Component, id, data)`
 
 Update the data on a sheet that's already open, by id. The sheet stays in place with no animation — only the content component re-renders with new props.
 
 ```tsx
-const { setData } = useSheetStack();
-
-// Type-map sheet
-setData("user-profile", "user-1", { userId: "u_new" });
-
-// Ad-hoc component (requires explicit id)
+const { setData } = useSheet();
 setData(UserProfile, "user-1", { userId: "u_new" });
 ```
 
 #### `remove(id)`
 
-```ts
-remove(id: string): void
-```
-
-Remove a specific sheet from anywhere in the stack by its id. If it was the last sheet, closes the stack. Useful for dismissing buried sheets like notifications.
+Remove a specific sheet from anywhere in the stack by its id. If it was the last sheet, closes the stack.
 
 ```tsx
-const { remove } = useSheetStack();
+const { remove } = useSheet();
 remove("notification-1");
 ```
 
 #### `pop()`
 
-```ts
-pop(): void
-```
-
 Remove the top sheet. The sheet below expands back with a spring animation. If it was the last sheet, closes the stack.
 
 ```tsx
-const { pop } = useSheetStack();
+const { pop } = useSheet();
 pop();
 ```
 
 #### `close()`
 
-```ts
-close(): void
-```
-
 Clear the entire stack and close. All sheets exit simultaneously.
 
 ```tsx
-const { close } = useSheetStack();
+const { close } = useSheet();
 close();
 ```
 
 ---
 
-## Ad-hoc component push
+## Explicit ids
 
-Every action that takes a type key also accepts a component directly. No need to register it in the type map — just pass the component and its data:
-
-```tsx
-import { createSheetStack } from "@howells/stacksheet";
-
-const sheets = createSheetStack();
-
-function ProfileSheet({ data, onClose }: { data: { userId: string }; onClose: () => void }) {
-  return <div>User {data.userId} <button onClick={onClose}>Close</button></div>;
-}
-
-function App() {
-  return (
-    <sheets.SheetStackProvider content={{}}>
-      <MyApp />
-    </sheets.SheetStackProvider>
-  );
-}
-
-function MyApp() {
-  const { push } = sheets.useSheetStack();
-  return (
-    <button onClick={() => push(ProfileSheet, { userId: "u_abc" })}>
-      View Profile
-    </button>
-  );
-}
-```
-
-### With explicit id
-
-Pass an id as the second argument to reference the sheet later with `setData` or `remove`:
+By default, Stacksheet auto-generates an id for each sheet. Pass an id as the second argument if you need to reference it later with `setData` or `remove`:
 
 ```tsx
-push(ProfileSheet, "profile-1", { userId: "u_abc" });
+open(ProfileSheet, "profile-1", { userId: "u_abc" });
 
 // Later...
 setData(ProfileSheet, "profile-1", { userId: "u_xyz" });
 remove("profile-1");
 ```
 
-### How it works
-
-A side-car `Map` lives next to the Zustand store. When you pass a component:
-
-1. A type key like `"__adhoc_0"` is generated (reused if the same component is pushed again)
-2. The component is stashed in the Map
-3. The store receives `{ type: "__adhoc_0", id, data }` — plain serializable data
-4. The renderer resolves the type key back to the component at render time
-
-The store stays fully serializable. Devtools and persistence work unchanged. Type-map sheets and ad-hoc sheets can coexist in the same stack.
-
----
-
-## Content components
-
-Each sheet type in your `TMap` maps to a React component. The component receives typed `data` and an `onClose` callback:
-
-```tsx
-type SheetContentComponent<TData> = ComponentType<{
-  data: TData;
-  onClose: () => void;
-}>;
-```
-
-| Prop | Type | Description |
-|---|---|---|
-| `data` | `TData` | The data payload passed when opening the sheet, typed per sheet type |
-| `onClose` | `() => void` | Closes the entire sheet stack |
-
-```tsx
-const sheets = createSheetStack<{
-  "bucket-editor": { bucket: Bucket };
-}>();
-
-function BucketEditor({
-  data,
-  onClose,
-}: {
-  data: { bucket: Bucket };
-  onClose: () => void;
-}) {
-  return (
-    <form onSubmit={() => { save(data.bucket); onClose(); }}>
-      {/* fields */}
-    </form>
-  );
-}
-
-// Pass in SheetStackProvider
-<sheets.SheetStackProvider content={{ "bucket-editor": BucketEditor }}>
-```
-
-The content map is fully typed — TypeScript will enforce that every key in your `TMap` has a matching component, and that each component receives the correct `data` shape.
-
 ---
 
 ## Configuration
 
-Pass config to `createSheetStack()`:
+Pass config to `createStacksheet()`:
 
 ```tsx
-const sheets = createSheetStack<MySheetMap>({
+const { StacksheetProvider, useSheet } = createStacksheet({
   side: "right",
   width: 480,
   spring: "snappy",
@@ -335,7 +192,7 @@ const sheets = createSheetStack<MySheetMap>({
 | `breakpoint` | `number` | 768 | Mobile breakpoint in px. |
 | `side` | `SideConfig` | { desktop: "right", mobile: "bottom" } | Sheet slide-from side. |
 | `stacking` | `StackingConfig` | — | Stacking visual parameters |
-| `spring` | `SpringPreset | SpringConfig` | — | Spring animation parameters — preset name or custom config |
+| `spring` | `SpringPreset \| SpringConfig` | — | Spring animation parameters — preset name or custom config |
 | `zIndex` | `number` | 100 | Base z-index. |
 
 ### Side
@@ -344,13 +201,13 @@ Controls which edge the sheet slides from. A string applies to all viewports. An
 
 ```tsx
 // Always right
-createSheetStack({ side: "right" });
+createStacksheet({ side: "right" });
 
 // Right on desktop, bottom sheet on mobile (default)
-createSheetStack({ side: { desktop: "right", mobile: "bottom" } });
+createStacksheet({ side: { desktop: "right", mobile: "bottom" } });
 
 // Left sidebar
-createSheetStack({ side: "left" });
+createStacksheet({ side: "left" });
 ```
 
 Available sides: `"left"` | `"right"` | `"bottom"`
@@ -368,7 +225,7 @@ Controls the Apple-style depth effect when sheets are stacked. Behind-sheets sca
 | `renderThreshold` | `5` | Max depth before content stops rendering |
 
 ```tsx
-createSheetStack({
+createStacksheet({
   stacking: { scaleStep: 0.06, offsetStep: 48 },
 });
 ```
@@ -389,10 +246,10 @@ Spring presets control animation feel. Pass a preset name or a custom `SpringCon
 
 ```tsx
 // Preset
-createSheetStack({ spring: "bouncy" });
+createStacksheet({ spring: "bouncy" });
 
 // Custom
-createSheetStack({ spring: { stiffness: 300, damping: 25, mass: 0.9 } });
+createStacksheet({ spring: { stiffness: 300, damping: 25, mass: 0.9 } });
 ```
 
 **`SpringConfig`:**
@@ -418,8 +275,7 @@ The renderer derives three spring variants from your config:
 Stacksheet renders with sensible inline defaults (white background, subtle shadow, backdrop overlay). Override with CSS classes:
 
 ```tsx
-<sheets.SheetStackProvider
-  content={contentMap}
+<StacksheetProvider
   classNames={{
     backdrop: "my-backdrop",
     panel: "my-panel",
@@ -428,7 +284,7 @@ Stacksheet renders with sensible inline defaults (white background, subtle shado
 >
 ```
 
-**`SheetClassNames`:**
+**`StacksheetClassNames`:**
 
 | Prop | Type | Required | Description |
 |---|---|---|---|
@@ -462,8 +318,7 @@ When a class is provided, the corresponding inline background/border styles are 
 Replace the default back/close header entirely with the `renderHeader` prop:
 
 ```tsx
-<sheets.SheetStackProvider
-  content={contentMap}
+<StacksheetProvider
   renderHeader={({ isNested, onBack, onClose }) => (
     <header className="my-header">
       {isNested && <button onClick={onBack}>Back</button>}
@@ -487,201 +342,145 @@ The default header is a 48px bar with icon buttons — a back arrow (shown when 
 
 ## Advanced
 
-### `createSheetStack()` deep dive
-
-Factory function that creates an isolated sheet stack instance. Each call produces its own Zustand store, React context, and typed hooks.
-
-```tsx
-import { createSheetStack } from "@howells/stacksheet";
-
-const sheets = createSheetStack<{
-  "user-profile": { userId: string };
-  "settings": { tab?: string };
-}>({
-  side: "right",
-  width: 420,
-  spring: "stiff",
-});
-```
-
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `TMap` | generic | Yes | Map of sheet type names → data shapes |
-| `config` | `SheetStackConfig` | No | Configuration options (see [Configuration](#configuration)) |
-
-**Returns: `SheetStackInstance<TMap>`**
-
-| Property | Type | Description |
-|---|---|---|
-| `SheetStackProvider` | `ComponentType<SheetProviderProps<TMap>>` | Provider component — wrap your app and pass the content map |
-| `useSheetStack` | `() => SheetActions<TMap>` | Hook returning all sheet actions |
-| `useSheetStackState` | `() => SheetSnapshot<TMap>` | Hook returning reactive state (stack, isOpen) |
-| `store` | `StoreApi<SheetSnapshot<TMap> & SheetActions<TMap>>` | Raw Zustand store for use outside React |
-
-#### `<SheetStackProvider>`
-
-Provider component returned by `createSheetStack()`. Renders the sheet stack UI and provides context for hooks.
-
-```tsx
-<sheets.SheetStackProvider
-  content={{
-    "user-profile": UserProfile,
-    "settings": Settings,
-  }}
-  classNames={{
-    backdrop: "my-backdrop",
-    panel: "my-panel",
-    header: "my-header",
-  }}
-  renderHeader={({ isNested, onBack, onClose }) => (
-    <MyCustomHeader isNested={isNested} onBack={onBack} onClose={onClose} />
-  )}
->
-  <App />
-</sheets.SheetStackProvider>
-```
-
-**Props:**
-
-| Prop | Type | Required | Description |
-|---|---|---|---|
-| `content` | `ContentMap<TMap>` | Yes | Map of sheet type keys to content components |
-| `children` | `ReactNode` | Yes | Your application content |
-| `classNames` | `SheetClassNames` | No | CSS class overrides for backdrop, panel, and header |
-| `renderHeader` | `(props: HeaderRenderProps) => ReactNode` | No | Custom header renderer — replaces the default back/close buttons |
-
-#### `useSheetStackState()`
-
-Hook that returns the reactive sheet state. Must be used within `<SheetStackProvider>`. Re-renders when the stack or open state changes.
-
-```tsx
-function SheetIndicator() {
-  const { stack, isOpen } = sheets.useSheetStackState();
-  return <span>{isOpen ? \`\${stack.length} sheets open\` : "closed"}</span>;
-}
-```
-
-**Returns: `SheetSnapshot<TMap>`**
-
-| Prop | Type | Required | Description |
-|---|---|---|---|
-| `stack` | `SheetItem<Extract<keyof TMap, string>>[]` | Yes | Current sheet stack, ordered bottom to top |
-| `isOpen` | `boolean` | Yes | Whether any sheets are currently visible |
-
-Each item in `stack` is a `SheetItem`:
-
-| Prop | Type | Required | Description |
-|---|---|---|---|
-| `id` | `string` | Yes | Unique identifier for this sheet instance |
-| `type` | `TType` | Yes | Sheet type key from the TMap |
-| `data` | `Record<string, unknown>` | Yes | Data payload passed when opening the sheet |
-
 ### Using the store outside React
 
 Need to open a sheet from an event handler, API callback, or keyboard shortcut? Use the `store` directly:
 
 ```tsx
-// Read current state (non-reactive)
-const state = sheets.store.getState();
-console.log(state.stack.length, state.isOpen);
+import { createStacksheet } from "@howells/stacksheet";
 
-// Call actions from anywhere
-sheets.store.getState().open("error", "err-1", { message: "Something broke" });
+const { StacksheetProvider, useSheet, store } = createStacksheet();
+
+// Call actions from anywhere — no hooks, no context
+store.getState().open(ErrorSheet, { message: "Something broke" });
+
+// Read current state
+const { stack, isOpen } = store.getState();
 
 // Subscribe to changes
-const unsub = sheets.store.subscribe((state) => {
+const unsub = store.subscribe((state) => {
   console.log("Stack changed:", state.stack.length);
 });
 ```
 
-The store has the full `SheetSnapshot<TMap> & SheetActions<TMap>` shape — all state and actions in one object.
-
-```tsx
-// sheets.ts — shared instance
-export const sheets = createSheetStack<{
-  "confirm-delete": { itemId: string; onConfirm: () => void };
-  "error": { message: string };
-}>();
-```
-
 ```tsx
 // api.ts — no React, no hooks, no context
-import { sheets } from "./sheets";
+import { store } from "./sheets";
+import { ErrorSheet } from "./error-sheet";
 
 export async function deleteItem(id: string) {
   try {
-    await fetch(\`/api/items/\${id}\`, { method: "DELETE" });
+    await fetch(`/api/items/${id}`, { method: "DELETE" });
   } catch (err) {
-    sheets.store.getState().open("error", "api-error", {
-      message: "Failed to delete item",
-    });
+    store.getState().open(ErrorSheet, { message: "Failed to delete item" });
   }
 }
 ```
 
-```tsx
-// keyboard.ts — global keyboard shortcut
-import { sheets } from "./sheets";
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "," && e.metaKey) {
-    sheets.store.getState().open("settings", "settings", { tab: "general" });
-  }
-});
-```
-
 ### Multiple instances
 
-Each `createSheetStack()` call creates a fully isolated instance with its own store, config, type map, and React context. Use this for distinct UI concerns:
+Each `createStacksheet()` call creates a fully isolated instance with its own store, config, and React context. Use this for distinct UI concerns:
 
 ```tsx
-const mainSheets = createSheetStack<{
-  "user-profile": { userId: string };
-}>({ side: "right" });
+const {
+  StacksheetProvider: MainProvider,
+  useSheet: useMainSheet,
+} = createStacksheet({ side: "right" });
 
-const settingsSheets = createSheetStack<{
-  "preferences": { section: string };
-}>({ side: "left", width: 360 });
+const {
+  StacksheetProvider: SettingsProvider,
+  useSheet: useSettingsSheet,
+} = createStacksheet({ side: "left", width: 360 });
 
 function App() {
   return (
-    <mainSheets.SheetStackProvider content={{ "user-profile": UserProfile }}>
-      <settingsSheets.SheetStackProvider content={{ "preferences": Preferences }}>
+    <MainProvider>
+      <SettingsProvider>
         <YourApp />
-      </settingsSheets.SheetStackProvider>
-    </mainSheets.SheetStackProvider>
+      </SettingsProvider>
+    </MainProvider>
   );
 }
 ```
 
 They render and animate independently.
 
+### Type registry
+
+For larger apps where you want compile-time type checking on action calls, you can pre-register sheet types in a type map:
+
+```tsx
+const { StacksheetProvider, useSheet } = createStacksheet<{
+  "user-profile": { userId: string };
+  "settings": { tab?: string };
+}>();
+
+// TypeScript enforces correct data shapes
+const { open } = useSheet();
+open("user-profile", "u1", { userId: "abc" }); // OK
+open("user-profile", "u1", {}); // Type error: missing userId
+open("unknown", "x", {}); // Type error: not a key
+```
+
+When using the type registry, pass the component map to the provider:
+
+```tsx
+<StacksheetProvider
+  sheets={{
+    "user-profile": UserProfile,
+    "settings": Settings,
+  }}
+>
+  <App />
+</StacksheetProvider>
+```
+
+The `sheets` prop is fully typed — TypeScript enforces that every key in your type map has a matching component with the correct props.
+
+Type-registry sheets and component-direct sheets can coexist in the same stack.
+
+### `useStacksheetState()`
+
+Hook that returns the reactive sheet state. Re-renders when the stack or open state changes.
+
+```tsx
+function SheetIndicator() {
+  const { stack, isOpen } = useStacksheetState();
+  return <span>{isOpen ? `${stack.length} sheets open` : "closed"}</span>;
+}
+```
+
+**Returns: `StacksheetSnapshot<TMap>`**
+
+| Prop | Type | Description |
+|---|---|---|
+| `stack` | `SheetItem[]` | Current sheet stack, ordered bottom to top |
+| `isOpen` | `boolean` | Whether any sheets are currently visible |
+
 ### Anatomy
 
-When rendered, `SheetStackProvider` produces the following DOM structure:
+When rendered, `StacksheetProvider` produces the following DOM structure:
 
 ```
-<SheetStackProvider>
-  {children}                         ← your app content
+<StacksheetProvider>
+  {children}                         <- your app content
 
   <!-- Backdrop (AnimatePresence) -->
-  <motion.div />                     ← overlay, fades in/out
+  <motion.div />                     <- overlay, fades in/out
 
   <!-- Clip container (always rendered) -->
   <div style="fixed; overflow:hidden">
     <AnimatePresence>
       <!-- One per stack item, bottom to top -->
-      <motion.div>                   ← panel (slides from side)
-        <DefaultHeader />            ← or renderHeader()
-        <div>                        ← scrollable content area
-          <ContentComponent />       ← your component
+      <motion.div>                   <- panel (slides from side)
+        <DefaultHeader />            <- or renderHeader()
+        <div>                        <- scrollable content area
+          <ContentComponent />       <- your component
         </div>
       </motion.div>
     </AnimatePresence>
   </div>
-</SheetStackProvider>
+</StacksheetProvider>
 ```
 
 **Key structural details:**
@@ -698,26 +497,6 @@ When rendered, `SheetStackProvider` produces the following DOM structure:
 
 ## TypeScript
 
-The type map generic enforces that every `open()`, `push()`, `navigate()`, and `replace()` call passes the correct data shape:
-
-```tsx
-const sheets = createSheetStack<{
-  "user-profile": { userId: string };
-  "settings": { tab?: string };
-}>();
-
-const { open } = sheets.useSheetStack();
-
-// ✓ Correct
-open("user-profile", "u1", { userId: "abc" });
-
-// ✗ Type error: missing userId
-open("user-profile", "u1", {});
-
-// ✗ Type error: "unknown-type" is not a key
-open("unknown-type", "x", {});
-```
-
 ### Exported types
 
 All types are importable from the package entry point:
@@ -730,14 +509,13 @@ import type {
   ResolvedConfig,
   ResponsiveSide,
   SheetActions,
-  SheetClassNames,
-  SheetComponentProps,
+  StacksheetClassNames,
   SheetContentComponent,
   SheetItem,
-  SheetProviderProps,
-  SheetSnapshot,
-  SheetStackConfig,
-  SheetStackInstance,
+  StacksheetProviderProps,
+  StacksheetSnapshot,
+  StacksheetConfig,
+  StacksheetInstance,
   Side,
   SideConfig,
   SpringConfig,
@@ -748,20 +526,19 @@ import type {
 | Type | Description |
 |---|---|
 | `SpringPreset` | Spring preset name (union of preset keys) |
-| `ContentMap` | Map of sheet type key → content component |
+| `ContentMap` | Map of sheet type key to content component |
 | `HeaderRenderProps` | Props passed to custom `renderHeader` function |
 | `ResolvedConfig` | Fully resolved config (all fields required) |
 | `ResponsiveSide` | Per-viewport side configuration `{ desktop, mobile }` |
 | `SheetActions` | All sheet actions (open, push, pop, close, etc.) |
-| `SheetClassNames` | CSS class overrides for backdrop, panel, header |
-| `SheetComponentProps` | Props shape for ad-hoc sheet components `{ data, onClose }` |
+| `StacksheetClassNames` | CSS class overrides for backdrop, panel, header |
 | `SheetContentComponent` | Component type rendered inside a sheet panel |
 | `SheetItem` | Single item in the sheet stack `{ id, type, data }` |
-| `SheetProviderProps` | Props for the `<SheetStackProvider>` component |
-| `SheetSnapshot` | Reactive state: `{ stack, isOpen }` |
-| `SheetStackConfig` | User-facing config passed to `createSheetStack()` |
-| `SheetStackInstance` | Return type of `createSheetStack()` |
-| `Side` | Sheet position: `"left"` | `"right"` | `"bottom"` |
+| `StacksheetProviderProps` | Props for the `<StacksheetProvider>` component |
+| `StacksheetSnapshot` | Reactive state: `{ stack, isOpen }` |
+| `StacksheetConfig` | User-facing config passed to `createStacksheet()` |
+| `StacksheetInstance` | Return type of `createStacksheet()` |
+| `Side` | Sheet position: `"left"` \| `"right"` \| `"bottom"` |
 | `SideConfig` | Side as string or responsive object |
 | `SpringConfig` | Spring physics: `{ stiffness, damping, mass }` |
 | `StackingConfig` | Depth-stacking visual parameters |

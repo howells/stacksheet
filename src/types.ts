@@ -1,16 +1,8 @@
 import type { ComponentType, ReactNode } from "react";
 
-// ── Ad-hoc component push ──────────────────────
-
-/** Props shape for a sheet content component */
-export interface SheetComponentProps<TData = Record<string, unknown>> {
-  data: TData;
-  onClose: () => void;
-}
-
 // ── Theming ─────────────────────────────────────
 
-export interface SheetClassNames {
+export interface StacksheetClassNames {
   /** Applied to backdrop overlay */
   backdrop?: string;
   /** Applied to each panel container */
@@ -76,7 +68,7 @@ export interface SpringConfig {
 
 // ── Main config ─────────────────────────────────
 
-export interface SheetStackConfig {
+export interface StacksheetConfig {
   /** Maximum stack depth. Default: Infinity (unlimited) */
   maxDepth?: number;
   /** Close on ESC key. Default: true */
@@ -130,11 +122,10 @@ export interface ResolvedConfig {
 
 // ── Content component types ─────────────────────
 
-/** Component rendered inside a sheet panel */
-export type SheetContentComponent<TData = unknown> = ComponentType<{
-  data: TData;
-  onClose: () => void;
-}>;
+/** Component rendered inside a sheet panel — receives data as spread props */
+export type SheetContentComponent<TData = unknown> = ComponentType<
+  TData extends Record<string, unknown> ? TData : Record<string, unknown>
+>;
 
 /** Map of sheet type → content component */
 export type ContentMap<TMap extends Record<string, unknown>> = {
@@ -143,7 +134,7 @@ export type ContentMap<TMap extends Record<string, unknown>> = {
 
 // ── Store state + actions ───────────────────────
 
-export interface SheetSnapshot<TMap extends Record<string, unknown>> {
+export interface StacksheetSnapshot<TMap extends Record<string, unknown>> {
   /** Current sheet stack, ordered bottom to top */
   stack: SheetItem<Extract<keyof TMap, string>>[];
   /** Whether any sheets are currently visible */
@@ -159,12 +150,12 @@ export interface SheetActions<TMap extends Record<string, unknown>> {
   ): void;
   /** Replace stack with an ad-hoc component */
   open<TData extends Record<string, unknown>>(
-    component: ComponentType<SheetComponentProps<TData>>,
+    component: ComponentType<TData>,
     data: TData
   ): void;
   /** Replace stack with an ad-hoc component (explicit id) */
   open<TData extends Record<string, unknown>>(
-    component: ComponentType<SheetComponentProps<TData>>,
+    component: ComponentType<TData>,
     id: string,
     data: TData
   ): void;
@@ -177,12 +168,12 @@ export interface SheetActions<TMap extends Record<string, unknown>> {
   ): void;
   /** Push an ad-hoc component onto the stack */
   push<TData extends Record<string, unknown>>(
-    component: ComponentType<SheetComponentProps<TData>>,
+    component: ComponentType<TData>,
     data: TData
   ): void;
   /** Push an ad-hoc component onto the stack (explicit id) */
   push<TData extends Record<string, unknown>>(
-    component: ComponentType<SheetComponentProps<TData>>,
+    component: ComponentType<TData>,
     id: string,
     data: TData
   ): void;
@@ -195,12 +186,12 @@ export interface SheetActions<TMap extends Record<string, unknown>> {
   ): void;
   /** Swap the top item with an ad-hoc component */
   replace<TData extends Record<string, unknown>>(
-    component: ComponentType<SheetComponentProps<TData>>,
+    component: ComponentType<TData>,
     data: TData
   ): void;
   /** Swap the top item with an ad-hoc component (explicit id) */
   replace<TData extends Record<string, unknown>>(
-    component: ComponentType<SheetComponentProps<TData>>,
+    component: ComponentType<TData>,
     id: string,
     data: TData
   ): void;
@@ -213,12 +204,12 @@ export interface SheetActions<TMap extends Record<string, unknown>> {
   ): void;
   /** Smart navigate with an ad-hoc component */
   navigate<TData extends Record<string, unknown>>(
-    component: ComponentType<SheetComponentProps<TData>>,
+    component: ComponentType<TData>,
     data: TData
   ): void;
   /** Smart navigate with an ad-hoc component (explicit id) */
   navigate<TData extends Record<string, unknown>>(
-    component: ComponentType<SheetComponentProps<TData>>,
+    component: ComponentType<TData>,
     id: string,
     data: TData
   ): void;
@@ -231,7 +222,7 @@ export interface SheetActions<TMap extends Record<string, unknown>> {
   ): void;
   /** Update data on an ad-hoc sheet by id */
   setData<TData extends Record<string, unknown>>(
-    component: ComponentType<SheetComponentProps<TData>>,
+    component: ComponentType<TData>,
     id: string,
     data: TData
   ): void;
@@ -246,24 +237,26 @@ export interface SheetActions<TMap extends Record<string, unknown>> {
 
 // ── Factory return type ─────────────────────────
 
-export interface SheetProviderProps<TMap extends Record<string, unknown>> {
-  /** Map of sheet type keys to content components */
-  content: ContentMap<TMap>;
+export interface StacksheetProviderProps<TMap extends Record<string, unknown>> {
+  /** Map of sheet type keys to content components (optional — only needed for type registry pattern) */
+  sheets?: ContentMap<TMap>;
   /** Your application content */
   children: ReactNode;
   /** CSS class overrides for backdrop, panel, and header */
-  classNames?: SheetClassNames;
+  classNames?: StacksheetClassNames;
   /** Custom header renderer — replaces the default back/close buttons */
   renderHeader?: (props: HeaderRenderProps) => ReactNode;
 }
 
-export interface SheetStackInstance<TMap extends Record<string, unknown>> {
-  /** Provider component — wrap your app, pass content map */
-  SheetStackProvider: ComponentType<SheetProviderProps<TMap>>;
+export interface StacksheetInstance<TMap extends Record<string, unknown>> {
+  /** Provider component — wrap your app, pass sheets map */
+  StacksheetProvider: ComponentType<StacksheetProviderProps<TMap>>;
   /** Hook returning sheet actions */
-  useSheetStack: () => SheetActions<TMap>;
+  useSheet: () => SheetActions<TMap>;
   /** Hook returning sheet state (stack, isOpen) */
-  useSheetStackState: () => SheetSnapshot<TMap>;
+  useStacksheetState: () => StacksheetSnapshot<TMap>;
   /** Raw Zustand store for advanced use */
-  store: import("zustand").StoreApi<SheetSnapshot<TMap> & SheetActions<TMap>>;
+  store: import("zustand").StoreApi<
+    StacksheetSnapshot<TMap> & SheetActions<TMap>
+  >;
 }

@@ -23,9 +23,9 @@ import type {
   HeaderRenderProps,
   ResolvedConfig,
   SheetActions,
-  SheetClassNames,
+  StacksheetClassNames,
   SheetItem,
-  SheetSnapshot,
+  StacksheetSnapshot,
   Side,
 } from "./types";
 
@@ -122,7 +122,7 @@ function DefaultHeader({ isNested, onBack, onClose }: HeaderRenderProps) {
 
 // ── Resolved classNames ─────────────────────────
 
-type ResolvedClassNames = Required<SheetClassNames>;
+type ResolvedClassNames = Required<StacksheetClassNames>;
 
 const EMPTY_CLASSNAMES: ResolvedClassNames = {
   backdrop: "",
@@ -130,7 +130,7 @@ const EMPTY_CLASSNAMES: ResolvedClassNames = {
   header: "",
 };
 
-function resolveClassNames(cn?: SheetClassNames): ResolvedClassNames {
+function resolveClassNames(cn?: StacksheetClassNames): ResolvedClassNames {
   if (!cn) {
     return EMPTY_CLASSNAMES;
   }
@@ -153,7 +153,7 @@ interface SheetPanelProps {
   config: ResolvedConfig;
   classNames: ResolvedClassNames;
   // biome-ignore lint/suspicious/noExplicitAny: heterogeneous content component
-  Content: ComponentType<{ data: any; onClose: () => void }> | undefined;
+  Content: ComponentType<any> | undefined;
   shouldRender: boolean;
   pop: () => void;
   close: () => void;
@@ -280,7 +280,7 @@ function SheetPanel({
             overscrollBehavior: "contain",
           }}
         >
-          <Content data={item.data} onClose={close} />
+          <Content {...(item.data as Record<string, unknown>)} />
         </div>
       )}
     </m.div>
@@ -319,20 +319,20 @@ function SheetPanel({
 // ── Renderer ────────────────────────────────────
 
 interface SheetRendererProps<TMap extends Record<string, unknown>> {
-  store: StoreApi<SheetSnapshot<TMap> & SheetActions<TMap>>;
+  store: StoreApi<StacksheetSnapshot<TMap> & SheetActions<TMap>>;
   config: ResolvedConfig;
-  content: ContentMap<TMap>;
+  sheets: ContentMap<TMap>;
   /** Ad-hoc component map (type key → component) */
   // biome-ignore lint/suspicious/noExplicitAny: heterogeneous component storage
   componentMap: Map<string, ComponentType<any>>;
-  classNames?: SheetClassNames;
+  classNames?: StacksheetClassNames;
   renderHeader?: (props: HeaderRenderProps) => React.ReactNode;
 }
 
 export function SheetRenderer<TMap extends Record<string, unknown>>({
   store,
   config,
-  content,
+  sheets,
   componentMap,
   classNames: classNamesProp,
   renderHeader,
@@ -474,13 +474,10 @@ export function SheetRenderer<TMap extends Record<string, unknown>>({
               const isNested = stack.length > 1;
               const shouldRender = depth < config.stacking.renderThreshold;
 
-              // Ad-hoc components take priority, then fall back to content map
+              // Ad-hoc components take priority, then fall back to sheets map
               const Content = (componentMap.get(item.type) ??
-                content[item.type as keyof TMap]) as
-                | ComponentType<{
-                    data: unknown;
-                    onClose: () => void;
-                  }>
+                sheets[item.type as keyof TMap]) as
+                | ComponentType<Record<string, unknown>>
                 | undefined;
 
               return (

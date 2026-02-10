@@ -6,14 +6,14 @@ import type {
   ResolvedConfig,
   SheetActions,
   SheetItem,
-  SheetSnapshot,
+  StacksheetSnapshot,
 } from "./types";
 
 // biome-ignore lint/suspicious/noExplicitAny: maps store heterogeneous components — type safety is at the call site
 type AnyComponent = ComponentType<any>;
 
-type StoreState<TMap extends Record<string, unknown>> = SheetSnapshot<TMap> &
-  SheetActions<TMap>;
+type StoreState<TMap extends Record<string, unknown>> =
+  StacksheetSnapshot<TMap> & SheetActions<TMap>;
 
 /** Return type of createSheetStore — store plus ad-hoc component maps */
 export interface SheetStoreBundle<TMap extends Record<string, unknown>> {

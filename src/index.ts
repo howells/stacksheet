@@ -1,5 +1,5 @@
 export { resolveConfig } from "./config";
-export { createSheetStack } from "./create";
+export { createStacksheet } from "./create";
 export { useIsMobile, useResolvedSide } from "./media";
 export type { SpringPreset } from "./springs";
 export { springs } from "./springs";
@@ -11,19 +11,17 @@ export type {
   ResponsiveSide,
   SheetActions,
   // Theming
-  SheetClassNames,
-  // Ad-hoc component push
-  SheetComponentProps,
+  StacksheetClassNames,
   // Components
   SheetContentComponent,
   // Core types
   SheetItem,
   // Factory
-  SheetProviderProps,
+  StacksheetProviderProps,
   // Store
-  SheetSnapshot,
-  SheetStackConfig,
-  SheetStackInstance,
+  StacksheetSnapshot,
+  StacksheetConfig,
+  StacksheetInstance,
   Side,
   SideConfig,
   SpringConfig,

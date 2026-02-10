@@ -2,7 +2,7 @@ import { springs } from "./springs";
 import type {
   ResolvedConfig,
   ResponsiveSide,
-  SheetStackConfig,
+  StacksheetConfig,
   StackingConfig,
 } from "./types";
 
@@ -23,7 +23,7 @@ const DEFAULT_SIDE: ResponsiveSide = {
 
 // ── Resolver ────────────────────────────────────
 
-export function resolveConfig(config: SheetStackConfig = {}): ResolvedConfig {
+export function resolveConfig(config: StacksheetConfig = {}): ResolvedConfig {
   const side: ResponsiveSide =
     typeof config.side === "string"
       ? { desktop: config.side, mobile: config.side }

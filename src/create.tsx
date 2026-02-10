@@ -6,30 +6,31 @@ import { resolveConfig } from "./config";
 import { SheetRenderer } from "./renderer";
 import { createSheetStore } from "./store";
 import type {
+  ContentMap,
   ResolvedConfig,
   SheetActions,
-  SheetProviderProps,
-  SheetSnapshot,
-  SheetStackConfig,
-  SheetStackInstance,
+  StacksheetProviderProps,
+  StacksheetSnapshot,
+  StacksheetConfig,
+  StacksheetInstance,
 } from "./types";
 
-type StoreState<TMap extends Record<string, unknown>> = SheetSnapshot<TMap> &
-  SheetActions<TMap>;
+type StoreState<TMap extends Record<string, unknown>> =
+  StacksheetSnapshot<TMap> & SheetActions<TMap>;
 
 /**
  * Create an isolated sheet stack instance with typed store, hooks, and provider.
  *
  * ```ts
- * const { SheetStackProvider, useSheetStack, useSheetStackState } = createSheetStack<{
+ * const { StacksheetProvider, useSheet, useStacksheetState } = createStacksheet<{
  *   "bucket-create": { onCreated?: (b: Bucket) => void };
  *   "bucket-edit": { bucket: Bucket };
  * }>();
  * ```
  */
-export function createSheetStack<TMap extends Record<string, unknown>>(
-  config?: SheetStackConfig
-): SheetStackInstance<TMap> {
+export function createStacksheet<TMap extends Record<string, unknown>>(
+  config?: StacksheetConfig
+): StacksheetInstance<TMap> {
   const resolved = resolveConfig(config);
   const { store, componentMap } = createSheetStore<TMap>(resolved);
 
@@ -43,7 +44,7 @@ export function createSheetStack<TMap extends Record<string, unknown>>(
     const ctx = useContext(StoreContext);
     if (!ctx) {
       throw new Error(
-        "useSheetStack/useSheetStackState must be used within <SheetStackProvider>"
+        "useSheet/useStacksheetState must be used within <StacksheetProvider>"
       );
     }
     return ctx;
@@ -51,12 +52,14 @@ export function createSheetStack<TMap extends Record<string, unknown>>(
 
   // ── Provider ────────────────────────────────
 
-  function SheetStackProvider({
-    content,
+  const EMPTY_SHEETS = {} as ContentMap<TMap>;
+
+  function StacksheetProvider({
+    sheets = EMPTY_SHEETS,
     children,
     classNames,
     renderHeader,
-  }: SheetProviderProps<TMap>) {
+  }: StacksheetProviderProps<TMap>) {
     const value = useMemo(() => ({ store, config: resolved }), []);
     return (
       <StoreContext.Provider value={value}>
@@ -65,7 +68,7 @@ export function createSheetStack<TMap extends Record<string, unknown>>(
           classNames={classNames}
           componentMap={componentMap}
           config={resolved}
-          content={content}
+          sheets={sheets}
           renderHeader={renderHeader}
           store={store}
         />
@@ -75,7 +78,7 @@ export function createSheetStack<TMap extends Record<string, unknown>>(
 
   // ── Hooks ───────────────────────────────────
 
-  function useSheetStack(): SheetActions<TMap> {
+  function useSheet(): SheetActions<TMap> {
     const { store: s } = useStoreContext();
     // Actions are stable refs in Zustand v5 — read once, no subscription needed
     return useMemo(() => {
@@ -93,7 +96,7 @@ export function createSheetStack<TMap extends Record<string, unknown>>(
     }, [s]);
   }
 
-  function useSheetStackState(): SheetSnapshot<TMap> {
+  function useStacksheetState(): StacksheetSnapshot<TMap> {
     const { store: s } = useStoreContext();
     return useStore(
       s,
@@ -104,5 +107,5 @@ export function createSheetStack<TMap extends Record<string, unknown>>(
     );
   }
 
-  return { SheetStackProvider, useSheetStack, useSheetStackState, store };
+  return { StacksheetProvider, useSheet, useStacksheetState, store };
 }
