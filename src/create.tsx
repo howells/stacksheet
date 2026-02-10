@@ -9,10 +9,10 @@ import type {
   ContentMap,
   ResolvedConfig,
   SheetActions,
-  StacksheetProviderProps,
-  StacksheetSnapshot,
   StacksheetConfig,
   StacksheetInstance,
+  StacksheetProviderProps,
+  StacksheetSnapshot,
 } from "./types";
 
 type StoreState<TMap extends Record<string, unknown>> =
@@ -68,8 +68,8 @@ export function createStacksheet<TMap extends Record<string, unknown>>(
           classNames={classNames}
           componentMap={componentMap}
           config={resolved}
-          sheets={sheets}
           renderHeader={renderHeader}
+          sheets={sheets}
           store={store}
         />
       </StoreContext.Provider>

@@ -23,10 +23,10 @@ import type {
   HeaderRenderProps,
   ResolvedConfig,
   SheetActions,
-  StacksheetClassNames,
   SheetItem,
-  StacksheetSnapshot,
   Side,
+  StacksheetClassNames,
+  StacksheetSnapshot,
 } from "./types";
 
 // ── Icons (inline SVG — no external dependency) ─

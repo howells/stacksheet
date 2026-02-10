@@ -2,8 +2,8 @@ import { springs } from "./springs";
 import type {
   ResolvedConfig,
   ResponsiveSide,
-  StacksheetConfig,
   StackingConfig,
+  StacksheetConfig,
 } from "./types";
 
 // ── Defaults ────────────────────────────────────

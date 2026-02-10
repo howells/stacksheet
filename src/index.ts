@@ -10,21 +10,21 @@ export type {
   ResolvedConfig,
   ResponsiveSide,
   SheetActions,
-  // Theming
-  StacksheetClassNames,
   // Components
   SheetContentComponent,
   // Core types
   SheetItem,
-  // Factory
-  StacksheetProviderProps,
-  // Store
-  StacksheetSnapshot,
-  StacksheetConfig,
-  StacksheetInstance,
   Side,
   SideConfig,
   SpringConfig,
   // Config
   StackingConfig,
+  // Theming
+  StacksheetClassNames,
+  StacksheetConfig,
+  StacksheetInstance,
+  // Factory
+  StacksheetProviderProps,
+  // Store
+  StacksheetSnapshot,
 } from "./types";
