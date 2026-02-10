@@ -1,0 +1,6 @@
+pnpm typecheck
+pnpm lint
+pnpm docs
+
+# Stage README if docs generation changed it
+git diff --quiet README.md || git add README.md

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
+  "extends": ["ultracite/biome/core"],
+  "root": true,
+  "files": {
+    "includes": ["!!**/node_modules"]
+  },
+  "overrides": [
+    {
+      "includes": ["**/src/index.ts", "**/src/index.tsx"],
+      "linter": {
+        "rules": {
+          "performance": {
+            "noBarrelFile": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": {
+              "level": "error",
+              "options": {
+                "filenameCases": ["PascalCase", "kebab-case"]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

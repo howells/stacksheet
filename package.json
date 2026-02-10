@@ -1,6 +1,6 @@
 {
   "name": "@howells/stacksheet",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
   "description": "Typed, animated sheet stack system. Zustand store + Motion animations with Apple-style depth stacking.",
   "type": "module",
@@ -31,10 +31,15 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "dev": "tsc -p tsconfig.json -w",
+    "build": "tsup",
+    "dev": "pnpm build && pnpm --filter stacksheet-demo dev",
+    "dev:lib": "tsup --watch",
+    "format": "ultracite fix --unsafe",
+    "lint": "biome check src --write --unsafe",
     "prepack": "pnpm build",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "docs": "tsx scripts/generate-docs.ts",
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky"
   },
   "keywords": [
     "sheet",
@@ -47,17 +52,23 @@
     "animation"
   ],
   "dependencies": {
-    "zustand": "^5.0.0",
-    "motion": "^12.0.0"
+    "focus-trap-react": "^12.0.0",
+    "motion": "^12.0.0",
+    "react-remove-scroll": "^2.7.2",
+    "zustand": "^5.0.0"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.14",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "typescript": "^5.7.0"
+    "husky": "^9.1.7",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.0",
+    "ultracite": "^7.1.5"
   },
   "packageManager": "pnpm@10.12.4"
 }
