@@ -4,7 +4,7 @@ import { createStacksheet } from "@howells/stacksheet";
 
 const { StacksheetProvider, useSheet, useStacksheetState } = createStacksheet({
   width: 520,
-  spring: "bouncy",
+  spring: "snappy",
   stacking: {
     scaleStep: 0.06,
     offsetStep: 32,
@@ -22,7 +22,7 @@ function ShowcaseSheet() {
       <span className="sheet-badge">Stack depth: {stack.length}</span>
       <h3>Custom Configuration</h3>
       <p>
-        This sheet uses a wider panel (520px), the <code>"bouncy"</code> spring
+        This sheet uses a wider panel (520px), the <code>"snappy"</code> spring
         preset, and exaggerated stacking effects. Push more layers to see the
         amplified depth.
       </p>

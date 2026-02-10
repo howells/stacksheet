@@ -1,5 +1,9 @@
-import { redirect } from "next/navigation";
+import { PlaygroundDemo } from "@/components/demos/playground-demo";
 
 export default function Home() {
-  redirect("/docs");
+  return (
+    <main className="pg-page">
+      <PlaygroundDemo />
+    </main>
+  );
 }

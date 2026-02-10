@@ -5,7 +5,7 @@ description: Typed, animated sheet stacking for React. Powered by Zustand and Mo
 
 import { DefaultDemo } from "@/components/demos/default-demo";
 
-Stacksheet gives you a `useSheet()` hook that can open, push, and navigate sheets from any component. No local state, no render props — just call `open()` with a component and the sheet appears with spring animations and Apple-style depth stacking.
+Stacksheet is a sheet stack manager for React. It gives you a hook to open, push, and navigate animated sheet panels from any component — with focus trapping, scroll lock, and keyboard navigation built in.
 
 <DefaultDemo />
 
@@ -13,13 +13,52 @@ Stacksheet gives you a `useSheet()` hook that can open, push, and navigate sheet
 
 ### 1. Create an instance
 
-```tsx
+`createStacksheet()` returns a provider and a hook. You'll typically do this once in a shared file and import them where needed.
+
+```tsx title="sheets.ts"
 import { createStacksheet } from "@howells/stacksheet";
 
-const { StacksheetProvider, useSheet } = createStacksheet();
+export const { StacksheetProvider, useSheet } = createStacksheet();
 ```
 
-### 2. Write a sheet — it's just a React component
+### 2. Add the provider
+
+Wrap the part of your app that needs sheets. The provider renders the backdrop and panels — your app content goes inside as `children`.
+
+```tsx title="app.tsx"
+import { StacksheetProvider } from "./sheets";
+
+function App() {
+  return (
+    <StacksheetProvider>
+      <YourApp />
+    </StacksheetProvider>
+  );
+}
+```
+
+### 3. Open sheets from anywhere
+
+Call `open()` with any React component and its props. The component renders inside a sheet panel that slides in from the right on desktop, or from the bottom on mobile.
+
+```tsx
+import { useSheet } from "./sheets";
+
+function UserProfile({ userId }: { userId: string }) {
+  return <div>User {userId}</div>;
+}
+
+function ViewProfileButton() {
+  const { open } = useSheet();
+  return (
+    <button onClick={() => open(UserProfile, { userId: "u_abc" })}>
+      View Profile
+    </button>
+  );
+}
+```
+
+The sheet panel includes a close button in the header by default. If your sheet component needs to close itself programmatically, use the `close` action from the hook:
 
 ```tsx
 function UserProfile({ userId }: { userId: string }) {
@@ -33,22 +72,26 @@ function UserProfile({ userId }: { userId: string }) {
 }
 ```
 
-### 3. Wrap your app with the provider
+## Complete example
+
+Here's everything in a single file:
 
 ```tsx
-function App() {
+import { createStacksheet } from "@howells/stacksheet";
+
+const { StacksheetProvider, useSheet } = createStacksheet();
+
+function UserProfile({ userId }: { userId: string }) {
+  const { close } = useSheet();
   return (
-    <StacksheetProvider>
-      <YourApp />
-    </StacksheetProvider>
+    <div>
+      <h2>User {userId}</h2>
+      <button onClick={close}>Done</button>
+    </div>
   );
 }
-```
 
-### 4. Open a sheet from anywhere
-
-```tsx
-function SomeButton() {
+function ViewProfileButton() {
   const { open } = useSheet();
   return (
     <button onClick={() => open(UserProfile, { userId: "u_abc" })}>
@@ -56,13 +99,19 @@ function SomeButton() {
     </button>
   );
 }
-```
 
-That's it. No registration, no type map. The sheet slides in from the right on desktop, from the bottom on mobile, with focus trapping, scroll lock, and keyboard navigation built in.
+export default function App() {
+  return (
+    <StacksheetProvider>
+      <ViewProfileButton />
+    </StacksheetProvider>
+  );
+}
+```
 
 ## Next steps
 
 - [Installation](/docs/installation) — package managers and peer deps
-- [createStacksheet()](/docs/create-sheet) — factory function API reference
-- [Hooks](/docs/hooks) — `useSheet()` and `useStacksheetState()` reference
-- [Styling](/docs/styling) — CSS classes and custom properties
+- [createStacksheet()](/docs/create-sheet) — factory function and config options
+- [Hooks](/docs/hooks) — all `useSheet()` actions: `open`, `push`, `navigate`, `pop`, `close`, and more
+- [Styling](/docs/styling) — CSS classes, custom properties, and custom headers

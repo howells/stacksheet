@@ -10,7 +10,7 @@ import { NavigateDemo } from "@/components/demos/navigate-demo";
 Returns the full set of sheet actions. Must be used within `<StacksheetProvider>`.
 
 ```tsx
-const { open, push, replace, navigate, setData, remove, pop, close } =
+const { open, push, replace, swap, navigate, setData, remove, pop, close } =
   useSheet();
 ```
 
@@ -40,6 +40,16 @@ Swap the top sheet without changing stack depth. If the stack is empty, opens a 
 ```tsx
 replace(UserProfile, { userId: "u_xyz" });
 ```
+
+### swap(Component, data)
+
+Swap the top panel's content in place — no animation. The panel frame stays put, only the inner component and props change.
+
+```tsx
+swap(SettingsSheet, { tab: "general" });
+```
+
+If the stack is empty, `swap` is a no-op.
 
 ### navigate(Component, data)
 

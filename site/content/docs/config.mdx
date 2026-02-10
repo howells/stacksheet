@@ -87,14 +87,12 @@ Spring presets control animation feel. Pass a preset name or a custom config:
 | `"soft"` | 120 | 18 | 1 | Very gentle, slow settle |
 | `"subtle"` | 300 | 30 | 1 | Barely noticeable bounce |
 | `"natural"` | 200 | 20 | 1 | Balanced, general-purpose |
-| `"playful"` | 170 | 15 | 1 | Character with bounce |
-| `"bouncy"` | 260 | 12 | 1 | Visible bounce, energetic |
 | `"snappy"` | 400 | 28 | 0.8 | Quick, responsive |
 | **`"stiff"`** | 400 | 40 | 1 | **Default.** Very quick, controlled |
 
 ```tsx
 // Preset
-createStacksheet({ spring: "bouncy" });
+createStacksheet({ spring: "snappy" });
 
 // Custom
 createStacksheet({
@@ -102,10 +100,4 @@ createStacksheet({
 });
 ```
 
-The renderer derives three spring variants from your config:
-
-| Spring | Purpose | Derived from |
-|---|---|---|
-| **primary** | Top sheet entrance/exit | Your config directly |
-| **stack** | Behind-sheets contracting | 60% stiffness, 140% mass |
-| **exit** | Pop/close animation | 50% stiffness, 120% mass |
+The same spring drives all animations — entrance, stacking transforms, and exit — so everything feels cohesive.
