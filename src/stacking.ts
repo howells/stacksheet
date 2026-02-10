@@ -13,6 +13,7 @@ export interface StackTransform {
 /**
  * Compute visual transforms for a panel at a given depth.
  * depth=0 is the top (foreground) panel.
+ * Panels beyond renderThreshold are clamped to the edge position and faded out.
  */
 export function getStackTransform(
   depth: number,
@@ -21,10 +22,19 @@ export function getStackTransform(
   if (depth <= 0) {
     return { scale: 1, offset: 0, opacity: 1, borderRadius: 0 };
   }
+
+  const beyondThreshold = depth >= stacking.renderThreshold;
+  // Clamp visual depth so panels beyond threshold stay at the edge position
+  const visualDepth = beyondThreshold
+    ? stacking.renderThreshold - 1
+    : depth;
+
   return {
-    scale: Math.max(0.5, 1 - depth * stacking.scaleStep),
-    offset: depth * stacking.offsetStep,
-    opacity: Math.max(0, 1 - depth * stacking.opacityStep),
+    scale: Math.max(0.5, 1 - visualDepth * stacking.scaleStep),
+    offset: visualDepth * stacking.offsetStep,
+    opacity: beyondThreshold
+      ? 0
+      : Math.max(0, 1 - visualDepth * stacking.opacityStep),
     borderRadius: stacking.radius,
   };
 }

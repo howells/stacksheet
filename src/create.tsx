@@ -87,6 +87,7 @@ export function createStacksheet<TMap extends Record<string, unknown>>(
         open: state.open,
         push: state.push,
         replace: state.replace,
+        swap: state.swap,
         navigate: state.navigate,
         setData: state.setData,
         remove: state.remove,

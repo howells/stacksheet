@@ -262,13 +262,12 @@ function SheetPanel({
       tabIndex={isTop ? -1 : undefined}
       transition={spring}
     >
-      {/* Header */}
-      {isTop &&
-        (renderHeader ? (
-          renderHeader(headerProps)
-        ) : (
-          <DefaultHeader {...headerProps} />
-        ))}
+      {/* Header — always rendered to prevent layout shift during push */}
+      {renderHeader ? (
+        renderHeader(headerProps)
+      ) : (
+        <DefaultHeader {...headerProps} />
+      )}
 
       {/* Content */}
       {shouldRender && Content && (
@@ -286,12 +285,9 @@ function SheetPanel({
     </m.div>
   );
 
-  if (!isTop) {
-    return panelContent;
-  }
-
   return (
     <FocusTrap
+      active={isTop}
       focusTrapOptions={{
         initialFocus: false,
         returnFocusOnDeactivate: true,
@@ -397,22 +393,11 @@ export function SheetRenderer<TMap extends Record<string, unknown>>({
     mass: config.spring.mass,
   };
 
-  // Slower spring for underlying sheets contracting/expanding (scale, offset, opacity).
-  // ~60% stiffness + higher mass = noticeably lagging behind the incoming sheet.
-  const stackSpring = {
-    type: "spring" as const,
-    damping: config.spring.damping * 1.1,
-    stiffness: config.spring.stiffness * 0.6,
-    mass: config.spring.mass * 1.4,
-  };
+  // Same spring for stacking transforms (scale, offset, opacity)
+  const stackSpring = spring;
 
-  // Softer spring for exit (pop) — less abrupt departure
-  const exitSpring = {
-    type: "spring" as const,
-    damping: config.spring.damping * 0.9,
-    stiffness: config.spring.stiffness * 0.5,
-    mass: config.spring.mass * 1.2,
-  };
+  // Same spring for exit (pop)
+  const exitSpring = spring;
 
   // Backdrop: use className if provided, otherwise inline fallback
   const hasBackdropClass = classNames.backdrop !== "";

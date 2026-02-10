@@ -13,7 +13,7 @@ const DEFAULT_STACKING: StackingConfig = {
   offsetStep: 36,
   opacityStep: 0,
   radius: 12,
-  renderThreshold: 5,
+  renderThreshold: 3,
 };
 
 const DEFAULT_SIDE: ResponsiveSide = {

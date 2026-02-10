@@ -196,6 +196,14 @@ export interface SheetActions<TMap extends Record<string, unknown>> {
     data: TData
   ): void;
 
+  /** Swap the top item's content in place (no animation) */
+  swap<K extends Extract<keyof TMap, string>>(type: K, data: TMap[K]): void;
+  /** Swap the top item's content with an ad-hoc component (no animation) */
+  swap<TData extends Record<string, unknown>>(
+    component: ComponentType<TData>,
+    data: TData
+  ): void;
+
   /** Smart: empty→open, same type on top→replace, different→push */
   navigate<K extends Extract<keyof TMap, string>>(
     type: K,

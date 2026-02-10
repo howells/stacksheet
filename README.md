@@ -64,7 +64,7 @@ Use `useSheet()` inside any component to get the full set of actions:
 
 ```tsx
 function MyComponent() {
-  const { open, push, replace, navigate, setData, remove, pop, close } = useSheet();
+  const { open, push, replace, swap, navigate, setData, remove, pop, close } = useSheet();
 }
 ```
 
@@ -100,6 +100,17 @@ Swap the top sheet without changing stack depth. If the stack is empty, opens a 
 const { replace } = useSheet();
 replace(UserProfile, { userId: "u_xyz" });
 ```
+
+#### `swap(Component, data)`
+
+Swap the top panel's content in place — no animation. The panel frame stays put, only the inner component and props change. Useful for transitions like Contact → Settings within the same panel position.
+
+```tsx
+const { swap } = useSheet();
+swap(SettingsSheet, { tab: "general" });
+```
+
+If the stack is empty, `swap` is a no-op.
 
 #### `navigate(Component, data)`
 
@@ -239,14 +250,12 @@ Spring presets control animation feel. Pass a preset name or a custom `SpringCon
 | `"soft"` | 120 | 18 | 1 | Very gentle, slow settle. Loaders, radial pickers |
 | `"subtle"` | 300 | 30 | 1 | Barely noticeable bounce, professional |
 | `"natural"` | 200 | 20 | 1 | Balanced, general-purpose default |
-| `"playful"` | 170 | 15 | 1 | Character with bounce |
-| `"bouncy"` | 260 | 12 | 1 | Visible bounce, energetic. Popovers, hints |
 | `"snappy"` | 400 | 28 | 0.8 | Quick, responsive for interactions |
 | **`"stiff"`** | 400 | 40 | 1 | **Default.** Very quick, controlled. Panels, drawers |
 
 ```tsx
 // Preset
-createStacksheet({ spring: "bouncy" });
+createStacksheet({ spring: "snappy" });
 
 // Custom
 createStacksheet({ spring: { stiffness: 300, damping: 25, mass: 0.9 } });

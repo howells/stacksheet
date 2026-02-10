@@ -209,6 +209,35 @@ export function createSheetStore<TMap extends Record<string, unknown>>(
         _replaceResolved(resolve(first, second, third));
       },
 
+      swap(first: unknown, second?: unknown) {
+        let type: string;
+        let data: Record<string, unknown>;
+
+        if (typeof first === "function") {
+          const component = first as AnyComponent;
+          let typeKey = componentRegistry.get(component);
+          if (!typeKey) {
+            warnInlineComponent(component, componentRegistry, warnedNames);
+            typeKey = getNextKey();
+            componentRegistry.set(component, typeKey);
+            componentMap.set(typeKey, component);
+          }
+          type = typeKey;
+          data = (second ?? {}) as Record<string, unknown>;
+        } else {
+          type = first as string;
+          data = (second ?? {}) as Record<string, unknown>;
+        }
+
+        set((state) => {
+          const top = state.stack.at(-1);
+          if (!top) return state;
+          const newStack = [...state.stack];
+          newStack[newStack.length - 1] = { id: top.id, type, data } as Item;
+          return { stack: newStack };
+        });
+      },
+
       navigate(first: unknown, second?: unknown, third?: unknown) {
         const resolved = resolve(first, second, third);
         const { stack } = get();
