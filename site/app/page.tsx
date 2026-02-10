@@ -5,7 +5,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
   return (
-    <main className={`pg-page ${inter.className}`}>
+    <main className={`min-h-dvh bg-zinc-50 antialiased ${inter.className}`}>
       <PlaygroundDemo />
     </main>
   );

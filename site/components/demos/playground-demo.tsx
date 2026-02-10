@@ -130,6 +130,20 @@ function useStack() {
   );
 }
 
+// ── Toggle (decorative) ──────────────────────
+
+function Toggle({ on }: { on?: boolean }) {
+  return (
+    <span
+      className={`inline-block w-9 h-5 rounded-full relative ${on ? "bg-zinc-950" : "bg-zinc-200"}`}
+    >
+      <span
+        className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full bg-white transition-transform duration-150 ${on ? "translate-x-4" : ""}`}
+      />
+    </span>
+  );
+}
+
 // ── Shared sheet controls ─────────────────────
 
 function SheetControls({ children }: { children: ReactNode }) {
@@ -155,57 +169,59 @@ function SheetControls({ children }: { children: ReactNode }) {
     actions.swap(key, data as never);
   }
 
-  const badgeColors: Record<string, string> = {
-    Contact: "pg-stack-dot--blue",
-    Settings: "pg-stack-dot--purple",
-    Alert: "pg-stack-dot--amber",
+  const dotColors: Record<string, string> = {
+    Contact: "bg-blue-500",
+    Settings: "bg-violet-500",
+    Alert: "bg-amber-500",
   };
 
   return (
-    <div className="pg-sheet">
+    <div className="p-6">
       {children}
 
-      <div className="pg-sheet-divider" />
+      <div className="h-px bg-zinc-100 my-5" />
 
-      <p className="pg-sheet-label">Try an action</p>
-      <div className="pg-sheet-actions">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-2.5">
+        Try an action
+      </p>
+      <div className="flex flex-wrap gap-1.5">
         <button
-          className="pg-sheet-action-btn"
+          className="inline-flex items-center h-[30px] px-3 text-xs font-medium font-mono border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
           onClick={() => doAction("push")}
           type="button"
         >
           push
         </button>
         <button
-          className="pg-sheet-action-btn"
+          className="inline-flex items-center h-[30px] px-3 text-xs font-medium font-mono border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
           onClick={() => doAction("navigate")}
           type="button"
         >
           navigate
         </button>
         <button
-          className="pg-sheet-action-btn"
+          className="inline-flex items-center h-[30px] px-3 text-xs font-medium font-mono border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
           onClick={() => doAction("replace")}
           type="button"
         >
           replace
         </button>
         <button
-          className="pg-sheet-action-btn"
+          className="inline-flex items-center h-[30px] px-3 text-xs font-medium font-mono border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
           onClick={() => doSwap()}
           type="button"
         >
           swap
         </button>
         <button
-          className="pg-sheet-action-btn"
+          className="inline-flex items-center h-[30px] px-3 text-xs font-medium font-mono border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
           onClick={() => actions.pop()}
           type="button"
         >
           pop
         </button>
         <button
-          className="pg-sheet-action-btn"
+          className="inline-flex items-center h-[30px] px-3 text-xs font-medium font-mono border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
           onClick={() => actions.close()}
           type="button"
         >
@@ -213,15 +229,18 @@ function SheetControls({ children }: { children: ReactNode }) {
         </button>
       </div>
 
-      <div className="pg-sheet-divider" />
+      <div className="h-px bg-zinc-100 my-5" />
 
-      <p className="pg-sheet-label">
-        Stack <span className="pg-sheet-label-count">{stack.length}</span>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-2.5">
+        Stack{" "}
+        <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-zinc-100 rounded-full text-zinc-500 ml-1 align-middle">
+          {stack.length}
+        </span>
       </p>
-      <div className="pg-stack">
+      <div className="flex flex-col gap-1">
         {stack.map((item, i) => (
           <button
-            className="pg-stack-item"
+            className="flex items-center gap-2 py-1.5 px-2.5 border-none rounded-md text-[13px] font-inherit bg-transparent cursor-pointer w-full text-left transition-colors duration-150 hover:bg-zinc-100 data-[current]:bg-zinc-100 data-[current]:cursor-default data-[current]:hover:bg-zinc-100"
             key={item.id}
             data-current={i === stack.length - 1 || undefined}
             disabled={i === stack.length - 1}
@@ -233,14 +252,16 @@ function SheetControls({ children }: { children: ReactNode }) {
             type="button"
           >
             <span
-              className={`pg-stack-dot ${badgeColors[item.type] || ""}`}
+              className={`w-2 h-2 rounded-full shrink-0 ${dotColors[item.type] || "bg-zinc-300"}`}
             />
-            <span className="pg-stack-type">{item.type}</span>
-            <span className="pg-stack-id">
+            <span className="font-medium text-zinc-950">{item.type}</span>
+            <span className="text-zinc-400 text-xs font-mono">
               {item.id.split("-")[0]}
             </span>
             {i === stack.length - 1 && (
-              <span className="pg-stack-current">current</span>
+              <span className="ml-auto text-[11px] font-medium text-zinc-500 bg-zinc-200 px-2 py-0.5 rounded-full">
+                current
+              </span>
             )}
           </button>
         ))}
@@ -251,6 +272,26 @@ function SheetControls({ children }: { children: ReactNode }) {
 
 // ── Sheet components ───────────────────────────
 
+const badgeVariants: Record<string, string> = {
+  blue: "bg-blue-100 text-blue-700",
+  purple: "bg-violet-100 text-violet-700",
+  amber: "bg-amber-100 text-amber-700",
+  green: "bg-green-100 text-green-700",
+};
+
+function Badge({
+  variant,
+  children,
+}: { variant: string; children: ReactNode }) {
+  return (
+    <span
+      className={`inline-block text-[11px] font-semibold uppercase tracking-wide px-2.5 py-0.5 rounded-full mb-3 ${badgeVariants[variant] || badgeVariants.blue}`}
+    >
+      {children}
+    </span>
+  );
+}
+
 function ContactSheet({
   name,
   email,
@@ -259,17 +300,21 @@ function ContactSheet({
 }: SheetTypeMap["Contact"]) {
   return (
     <SheetControls>
-      <span className="pg-sheet-badge pg-sheet-badge--blue">Contact</span>
-      <h3 className="pg-sheet-title">{name}</h3>
-      <p className="pg-sheet-subtitle">{role}</p>
-      <div className="pg-sheet-fields">
-        <div className="pg-sheet-field">
-          <span className="pg-sheet-field-label">Email</span>
-          <span className="pg-sheet-field-value">{email}</span>
+      <Badge variant="blue">Contact</Badge>
+      <h3 className="text-lg font-semibold mb-1">{name}</h3>
+      <p className="text-sm text-zinc-500 mb-4">{role}</p>
+      <div className="flex flex-col gap-3 mb-1">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+            Email
+          </span>
+          <span className="text-sm text-zinc-950">{email}</span>
         </div>
-        <div className="pg-sheet-field">
-          <span className="pg-sheet-field-label">Location</span>
-          <span className="pg-sheet-field-value">{location}</span>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+            Location
+          </span>
+          <span className="text-sm text-zinc-950">{location}</span>
         </div>
       </div>
     </SheetControls>
@@ -282,19 +327,19 @@ function SettingsSheet({
 }: SheetTypeMap["Settings"]) {
   return (
     <SheetControls>
-      <span className="pg-sheet-badge pg-sheet-badge--purple">
-        Settings
-      </span>
-      <h3 className="pg-sheet-title">{section}</h3>
-      <p className="pg-sheet-text">{description}</p>
-      <div className="pg-sheet-fields">
-        <div className="pg-sheet-toggle-row">
+      <Badge variant="purple">Settings</Badge>
+      <h3 className="text-lg font-semibold mb-1">{section}</h3>
+      <p className="text-sm text-zinc-500 leading-relaxed mb-4">
+        {description}
+      </p>
+      <div className="flex flex-col gap-3 mb-1">
+        <div className="flex items-center justify-between text-sm text-zinc-950 py-2">
           <span>Enable feature</span>
-          <span className="pg-sheet-toggle" data-on />
+          <Toggle on />
         </div>
-        <div className="pg-sheet-toggle-row">
+        <div className="flex items-center justify-between text-sm text-zinc-950 py-2 border-t border-zinc-100">
           <span>Send digest</span>
-          <span className="pg-sheet-toggle" />
+          <Toggle />
         </div>
       </div>
     </SheetControls>
@@ -308,16 +353,16 @@ function AlertSheet({
 }: SheetTypeMap["Alert"]) {
   const variant =
     severity === "warning"
-      ? "pg-sheet-badge--amber"
+      ? "amber"
       : severity === "success"
-        ? "pg-sheet-badge--green"
-        : "pg-sheet-badge--blue";
+        ? "green"
+        : "blue";
 
   return (
     <SheetControls>
-      <span className={`pg-sheet-badge ${variant}`}>{severity}</span>
-      <h3 className="pg-sheet-title">{title}</h3>
-      <p className="pg-sheet-text">{message}</p>
+      <Badge variant={variant}>{severity}</Badge>
+      <h3 className="text-lg font-semibold mb-1">{title}</h3>
+      <p className="text-sm text-zinc-500 leading-relaxed mb-4">{message}</p>
     </SheetControls>
   );
 }
@@ -398,8 +443,11 @@ function Pill({
 }) {
   return (
     <button
-      className="pg-pill"
-      data-active={active || undefined}
+      className={`inline-flex items-center h-[34px] px-4 text-[13px] font-medium rounded-full cursor-pointer transition-colors duration-150 ${
+        active
+          ? "bg-zinc-950 text-zinc-50"
+          : "shadow-[0_0_0_1px_rgba(0,0,0,0.08)] text-zinc-950 hover:bg-zinc-100"
+      }`}
       onClick={onClick}
       type="button"
     >
@@ -436,16 +484,20 @@ function LeftColumn({
   ];
 
   return (
-    <div className="pg-left">
-      <h1 className="pg-title">Stacksheet</h1>
-      <p className="pg-tagline">
+    <div className="flex flex-col md:sticky md:top-12">
+      <h1 className="text-5xl font-bold tracking-tight leading-none mb-3">
+        Stacksheet
+      </h1>
+      <p className="text-[15px] text-zinc-500 leading-relaxed mb-8">
         A typed, animated sheet stack for React.
       </p>
 
-      <div className="pg-controls">
-        <div className="pg-control-group">
-          <p className="pg-label">Position</p>
-          <div className="pg-pills">
+      <div className="flex flex-col gap-6 mb-6">
+        <div className="flex flex-col gap-2">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400">
+            Position
+          </p>
+          <div className="flex flex-wrap gap-1.5">
             {sides.map((s) => (
               <Pill
                 key={s}
@@ -460,9 +512,11 @@ function LeftColumn({
           </div>
         </div>
 
-        <div className="pg-control-group">
-          <p className="pg-label">Spring</p>
-          <div className="pg-pills">
+        <div className="flex flex-col gap-2">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400">
+            Spring
+          </p>
+          <div className="flex flex-wrap gap-1.5">
             {springPresets.map((p) => (
               <Pill
                 key={p}
@@ -477,9 +531,11 @@ function LeftColumn({
           </div>
         </div>
 
-        <div className="pg-control-group">
-          <p className="pg-label">Options</p>
-          <div className="pg-pills">
+        <div className="flex flex-col gap-2">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400">
+            Options
+          </p>
+          <div className="flex flex-wrap gap-1.5">
             {toggles.map(({ key, label }) => (
               <Pill
                 key={key}
@@ -499,19 +555,22 @@ function LeftColumn({
       </div>
 
       <button
-        className="pg-btn pg-btn--primary"
+        className="inline-flex items-center justify-center h-11 px-7 text-[15px] font-medium rounded-full bg-zinc-950 text-zinc-50 border-none cursor-pointer transition-all duration-150 hover:opacity-85 active:scale-[0.97] mb-4 self-start"
         onClick={handleOpen}
         type="button"
       >
         Open a sheet
       </button>
 
-      <div className="pg-links">
-        <a className="pg-btn pg-btn--secondary" href="/docs">
+      <div className="flex items-center gap-3 self-start">
+        <a
+          className="inline-flex items-center justify-center h-11 px-7 text-[15px] font-medium rounded-full bg-transparent text-zinc-950 border border-zinc-200 cursor-pointer transition-colors duration-150 hover:bg-zinc-100 no-underline"
+          href="/docs"
+        >
           Documentation
         </a>
         <a
-          className="pg-link"
+          className="text-sm text-zinc-500 underline underline-offset-[3px] hover:text-zinc-950"
           href="https://github.com/howells/stacksheet"
         >
           GitHub
@@ -524,7 +583,6 @@ function LeftColumn({
 // ── Right Column ───────────────────────────────
 
 function RightColumn({ config }: { config: PlaygroundConfig }) {
-  // Build config code string
   const configParts: string[] = [];
   if (config.side !== "right")
     configParts.push(`side: "${config.side}"`);
@@ -541,12 +599,16 @@ function RightColumn({ config }: { config: PlaygroundConfig }) {
       : "createStacksheet()";
 
   return (
-    <div className="pg-right">
-      <div className="pg-code">
-        <code>{configCode}</code>
+    <div className="flex flex-col gap-4 pt-2">
+      <div className="bg-zinc-900 rounded-xl p-5">
+        <code className="text-sm font-mono text-zinc-300 whitespace-pre">
+          {configCode}
+        </code>
       </div>
-      <div className="pg-install">
-        <code>npm i @howells/stacksheet</code>
+      <div className="text-center py-1">
+        <code className="text-[13px] font-mono text-zinc-400">
+          npm i @howells/stacksheet
+        </code>
       </div>
     </div>
   );
@@ -565,7 +627,7 @@ function PageContent({
 
   return (
     <StacksheetProvider sheets={sheetMap}>
-      <div className="pg-layout">
+      <div className="grid grid-cols-1 md:grid-cols-[400px_1fr] gap-8 md:gap-16 max-w-5xl mx-auto p-6 md:p-12 min-h-dvh items-center">
         <LeftColumn config={config} onConfigChange={onConfigChange} />
         <RightColumn config={config} />
       </div>
