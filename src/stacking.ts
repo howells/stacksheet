@@ -25,9 +25,7 @@ export function getStackTransform(
 
   const beyondThreshold = depth >= stacking.renderThreshold;
   // Clamp visual depth so panels beyond threshold stay at the edge position
-  const visualDepth = beyondThreshold
-    ? stacking.renderThreshold - 1
-    : depth;
+  const visualDepth = beyondThreshold ? stacking.renderThreshold - 1 : depth;
 
   return {
     scale: Math.max(0.5, 1 - visualDepth * stacking.scaleStep),

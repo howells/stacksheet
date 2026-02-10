@@ -231,7 +231,9 @@ export function createSheetStore<TMap extends Record<string, unknown>>(
 
         set((state) => {
           const top = state.stack.at(-1);
-          if (!top) return state;
+          if (!top) {
+            return state;
+          }
           const newStack = [...state.stack];
           newStack[newStack.length - 1] = { id: top.id, type, data } as Item;
           return { stack: newStack };
