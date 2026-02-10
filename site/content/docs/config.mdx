@@ -1,0 +1,111 @@
+---
+title: Config
+description: Full StacksheetConfig reference with all options and defaults.
+---
+
+import { SideDemo } from "@/components/demos/side-demo";
+import { ConfigDemo } from "@/components/demos/config-demo";
+
+Pass configuration to `createStacksheet()`:
+
+```tsx
+const { StacksheetProvider, useSheet } = createStacksheet({
+  side: "right",
+  width: 480,
+  spring: "snappy",
+  closeOnEscape: true,
+});
+```
+
+## Options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `maxDepth` | `number` | `Infinity` | Maximum stack depth |
+| `closeOnEscape` | `boolean` | `true` | Close on ESC key |
+| `closeOnBackdrop` | `boolean` | `true` | Close on backdrop click |
+| `showOverlay` | `boolean` | `true` | Show backdrop overlay |
+| `lockScroll` | `boolean` | `true` | Lock body scroll when open |
+| `width` | `number` | `420` | Panel width in px |
+| `maxWidth` | `string` | `"90vw"` | Maximum panel width (CSS value) |
+| `breakpoint` | `number` | `768` | Mobile breakpoint in px |
+| `side` | `SideConfig` | `{ desktop: "right", mobile: "bottom" }` | Sheet slide-from side |
+| `stacking` | `Partial<StackingConfig>` | — | Stacking visual parameters |
+| `spring` | `SpringPreset \| Partial<SpringConfig>` | `"stiff"` | Spring animation config |
+| `zIndex` | `number` | `100` | Base z-index |
+| `ariaLabel` | `string` | `"Sheet dialog"` | Default aria-label for dialog panels |
+| `onOpenComplete` | `() => void` | — | Called when top panel entrance animation completes |
+| `onCloseComplete` | `() => void` | — | Called when last panel exit animation completes |
+
+## Side
+
+Controls which edge the sheet slides from.
+
+<SideDemo />
+
+A string applies to all viewports. An object sets different sides for desktop and mobile:
+
+```tsx
+// Always right
+createStacksheet({ side: "right" });
+
+// Right on desktop, bottom on mobile (default)
+createStacksheet({ side: { desktop: "right", mobile: "bottom" } });
+
+// Left sidebar
+createStacksheet({ side: "left" });
+```
+
+Available sides: `"left"` | `"right"` | `"bottom"`
+
+## Stacking
+
+Controls the Apple-style depth effect when sheets are stacked:
+
+| Option | Default | Description |
+|---|---|---|
+| `scaleStep` | `0.04` | Scale reduction per depth level |
+| `offsetStep` | `36` | Offset per depth level in px |
+| `opacityStep` | `0` | Opacity reduction per depth level |
+| `radius` | `12` | Border radius on stacked panels in px |
+| `renderThreshold` | `5` | Max depth before content stops rendering |
+
+```tsx
+createStacksheet({
+  stacking: { scaleStep: 0.06, offsetStep: 48 },
+});
+```
+
+<ConfigDemo />
+
+## Springs
+
+Spring presets control animation feel. Pass a preset name or a custom config:
+
+| Preset | Stiffness | Damping | Mass | Feel |
+|---|---|---|---|---|
+| `"soft"` | 120 | 18 | 1 | Very gentle, slow settle |
+| `"subtle"` | 300 | 30 | 1 | Barely noticeable bounce |
+| `"natural"` | 200 | 20 | 1 | Balanced, general-purpose |
+| `"playful"` | 170 | 15 | 1 | Character with bounce |
+| `"bouncy"` | 260 | 12 | 1 | Visible bounce, energetic |
+| `"snappy"` | 400 | 28 | 0.8 | Quick, responsive |
+| **`"stiff"`** | 400 | 40 | 1 | **Default.** Very quick, controlled |
+
+```tsx
+// Preset
+createStacksheet({ spring: "bouncy" });
+
+// Custom
+createStacksheet({
+  spring: { stiffness: 300, damping: 25, mass: 0.9 },
+});
+```
+
+The renderer derives three spring variants from your config:
+
+| Spring | Purpose | Derived from |
+|---|---|---|
+| **primary** | Top sheet entrance/exit | Your config directly |
+| **stack** | Behind-sheets contracting | 60% stiffness, 140% mass |
+| **exit** | Pop/close animation | 50% stiffness, 120% mass |

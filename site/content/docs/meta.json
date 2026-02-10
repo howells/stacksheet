@@ -1,0 +1,18 @@
+{
+  "title": "Docs",
+  "pages": [
+    "---Basics---",
+    "index",
+    "installation",
+    "---API---",
+    "create-sheet",
+    "provider",
+    "hooks",
+    "config",
+    "---Guides---",
+    "styling",
+    "accessibility",
+    "callbacks",
+    "type-registry"
+  ]
+}

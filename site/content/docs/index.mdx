@@ -1,0 +1,68 @@
+---
+title: Getting Started
+description: Typed, animated sheet stacking for React. Powered by Zustand and Motion.
+---
+
+import { DefaultDemo } from "@/components/demos/default-demo";
+
+Stacksheet gives you a `useSheet()` hook that can open, push, and navigate sheets from any component. No local state, no render props — just call `open()` with a component and the sheet appears with spring animations and Apple-style depth stacking.
+
+<DefaultDemo />
+
+## Quick start
+
+### 1. Create an instance
+
+```tsx
+import { createStacksheet } from "@howells/stacksheet";
+
+const { StacksheetProvider, useSheet } = createStacksheet();
+```
+
+### 2. Write a sheet — it's just a React component
+
+```tsx
+function UserProfile({ userId }: { userId: string }) {
+  const { close } = useSheet();
+  return (
+    <div>
+      <h2>User {userId}</h2>
+      <button onClick={close}>Done</button>
+    </div>
+  );
+}
+```
+
+### 3. Wrap your app with the provider
+
+```tsx
+function App() {
+  return (
+    <StacksheetProvider>
+      <YourApp />
+    </StacksheetProvider>
+  );
+}
+```
+
+### 4. Open a sheet from anywhere
+
+```tsx
+function SomeButton() {
+  const { open } = useSheet();
+  return (
+    <button onClick={() => open(UserProfile, { userId: "u_abc" })}>
+      View Profile
+    </button>
+  );
+}
+```
+
+That's it. No registration, no type map. The sheet slides in from the right on desktop, from the bottom on mobile, with focus trapping, scroll lock, and keyboard navigation built in.
+
+## Next steps
+
+- [Installation](/docs/installation) — package managers and peer deps
+- [createStacksheet()](/docs/create-sheet) — factory function API reference
+- [Hooks](/docs/hooks) — `useSheet()` and `useStacksheetState()` reference
+- [Styling](/docs/styling) — CSS classes and custom properties

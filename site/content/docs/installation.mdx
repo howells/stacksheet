@@ -1,0 +1,48 @@
+---
+title: Installation
+description: Install Stacksheet and its peer dependencies.
+---
+
+## Install
+
+```package-install
+@howells/stacksheet
+```
+
+## Peer dependencies
+
+Stacksheet requires React 18 or 19:
+
+```package-install
+react react-dom
+```
+
+## Bundle
+
+Stacksheet ships as ESM with tree-shakeable exports. The core bundle includes:
+
+- [Zustand](https://github.com/pmndrs/zustand) — state management
+- [Motion](https://motion.dev/) — spring animations
+- [focus-trap-react](https://github.com/focus-trap/focus-trap-react) — focus management
+- [react-remove-scroll](https://github.com/theKashey/react-remove-scroll) — scroll lock
+
+All dependencies are included in the package — no additional installs needed beyond the peer deps.
+
+## TypeScript
+
+Stacksheet is written in TypeScript and ships declaration files. Component props are fully inferred:
+
+```tsx
+import { createStacksheet } from "@howells/stacksheet";
+
+const { useSheet } = createStacksheet();
+
+function UserProfile({ userId }: { userId: string }) {
+  return <div>{userId}</div>;
+}
+
+const { open } = useSheet();
+
+// TypeScript infers { userId: string } from the component
+open(UserProfile, { userId: "abc" });
+```

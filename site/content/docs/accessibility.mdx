@@ -1,0 +1,72 @@
+---
+title: Accessibility
+description: Focus trapping, keyboard navigation, and ARIA attributes.
+---
+
+## Focus management
+
+### Focus trap
+
+The top panel is wrapped in a focus trap via `focus-trap-react`. This means:
+
+- **Tab** cycles through focusable elements within the panel
+- Focus cannot escape to the page behind the sheet
+- `allowOutsideClick: true` allows backdrop clicks to close the sheet
+
+### Focus restoration
+
+When the sheet stack opens, Stacksheet captures `document.activeElement` (the trigger element). When the stack fully closes, focus returns to that element automatically.
+
+For stacked sheets, each level handles its own focus restoration via `focus-trap-react`'s `returnFocusOnDeactivate` — popping a sheet returns focus to the element that was focused in the sheet below.
+
+### Fallback focus
+
+If no focusable elements exist inside a panel, the panel container itself (which has `tabIndex={-1}`) receives focus as a fallback. This ensures the focus trap always has a target.
+
+## Keyboard navigation
+
+| Key | Action |
+|---|---|
+| **Escape** | Pops the top sheet. If it's the last one, closes the stack. |
+| **Tab** | Cycles through focusable elements in the top panel |
+| **Shift+Tab** | Cycles backward through focusable elements |
+
+Escape behavior can be disabled with `closeOnEscape: false`:
+
+```tsx
+createStacksheet({ closeOnEscape: false });
+```
+
+## ARIA attributes
+
+The top panel gets `role="dialog"` and `aria-modal="true"`. Sheets below the top have these attributes removed.
+
+### aria-label
+
+Configure the dialog's accessible name:
+
+```tsx
+// Global default
+createStacksheet({ ariaLabel: "Settings panel" });
+```
+
+Per-sheet override via the `__ariaLabel` data property:
+
+```tsx
+open("user-profile", "u1", {
+  userId: "abc",
+  __ariaLabel: "User profile for John",
+});
+```
+
+The per-sheet label takes priority over the global config.
+
+## Scroll lock
+
+When the sheet stack is open, body scroll is locked using `react-remove-scroll`. This library handles scrollbar width compensation automatically — no layout shift when the scrollbar disappears.
+
+Disable with `lockScroll: false`:
+
+```tsx
+createStacksheet({ lockScroll: false });
+```

@@ -32,7 +32,7 @@
   },
   "scripts": {
     "build": "tsup",
-    "dev": "pnpm build && pnpm --filter stacksheet-demo dev",
+    "dev": "pnpm build && pnpm --filter stacksheet-docs dev",
     "dev:lib": "tsup --watch",
     "format": "ultracite fix --unsafe",
     "lint": "biome check src --write --unsafe",

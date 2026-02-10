@@ -1,0 +1,108 @@
+---
+title: Type Registry
+description: Pre-register sheet types for compile-time type checking.
+---
+
+## Overview
+
+By default, you pass components directly to actions like `open(MyComponent, { props })`. For larger apps where you want compile-time type checking on every action call, you can pre-register sheet types in a type map.
+
+This is optional — most apps don't need it.
+
+## Setup
+
+Define your sheet types as a generic parameter to `createStacksheet()`, then pass the component map to the provider:
+
+```tsx
+import { createStacksheet } from "@howells/stacksheet";
+
+const { StacksheetProvider, useSheet } = createStacksheet<{
+  "user-profile": { userId: string };
+  "settings": { tab?: string };
+}>();
+
+function UserProfile({ userId }: { userId: string }) {
+  const { close } = useSheet();
+  return (
+    <div>
+      User {userId}
+      <button onClick={close}>Close</button>
+    </div>
+  );
+}
+
+function Settings({ tab }: { tab?: string }) {
+  return <div>Settings: {tab}</div>;
+}
+
+function App() {
+  return (
+    <StacksheetProvider
+      sheets={{
+        "user-profile": UserProfile,
+        "settings": Settings,
+      }}
+    >
+      <YourApp />
+    </StacksheetProvider>
+  );
+}
+```
+
+## Type-checked actions
+
+With the type map, actions accept a string key instead of a component reference. TypeScript enforces correct data shapes:
+
+```tsx
+const { open } = useSheet();
+
+// Correct
+open("user-profile", "u1", { userId: "abc" });
+
+// Type error: missing userId
+open("user-profile", "u1", {});
+
+// Type error: "unknown-type" is not a key
+open("unknown-type", "x", {});
+```
+
+The `sheets` prop on the provider is also fully typed — TypeScript enforces that every key in your type map has a matching component with the correct props.
+
+## Mixing with direct components
+
+Type-registry sheets and direct-component sheets can coexist in the same stack:
+
+```tsx
+const { useSheet } = createStacksheet<{
+  "user-profile": { userId: string };
+}>();
+
+const { open, push } = useSheet();
+
+// Registry sheet (string key)
+open("user-profile", "u1", { userId: "abc" });
+
+// Direct component (same stack)
+push(QuickActions, { items: ["edit", "delete"] });
+```
+
+## Inline component warning
+
+In development, Stacksheet warns if you pass an inline arrow function as a component:
+
+```tsx
+// Warning: new component reference on every render
+push(({ userId }) => <div>...</div>, { userId: "u_abc" });
+```
+
+This creates a new component on every render, which breaks React reconciliation. Define your components at module level or with `React.memo` instead.
+
+## When to use this
+
+Consider the type registry when:
+
+- You have a fixed set of known sheet types used across many files
+- You want TypeScript to catch typos in sheet type names
+- You're using the store outside React and want typed `open("key", ...)` calls
+
+For most use cases, passing components directly is simpler and equally type-safe (TypeScript infers the props from the component type).

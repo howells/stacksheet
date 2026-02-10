@@ -1,0 +1,76 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+
+/* ── Demo styles ─────────────────────────── */
+
+.demo-preview {
+  margin-top: 1.5rem;
+  background: var(--fd-muted);
+  border: 1px solid var(--fd-border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 2rem;
+}
+
+.demo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: 1px solid var(--fd-border);
+  border-radius: 999px;
+  background: var(--fd-background);
+  color: var(--fd-foreground);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.demo-btn:hover {
+  background: var(--fd-muted);
+}
+
+.demo-btn-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sheet-content {
+  padding: 1.5rem;
+}
+
+.sheet-content h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.sheet-content p {
+  color: var(--fd-muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.sheet-content .demo-btn {
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.sheet-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--fd-muted-foreground);
+  background: var(--fd-muted);
+  padding: 0.25em 0.625em;
+  border-radius: 999px;
+  margin-bottom: 0.75rem;
+}

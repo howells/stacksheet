@@ -1,0 +1,84 @@
+---
+title: StacksheetProvider
+description: Provider component that renders the sheet stack UI.
+---
+
+## Overview
+
+`StacksheetProvider` is the component returned by `createStacksheet()`. It renders the sheet stack UI (backdrop, panels, headers) and provides React context for the hooks.
+
+```tsx
+<StacksheetProvider>
+  <App />
+</StacksheetProvider>
+```
+
+## Props
+
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | Yes | Your application content |
+| `sheets` | `ContentMap<TMap>` | No | Component map for [type registry](/docs/type-registry) pattern |
+| `classNames` | `StacksheetClassNames` | No | CSS class overrides for backdrop, panel, and header |
+| `renderHeader` | `(props: HeaderRenderProps) => ReactNode` | No | Custom header renderer — replaces the default back/close buttons |
+
+## Styling props
+
+Override styles with `classNames` and `renderHeader`:
+
+```tsx
+<StacksheetProvider
+  classNames={{
+    backdrop: "my-backdrop",
+    panel: "my-panel",
+  }}
+  renderHeader={({ isNested, onBack, onClose }) => (
+    <MyCustomHeader
+      isNested={isNested}
+      onBack={onBack}
+      onClose={onClose}
+    />
+  )}
+>
+  <App />
+</StacksheetProvider>
+```
+
+See [Styling](/docs/styling) for full details.
+
+## Content components
+
+Sheet components are regular React components. They receive their data as props. If the component needs to close the sheet, it calls `useSheet().close()`:
+
+```tsx
+function UserProfile({ userId }: { userId: string }) {
+  const { close } = useSheet();
+  return (
+    <div>
+      <h2>User {userId}</h2>
+      <button onClick={close}>Done</button>
+    </div>
+  );
+}
+```
+
+## DOM anatomy
+
+When rendered, the provider produces:
+
+```
+<StacksheetProvider>
+  {children}                        <- your app content
+  <motion.div />                    <- backdrop overlay
+  <div style="fixed; overflow:hidden">
+    <AnimatePresence>
+      <motion.div>                  <- panel (slides from side)
+        <DefaultHeader />           <- or renderHeader()
+        <div>                       <- scrollable content area
+          <ContentComponent />      <- your component
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  </div>
+</StacksheetProvider>
+```

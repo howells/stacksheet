@@ -1,0 +1,74 @@
+---
+title: Styling
+description: CSS classes, custom properties, and custom headers.
+---
+
+## Class names
+
+Stacksheet renders with sensible inline defaults (white background, subtle shadow, backdrop overlay). Override with CSS classes:
+
+```tsx
+<StacksheetProvider
+  classNames={{
+    backdrop: "my-backdrop",
+    panel: "my-panel",
+    header: "my-header",
+  }}
+>
+```
+
+| Prop | Description |
+|---|---|
+| `backdrop` | Applied to the backdrop overlay |
+| `panel` | Applied to each panel container |
+| `header` | Applied to the header bar |
+
+When a class is provided, the corresponding inline background/border styles are removed so your CSS has full control.
+
+## CSS custom properties
+
+The library uses CSS custom properties as fallbacks:
+
+| Property | Default | Used on |
+|---|---|---|
+| `--background` | `#fff` | Panel background |
+| `--border` | `transparent` | Panel border, header border |
+| `--overlay` | `rgba(0,0,0,0.2)` | Backdrop |
+
+```css
+.my-panel {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+}
+
+.my-backdrop {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+}
+```
+
+## Custom header
+
+Replace the default back/close header with the `renderHeader` prop:
+
+```tsx
+<StacksheetProvider
+  renderHeader={({ isNested, onBack, onClose }) => (
+    <header className="my-header">
+      {isNested && <button onClick={onBack}>Back</button>}
+      <button onClick={onClose}>Close</button>
+    </header>
+  )}
+>
+```
+
+### HeaderRenderProps
+
+| Prop | Type | Description |
+|---|---|---|
+| `isNested` | `boolean` | `true` when the stack has more than one sheet |
+| `onBack` | `() => void` | Pop the top sheet (go back one level) |
+| `onClose` | `() => void` | Close the entire sheet stack |
+
+The default header is a 48px bar with icon buttons — a back arrow (shown when nested) and a close X.

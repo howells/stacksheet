@@ -1,0 +1,84 @@
+---
+title: createStacksheet()
+description: Factory function that creates an isolated sheet stack instance.
+---
+
+## Overview
+
+`createStacksheet()` creates an isolated sheet stack instance with its own Zustand store, React context, and typed hooks. Each call is independent — you can have multiple sheet stacks with different configs in the same app.
+
+```tsx
+import { createStacksheet } from "@howells/stacksheet";
+
+const { StacksheetProvider, useSheet, useStacksheetState, store } =
+  createStacksheet({
+    side: "right",
+    width: 420,
+    spring: "stiff",
+  });
+```
+
+## Parameters
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `config` | `StacksheetConfig` | No | Configuration options (see [Config](/docs/config)) |
+
+## Return type
+
+Returns a `StacksheetInstance` with four properties:
+
+| Property | Type | Description |
+|---|---|---|
+| `StacksheetProvider` | `ComponentType` | Provider component — wrap your app |
+| `useSheet` | `() => SheetActions` | Hook returning all sheet actions |
+| `useStacksheetState` | `() => StacksheetSnapshot` | Hook returning reactive state (stack, isOpen) |
+| `store` | `StoreApi<...>` | Raw Zustand store for use outside React |
+
+## Multiple instances
+
+Each call creates a fully isolated instance. Use this for distinct UI concerns:
+
+```tsx
+const {
+  StacksheetProvider: MainProvider,
+  useSheet: useMainSheet,
+} = createStacksheet({ side: "right" });
+
+const {
+  StacksheetProvider: SettingsProvider,
+  useSheet: useSettingsSheet,
+} = createStacksheet({ side: "left", width: 360 });
+
+function App() {
+  return (
+    <MainProvider>
+      <SettingsProvider>
+        <YourApp />
+      </SettingsProvider>
+    </MainProvider>
+  );
+}
+```
+
+They render and animate independently.
+
+## Using the store outside React
+
+The `store` property is a standard Zustand store. Use it in event handlers, API callbacks, or keyboard shortcuts:
+
+```tsx
+const { store } = createStacksheet();
+
+// Read current state
+const state = store.getState();
+console.log(state.stack.length, state.isOpen);
+
+// Call actions from anywhere
+store.getState().open(ErrorSheet, { message: "Something broke" });
+
+// Subscribe to changes
+const unsub = store.subscribe((state) => {
+  console.log("Stack changed:", state.stack.length);
+});
+```
