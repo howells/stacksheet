@@ -43,11 +43,13 @@ replace(UserProfile, { userId: "u_xyz" });
 
 ### swap(Component, data)
 
-Swap the top panel's content in place — no animation. The panel frame stays put, only the inner component and props change.
+Swap the top panel's content in place — no animation. The panel frame stays in place: same id, same position, same stacking. Only the inner component and props change. React reconciles without an AnimatePresence transition.
 
 ```tsx
 swap(SettingsSheet, { tab: "general" });
 ```
+
+This is useful for tab-like navigation within a single sheet where you want instant content changes without slide animations.
 
 If the stack is empty, `swap` is a no-op.
 
@@ -132,3 +134,26 @@ function SheetIndicator() {
   );
 }
 ```
+
+---
+
+## useSheetPanel()
+
+Returns the current panel's context. Must be called inside a component rendered by the sheet stack (works in both classic and [composable mode](/docs/composable-parts)).
+
+```tsx
+import { useSheetPanel } from "@howells/stacksheet";
+
+const { close, back, isNested, isTop, panelId, side } = useSheetPanel();
+```
+
+| Property | Type | Description |
+|---|---|---|
+| `close` | `() => void` | Close the entire sheet stack |
+| `back` | `() => void` | Pop the top sheet (go back one level) |
+| `isNested` | `boolean` | Whether the stack has more than one sheet |
+| `isTop` | `boolean` | Whether this is the top (active) sheet |
+| `panelId` | `string` | Unique ID prefix for ARIA linking |
+| `side` | `Side` | Current resolved side (`"left"` \| `"right"` \| `"bottom"`) |
+
+This is the hook that powers the `Sheet.*` composable parts. Use it when you need panel-level context for custom controls. See [Composable Parts](/docs/composable-parts) for the full guide.

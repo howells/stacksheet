@@ -34,6 +34,7 @@ The library uses CSS custom properties as fallbacks:
 | `--background` | `#fff` | Panel background |
 | `--border` | `transparent` | Panel border, header border |
 | `--overlay` | `rgba(0,0,0,0.2)` | Backdrop |
+| `--muted-foreground` | `rgba(0,0,0,0.25)` | `Sheet.Handle` bar color |
 
 ```css
 .my-panel {
@@ -72,3 +73,25 @@ Replace the default back/close header with the `renderHeader` prop:
 | `onClose` | `() => void` | Close the entire sheet stack |
 
 The default header is a 48px bar with icon buttons — a back arrow (shown when nested) and a close X.
+
+## Composable mode
+
+For full control over the panel layout, set `renderHeader={false}` and use `Sheet.*` parts:
+
+```tsx
+<StacksheetProvider renderHeader={false}>
+  <App />
+</StacksheetProvider>
+```
+
+This is a third option beyond the default header and `renderHeader` function. See [Composable Parts](/docs/composable-parts) for the full guide.
+
+## Data attributes
+
+These attributes are used by the library for behavior and can be targeted in CSS:
+
+| Attribute | Purpose |
+|---|---|
+| `data-stacksheet-handle` | Drag handle element. Added by `Sheet.Handle`. Always allows drag initiation. |
+| `data-stacksheet-no-drag` | Prevents drag from starting on this element and its children. |
+| `data-stacksheet-wrapper` | Content wrapper for the [body scale effect](/docs/body-scale). |

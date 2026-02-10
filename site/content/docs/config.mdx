@@ -36,6 +36,13 @@ const { StacksheetProvider, useSheet } = createStacksheet({
 | `ariaLabel` | `string` | `"Sheet dialog"` | Default aria-label for dialog panels |
 | `onOpenComplete` | `() => void` | — | Called when top panel entrance animation completes |
 | `onCloseComplete` | `() => void` | — | Called when last panel exit animation completes |
+| `drag` | `boolean` | `true` | Enable drag-to-dismiss |
+| `closeThreshold` | `number` | `0.25` | Fraction of panel to trigger close (0–1) |
+| `velocityThreshold` | `number` | `0.5` | Velocity in px/ms to trigger close |
+| `dismissible` | `boolean` | `true` | Master switch for dismissal (drag + backdrop + escape) |
+| `modal` | `boolean` | `true` | Modal mode (overlay + scroll lock + focus trap) |
+| `shouldScaleBackground` | `boolean` | `false` | Scale `[data-stacksheet-wrapper]` when open |
+| `scaleBackgroundAmount` | `number` | `0.97` | Background scale factor |
 
 ## Side
 
@@ -101,3 +108,28 @@ createStacksheet({
 ```
 
 The same spring drives all animations — entrance, stacking transforms, and exit — so everything feels cohesive.
+
+## Drag
+
+Sheets can be dismissed by dragging them in the direction they came from. Enabled by default. See [Drag to Dismiss](/docs/drag-to-dismiss) for the full gesture pipeline, data attributes, and handle-only patterns.
+
+```tsx
+createStacksheet({ drag: false }); // disable drag only
+createStacksheet({ dismissible: false }); // disable all dismissal
+```
+
+## Modal
+
+Set `modal: false` to skip the backdrop overlay, focus trap, and scroll lock. See [Non-Modal Mode](/docs/non-modal) for the comparison table and use cases.
+
+```tsx
+createStacksheet({ modal: false });
+```
+
+## Body scale
+
+Scale down your page content when sheets open for an iOS-style depth effect. See [Body Scale Effect](/docs/body-scale) for setup and wrapper placement.
+
+```tsx
+createStacksheet({ shouldScaleBackground: true });
+```

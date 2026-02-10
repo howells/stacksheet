@@ -1,0 +1,100 @@
+---
+title: Drag to Dismiss
+description: Swipe gestures, thresholds, and drag configuration.
+---
+
+import { DragDemo } from "@/components/demos/drag-demo";
+
+Sheets can be dismissed by dragging them in the direction they came from — right panels drag right, left panels drag left, bottom panels drag down. This is enabled by default.
+
+<DragDemo />
+
+## How it works
+
+The gesture pipeline runs on pointer events:
+
+1. **Dead zone** (10px) — small movements are ignored to avoid accidental drags
+2. **Angle check** (35°) — the gesture must be roughly aligned with the dismiss direction
+3. **Direction check** — must be moving away from the screen (right for right panels, etc.)
+4. **Commit** — once past the dead zone and checks, the drag is active
+5. **Threshold** — on release, the sheet closes if it passed 25% of the panel width OR the velocity exceeded 0.5 px/ms
+
+## Configuration
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `drag` | `boolean` | `true` | Enable drag-to-dismiss |
+| `closeThreshold` | `number` | `0.25` | Fraction of panel dimension to trigger close (0–1) |
+| `velocityThreshold` | `number` | `0.5` | Velocity in px/ms to trigger close |
+| `dismissible` | `boolean` | `true` | Master switch for all dismissal (drag + backdrop + escape) |
+
+```tsx
+createStacksheet({
+  drag: true,
+  closeThreshold: 0.3,
+  velocityThreshold: 0.4,
+});
+```
+
+## Disabling drag
+
+Disable just drag while keeping backdrop/escape close:
+
+```tsx
+createStacksheet({ drag: false });
+```
+
+Disable all forms of dismissal (drag, backdrop click, and escape key):
+
+```tsx
+createStacksheet({ dismissible: false });
+```
+
+When `dismissible` is `false`, the sheet can only be closed programmatically via `close()` or `pop()`.
+
+## Data attributes
+
+| Attribute | Purpose |
+|---|---|
+| `data-stacksheet-handle` | Marks a drag handle. Drag always starts from handle elements, even inside no-drag zones. Added automatically by `Sheet.Handle`. |
+| `data-stacksheet-no-drag` | Prevents drag from starting on this element and its children. Useful for text inputs, sliders, or other interactive areas. |
+
+## Interactive elements
+
+Drag never starts from these elements, so text selection, button clicks, and form inputs work normally:
+
+- `INPUT`, `TEXTAREA`, `SELECT`
+- `BUTTON`, `A`
+- Elements with `contentEditable`
+
+## Handle-only drag
+
+To restrict drag to only the handle area, wrap your sheet content in a `data-stacksheet-no-drag` container and place the handle above it:
+
+```tsx
+function MySheet() {
+  return (
+    <>
+      <Sheet.Handle />
+      <div data-stacksheet-no-drag="">
+        {/* Content here won't initiate drag */}
+        <input type="text" placeholder="Safe to select text" />
+      </div>
+    </>
+  );
+}
+```
+
+## Scroll interaction
+
+For bottom panels, drag is suppressed when the scroll container has been scrolled down (`scrollTop > 0`). This prevents conflicts between scrolling content back to the top and dismissing the sheet. Once scrolled to the top, drag works normally.
+
+## Stacked sheets
+
+When dragging a stacked sheet (stack depth > 1), the gesture calls `pop()` instead of `close()` — removing just the top sheet rather than closing the entire stack.
+
+## Combining with other features
+
+- **Non-modal mode**: drag works the same way. No overlay to interfere with.
+- **Composable mode**: drag works on the panel regardless of whether `Sheet.Header` is present.
+- **Body scale**: the background stays scaled during drag and animates back on close.

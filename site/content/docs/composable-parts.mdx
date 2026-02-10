@@ -1,0 +1,150 @@
+---
+title: Composable Parts
+description: Build custom sheet layouts with Sheet.* components.
+---
+
+import { ComposableDemo } from "@/components/demos/composable-demo";
+
+Stacksheet has two rendering modes:
+
+- **Classic mode** (default) — auto header with close/back buttons, scroll wrapper around your content
+- **Composable mode** — set `renderHeader={false}` and build the layout yourself using `Sheet.*` parts
+
+<ComposableDemo />
+
+## Enabling composable mode
+
+Pass `renderHeader={false}` to the provider. This disables the auto header and scroll wrapper, giving your content full control of the panel layout:
+
+```tsx
+<StacksheetProvider renderHeader={false}>
+  <App />
+</StacksheetProvider>
+```
+
+Your sheet components now fill the panel directly and use `Sheet.*` parts to build the layout.
+
+## Parts reference
+
+| Part | Element | Description |
+|---|---|---|
+| `Sheet.Handle` | `div` | Drag handle bar. Adds `data-stacksheet-handle` for drag-to-dismiss. |
+| `Sheet.Header` | `header` | Flex-shrink container for top bar content |
+| `Sheet.Title` | `h2` | Sets `aria-labelledby` on the panel automatically |
+| `Sheet.Description` | `p` | Sets `aria-describedby` on the panel automatically |
+| `Sheet.Body` | Radix ScrollArea | Flex-grow scrollable area with custom scrollbar |
+| `Sheet.Footer` | `footer` | Flex-shrink container pinned to the bottom |
+| `Sheet.Close` | `button` | Calls `close()`. Default content: X icon. |
+| `Sheet.Back` | `button` | Calls `pop()`. Default content: arrow-left icon. Renders `null` when not nested. |
+
+## Typical layout
+
+```tsx
+function MySheet({ title }: { title: string }) {
+  return (
+    <>
+      <Sheet.Handle />
+      <Sheet.Header>
+        <div style={{ display: "flex", alignItems: "center", padding: "0 12px", height: 48 }}>
+          <Sheet.Back />
+          <Sheet.Title>{title}</Sheet.Title>
+          <div style={{ flex: 1 }} />
+          <Sheet.Close />
+        </div>
+      </Sheet.Header>
+      <Sheet.Body>
+        <div style={{ padding: 16 }}>
+          <Sheet.Description>Accessible description text</Sheet.Description>
+          <p>Scrollable content goes here.</p>
+        </div>
+      </Sheet.Body>
+      <Sheet.Footer>
+        <div style={{ padding: 12, borderTop: "1px solid var(--border)" }}>
+          <button>Action</button>
+        </div>
+      </Sheet.Footer>
+    </>
+  );
+}
+```
+
+## asChild
+
+Every part accepts `asChild` to render as its child element instead of the default:
+
+```tsx
+<Sheet.Title asChild>
+  <h3 className="my-title">Settings</h3>
+</Sheet.Title>
+
+<Sheet.Body asChild>
+  <div className="my-scroll-area">{/* your own scroll implementation */}</div>
+</Sheet.Body>
+```
+
+When `asChild` is true on `Sheet.Body`, the Radix ScrollArea is skipped and your child element is rendered directly with `flex: 1; min-height: 0` applied.
+
+## Sheet.Handle
+
+The handle renders a centered grab bar by default. It adds `data-stacksheet-handle` which enables [drag-to-dismiss](/docs/drag-to-dismiss) from the handle regardless of other content settings.
+
+Pass custom children to replace the default bar:
+
+```tsx
+<Sheet.Handle>
+  <div className="my-handle-indicator" />
+</Sheet.Handle>
+```
+
+The bar color uses `var(--muted-foreground, rgba(0, 0, 0, 0.25))`.
+
+## Sheet.Back
+
+Renders `null` automatically when the sheet is not nested (stack depth is 1). No conditional rendering needed in your code:
+
+```tsx
+{/* Always safe to include — only visible when stacked */}
+<Sheet.Back />
+```
+
+## Sheet.Body
+
+By default, wraps content in a Radix ScrollArea with a thin custom scrollbar. The viewport has `overscroll-behavior: contain` to prevent scroll chaining.
+
+Use `asChild` to opt out of the ScrollArea and bring your own scroll container:
+
+```tsx
+<Sheet.Body asChild>
+  <div style={{ overflow: "auto", flex: 1 }}>{children}</div>
+</Sheet.Body>
+```
+
+## Accessibility
+
+In composable mode, the panel gets `aria-labelledby` and `aria-describedby` linked to `Sheet.Title` and `Sheet.Description` automatically via matching IDs. This replaces the `aria-label` used in classic mode.
+
+If you omit `Sheet.Title`, the panel won't have an accessible name — consider always including one, even if visually hidden.
+
+## useSheetPanel()
+
+For custom controls beyond what the parts provide, use the `useSheetPanel()` hook inside any sheet content component:
+
+```tsx
+import { useSheetPanel } from "@howells/stacksheet";
+
+function MyControls() {
+  const { close, back, isNested, isTop, panelId, side } = useSheetPanel();
+  // Build custom UI with these values
+}
+```
+
+| Property | Type | Description |
+|---|---|---|
+| `close` | `() => void` | Close the entire sheet stack |
+| `back` | `() => void` | Pop the top sheet (go back one level) |
+| `isNested` | `boolean` | Whether the stack has more than one sheet |
+| `isTop` | `boolean` | Whether this is the top (active) sheet |
+| `panelId` | `string` | Unique ID prefix for ARIA linking |
+| `side` | `Side` | Current resolved side (`"left"` \| `"right"` \| `"bottom"`) |
+
+This hook works in both classic and composable mode — it's provided by the panel renderer, not the rendering mode.

@@ -20,7 +20,7 @@ description: Provider component that renders the sheet stack UI.
 | `children` | `ReactNode` | Yes | Your application content |
 | `sheets` | `ContentMap<TMap>` | No | Component map for [type registry](/docs/type-registry) pattern |
 | `classNames` | `StacksheetClassNames` | No | CSS class overrides for backdrop, panel, and header |
-| `renderHeader` | `(props: HeaderRenderProps) => ReactNode` | No | Custom header renderer — replaces the default back/close buttons |
+| `renderHeader` | `false \| (props: HeaderRenderProps) => ReactNode` | No | Custom header renderer, or `false` for [composable mode](/docs/composable-parts) |
 
 ## Styling props
 
@@ -46,6 +46,18 @@ Override styles with `classNames` and `renderHeader`:
 
 See [Styling](/docs/styling) for full details.
 
+## Composable mode
+
+Set `renderHeader={false}` to disable the auto header and scroll wrapper. Your sheet components then use `Sheet.*` parts to build custom layouts:
+
+```tsx
+<StacksheetProvider renderHeader={false}>
+  <App />
+</StacksheetProvider>
+```
+
+See [Composable Parts](/docs/composable-parts) for the full guide, parts reference, and accessibility details.
+
 ## Content components
 
 Sheet components are regular React components. They receive their data as props. If the component needs to close the sheet, it calls `useSheet().close()`:
@@ -68,17 +80,33 @@ When rendered, the provider produces:
 
 ```
 <StacksheetProvider>
-  {children}                        <- your app content
-  <motion.div />                    <- backdrop overlay
-  <div style="fixed; overflow:hidden">
-    <AnimatePresence>
-      <motion.div>                  <- panel (slides from side)
-        <DefaultHeader />           <- or renderHeader()
-        <div>                       <- scrollable content area
-          <ContentComponent />      <- your component
-        </div>
-      </motion.div>
-    </AnimatePresence>
-  </div>
+  {children}                          <- your app content
+  <Portal>                            <- Radix Portal (renders at document.body)
+    <motion.div />                    <- backdrop overlay (modal only)
+    <RemoveScroll>                    <- scroll lock wrapper (modal only)
+      <div style="fixed; overflow:hidden">
+        <AnimatePresence>
+          <FocusTrap>                 <- focus trap (modal only)
+            <motion.div>             <- panel (slides from side)
+              <DefaultHeader />      <- or renderHeader()
+              <div>                  <- scrollable content area
+                <ContentComponent /> <- your component
+              </div>
+            </motion.div>
+          </FocusTrap>
+        </AnimatePresence>
+      </div>
+    </RemoveScroll>
+  </Portal>
 </StacksheetProvider>
 ```
+
+In composable mode (`renderHeader={false}`), the panel contains your component directly — no auto header or scroll wrapper:
+
+```
+<motion.div>                         <- panel
+  <ContentComponent />               <- uses Sheet.* parts for layout
+</motion.div>
+```
+
+In non-modal mode (`modal: false`), the `FocusTrap`, `RemoveScroll`, and backdrop are omitted.

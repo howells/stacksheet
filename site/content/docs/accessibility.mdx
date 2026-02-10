@@ -61,6 +61,23 @@ open("user-profile", "u1", {
 
 The per-sheet label takes priority over the global config.
 
+## Composable mode
+
+In [composable mode](/docs/composable-parts) (`renderHeader={false}`), the panel uses `aria-labelledby` and `aria-describedby` instead of `aria-label`. These are automatically linked to `Sheet.Title` and `Sheet.Description` via matching IDs.
+
+If you omit `Sheet.Title`, the panel won't have an accessible name. Always include one, even if visually hidden.
+
+## Non-modal mode
+
+In [non-modal mode](/docs/non-modal) (`modal: false`):
+
+- `aria-modal` is **not** set on the panel
+- `role="dialog"` is still set on the top panel
+- Focus trap is **inactive** — the user can Tab to elements behind the sheet
+- Scroll lock is inactive
+
+This is appropriate for sidebars and auxiliary panels where blocking page interaction would be undesirable.
+
 ## Scroll lock
 
 When the sheet stack is open, body scroll is locked using `react-remove-scroll`. This library handles scrollbar width compensation automatically — no layout shift when the scrollbar disappears.

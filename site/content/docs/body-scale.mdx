@@ -1,0 +1,94 @@
+---
+title: Body Scale Effect
+description: iOS-style background scale when sheets open.
+---
+
+import { BodyScaleDemo } from "@/components/demos/body-scale-demo";
+
+Enable `shouldScaleBackground` to scale down your page content when a sheet opens, creating an iOS-style depth effect.
+
+<BodyScaleDemo />
+
+## Setup
+
+Two things are needed:
+
+### 1. Enable the config
+
+```tsx
+createStacksheet({ shouldScaleBackground: true });
+```
+
+### 2. Add the wrapper attribute
+
+Wrap the content you want to scale with `data-stacksheet-wrapper`:
+
+```tsx
+export default function App() {
+  return (
+    <StacksheetProvider>
+      <div data-stacksheet-wrapper="">
+        <MainContent />
+      </div>
+    </StacksheetProvider>
+  );
+}
+```
+
+The wrapper should be a sibling or child of the provider — **not inside a sheet component**.
+
+## Configuration
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `shouldScaleBackground` | `boolean` | `false` | Enable the body scale effect |
+| `scaleBackgroundAmount` | `number` | `0.97` | Scale factor applied (0–1) |
+
+```tsx
+createStacksheet({
+  shouldScaleBackground: true,
+  scaleBackgroundAmount: 0.95, // more dramatic scale
+});
+```
+
+## How it works
+
+When the sheet opens, the wrapper element gets:
+
+- `transform: scale(0.97)` — scales down
+- `border-radius: 8px` — rounds corners for the app-inside-a-phone look
+- `overflow: hidden` — clips content at rounded corners
+- `transition: 500ms cubic-bezier(0.32, 0.72, 0, 1)` — smooth iOS-style easing
+
+When the sheet closes, the transform and border-radius animate back. After the transition completes, overflow and other temporary styles are cleaned up.
+
+## Wrapper placement
+
+The effect uses `document.querySelector("[data-stacksheet-wrapper]")` to find the first matching element. Place the attribute on a single top-level content wrapper — not on individual components or multiple elements.
+
+Typical placement:
+
+```tsx
+// Layout component
+<StacksheetProvider>
+  <div data-stacksheet-wrapper="">
+    <Header />
+    <main>{children}</main>
+    <Footer />
+  </div>
+</StacksheetProvider>
+```
+
+## Combining with other features
+
+Body scale pairs well with bottom sheets and [composable parts](/docs/composable-parts) for an iOS-like experience:
+
+```tsx
+const { StacksheetProvider, useSheet } = createStacksheet({
+  side: "bottom",
+  shouldScaleBackground: true,
+});
+
+// Use renderHeader={false} with Sheet.Handle for the iOS pull-down look
+<StacksheetProvider renderHeader={false}>
+```

@@ -1,0 +1,49 @@
+---
+title: Non-Modal Mode
+description: Sheets without overlay, focus trap, or scroll lock.
+---
+
+import { NonModalDemo } from "@/components/demos/non-modal-demo";
+
+Set `modal: false` to open sheets that don't block page interaction. The page behind remains fully usable — no overlay, no focus trap, no scroll lock.
+
+<NonModalDemo />
+
+## Usage
+
+```tsx
+createStacksheet({ modal: false });
+```
+
+## Modal vs non-modal
+
+| Behavior | Modal (default) | Non-modal |
+|---|---|---|
+| Backdrop overlay | Shown | Skipped |
+| Focus trap | Active | Inactive |
+| Scroll lock | Active | Inactive |
+| `aria-modal` | `"true"` | Not set |
+| Escape key | Closes (if `closeOnEscape`) | Closes (if `closeOnEscape`) |
+| Drag to dismiss | Works | Works |
+| `role="dialog"` | Set on top panel | Set on top panel |
+
+## Use cases
+
+- **Sidebars** — persistent navigation that doesn't block content
+- **Auxiliary panels** — inspector or property panels alongside the main view
+- **Notification trays** — slide-in notification lists
+- **Tool palettes** — floating tool panels in creative apps
+
+## Combining with other options
+
+`showOverlay` is automatically skipped in non-modal mode — you don't need to set it to `false`.
+
+Scroll lock (`lockScroll`) is also skipped automatically.
+
+Drag to dismiss, escape key, and all other behaviors work the same as modal mode.
+
+```tsx
+// These are equivalent in non-modal mode
+createStacksheet({ modal: false });
+createStacksheet({ modal: false, showOverlay: false, lockScroll: false });
+```

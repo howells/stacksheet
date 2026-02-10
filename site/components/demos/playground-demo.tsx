@@ -391,6 +391,9 @@ interface PlaygroundConfig {
   showOverlay: boolean;
   closeOnBackdrop: boolean;
   closeOnEscape: boolean;
+  drag: boolean;
+  modal: boolean;
+  shouldScaleBackground: boolean;
 }
 
 const defaultConfig: PlaygroundConfig = {
@@ -399,6 +402,9 @@ const defaultConfig: PlaygroundConfig = {
   showOverlay: true,
   closeOnBackdrop: true,
   closeOnEscape: true,
+  drag: true,
+  modal: true,
+  shouldScaleBackground: false,
 };
 
 // ── DemoInstance ────────────────────────────────
@@ -418,6 +424,9 @@ function DemoInstance({
       showOverlay: config.showOverlay,
       closeOnBackdrop: config.closeOnBackdrop,
       closeOnEscape: config.closeOnEscape,
+      drag: config.drag,
+      modal: config.modal,
+      shouldScaleBackground: config.shouldScaleBackground,
     });
   }
 
@@ -481,6 +490,9 @@ function LeftColumn({
     { key: "showOverlay", label: "overlay" },
     { key: "closeOnBackdrop", label: "backdrop close" },
     { key: "closeOnEscape", label: "escape close" },
+    { key: "drag", label: "drag to dismiss" },
+    { key: "modal", label: "modal" },
+    { key: "shouldScaleBackground", label: "body scale" },
   ];
 
   return (
@@ -592,6 +604,10 @@ function RightColumn({ config }: { config: PlaygroundConfig }) {
   if (!config.closeOnBackdrop)
     configParts.push("closeOnBackdrop: false");
   if (!config.closeOnEscape) configParts.push("closeOnEscape: false");
+  if (!config.drag) configParts.push("drag: false");
+  if (!config.modal) configParts.push("modal: false");
+  if (config.shouldScaleBackground)
+    configParts.push("shouldScaleBackground: true");
 
   const configCode =
     configParts.length > 0
@@ -627,7 +643,10 @@ function PageContent({
 
   return (
     <StacksheetProvider sheets={sheetMap}>
-      <div className="grid grid-cols-1 md:grid-cols-[400px_1fr] gap-8 md:gap-16 max-w-5xl mx-auto p-6 md:p-12 min-h-dvh items-center">
+      <div
+        data-stacksheet-wrapper=""
+        className="grid grid-cols-1 md:grid-cols-[400px_1fr] gap-8 md:gap-16 max-w-5xl mx-auto p-6 md:p-12 min-h-dvh items-center"
+      >
         <LeftColumn config={config} onConfigChange={onConfigChange} />
         <RightColumn config={config} />
       </div>
