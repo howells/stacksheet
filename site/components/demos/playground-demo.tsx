@@ -4,14 +4,14 @@ import {
   type ReactNode,
   createContext,
   useContext,
+  useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import {
   type SheetActions,
   type SpringPreset,
-  type StacksheetConfig,
-  type StacksheetSnapshot,
   createStacksheet,
 } from "@howells/stacksheet";
 
@@ -51,34 +51,36 @@ const presets: Record<SheetKey, SheetTypeMap[SheetKey][]> = {
   Settings: [
     {
       section: "General",
-      description: "Language, timezone, and display preferences for your account.",
+      description:
+        "Language, timezone, and display preferences for your account.",
     },
     {
       section: "Notifications",
-      description: "Control which emails, push, and in-app alerts you receive.",
+      description:
+        "Control which emails, push, and in-app alerts you receive.",
     },
     {
       section: "Privacy",
-      description: "Manage data sharing, visibility, and third-party access.",
+      description:
+        "Manage data sharing, visibility, and third-party access.",
     },
   ],
   Alert: [
     {
       title: "Trial expiring",
       message:
-        "Your free trial ends in 3 days. Upgrade to keep access to all features including analytics and team collaboration.",
+        "Your free trial ends in 3 days. Upgrade to keep access to all features.",
       severity: "warning",
     },
     {
       title: "Update available",
       message:
-        "Version 2.4 includes performance improvements, bug fixes, and a redesigned settings panel.",
+        "Version 2.4 includes performance improvements and bug fixes.",
       severity: "info",
     },
     {
       title: "New team member",
-      message:
-        "Jordan Lee has joined the Engineering team. They'll have access to shared projects and dashboards.",
+      message: "Jordan Lee has joined the Engineering team.",
       severity: "success",
     },
   ],
@@ -86,9 +88,11 @@ const presets: Record<SheetKey, SheetTypeMap[SheetKey][]> = {
 
 // ── Playground context ─────────────────────────
 
+type StacksheetReturn = ReturnType<typeof createStacksheet<SheetTypeMap>>;
+
 interface PlaygroundCtx {
-  useSheet: () => SheetActions<SheetTypeMap>;
-  useStacksheetState: () => StacksheetSnapshot<SheetTypeMap>;
+  store: StacksheetReturn["store"];
+  StacksheetProvider: StacksheetReturn["StacksheetProvider"];
 }
 
 const PlaygroundContext = createContext<PlaygroundCtx | null>(null);
@@ -99,12 +103,38 @@ function usePlayground() {
   return ctx;
 }
 
+function useActions(): SheetActions<SheetTypeMap> {
+  const { store } = usePlayground();
+  return useMemo(() => {
+    const s = store.getState();
+    return {
+      open: s.open,
+      push: s.push,
+      replace: s.replace,
+      swap: s.swap,
+      navigate: s.navigate,
+      setData: s.setData,
+      remove: s.remove,
+      pop: s.pop,
+      close: s.close,
+    };
+  }, [store]);
+}
+
+function useStack() {
+  const { store } = usePlayground();
+  return useSyncExternalStore(
+    store.subscribe,
+    () => store.getState().stack,
+    () => store.getState().stack,
+  );
+}
+
 // ── Shared sheet controls ─────────────────────
 
 function SheetControls({ children }: { children: ReactNode }) {
-  const { useSheet, useStacksheetState } = usePlayground();
-  const actions = useSheet();
-  const { stack } = useStacksheetState();
+  const actions = useActions();
+  const stack = useStack();
   const counterRef = useRef(0);
 
   function doAction(name: "push" | "navigate" | "replace") {
@@ -196,16 +226,19 @@ function SheetControls({ children }: { children: ReactNode }) {
             data-current={i === stack.length - 1 || undefined}
             disabled={i === stack.length - 1}
             onClick={() => {
-              // Remove everything above this item to make it the top
               for (let j = stack.length - 1; j > i; j--) {
                 actions.remove(stack[j].id);
               }
             }}
             type="button"
           >
-            <span className={`pg-stack-dot ${badgeColors[item.type] || ""}`} />
+            <span
+              className={`pg-stack-dot ${badgeColors[item.type] || ""}`}
+            />
             <span className="pg-stack-type">{item.type}</span>
-            <span className="pg-stack-id">{item.id.split("-")[0]}</span>
+            <span className="pg-stack-id">
+              {item.id.split("-")[0]}
+            </span>
             {i === stack.length - 1 && (
               <span className="pg-stack-current">current</span>
             )}
@@ -218,7 +251,12 @@ function SheetControls({ children }: { children: ReactNode }) {
 
 // ── Sheet components ───────────────────────────
 
-function ContactSheet({ name, email, role, location }: SheetTypeMap["Contact"]) {
+function ContactSheet({
+  name,
+  email,
+  role,
+  location,
+}: SheetTypeMap["Contact"]) {
   return (
     <SheetControls>
       <span className="pg-sheet-badge pg-sheet-badge--blue">Contact</span>
@@ -238,10 +276,15 @@ function ContactSheet({ name, email, role, location }: SheetTypeMap["Contact"]) 
   );
 }
 
-function SettingsSheet({ section, description }: SheetTypeMap["Settings"]) {
+function SettingsSheet({
+  section,
+  description,
+}: SheetTypeMap["Settings"]) {
   return (
     <SheetControls>
-      <span className="pg-sheet-badge pg-sheet-badge--purple">Settings</span>
+      <span className="pg-sheet-badge pg-sheet-badge--purple">
+        Settings
+      </span>
       <h3 className="pg-sheet-title">{section}</h3>
       <p className="pg-sheet-text">{description}</p>
       <div className="pg-sheet-fields">
@@ -258,7 +301,11 @@ function SettingsSheet({ section, description }: SheetTypeMap["Settings"]) {
   );
 }
 
-function AlertSheet({ title, message, severity }: SheetTypeMap["Alert"]) {
+function AlertSheet({
+  title,
+  message,
+  severity,
+}: SheetTypeMap["Alert"]) {
   const variant =
     severity === "warning"
       ? "pg-sheet-badge--amber"
@@ -295,9 +342,7 @@ const springPresets: SpringPreset[] = [
 
 interface PlaygroundConfig {
   side: "left" | "right" | "bottom";
-  width: number;
   spring: SpringPreset;
-  maxDepth: number;
   showOverlay: boolean;
   closeOnBackdrop: boolean;
   closeOnEscape: boolean;
@@ -305,9 +350,7 @@ interface PlaygroundConfig {
 
 const defaultConfig: PlaygroundConfig = {
   side: "right",
-  width: 420,
   spring: "stiff",
-  maxDepth: Number.POSITIVE_INFINITY,
   showOverlay: true,
   closeOnBackdrop: true,
   closeOnEscape: true,
@@ -322,28 +365,22 @@ function DemoInstance({
   config: PlaygroundConfig;
   children: ReactNode;
 }) {
-  const instanceRef = useRef<ReturnType<
-    typeof createStacksheet<SheetTypeMap>
-  > | null>(null);
+  const instanceRef = useRef<StacksheetReturn | null>(null);
   if (!instanceRef.current) {
-    const stacksheetConfig: StacksheetConfig = {
+    instanceRef.current = createStacksheet<SheetTypeMap>({
       side: config.side,
-      width: config.width,
       spring: config.spring,
-      maxDepth: config.maxDepth,
       showOverlay: config.showOverlay,
       closeOnBackdrop: config.closeOnBackdrop,
       closeOnEscape: config.closeOnEscape,
-    };
-    instanceRef.current = createStacksheet<SheetTypeMap>(stacksheetConfig);
+    });
   }
 
-  const { StacksheetProvider, useSheet, useStacksheetState } =
-    instanceRef.current;
+  const { StacksheetProvider, store } = instanceRef.current;
 
   return (
-    <PlaygroundContext.Provider value={{ useSheet, useStacksheetState }}>
-      <StacksheetProvider sheets={sheetMap}>{children}</StacksheetProvider>
+    <PlaygroundContext.Provider value={{ store, StacksheetProvider }}>
+      {children}
     </PlaygroundContext.Provider>
   );
 }
@@ -371,21 +408,16 @@ function Pill({
   );
 }
 
-// ── Code block ─────────────────────────────────
+// ── Left Column ────────────────────────────────
 
-function Code({ children }: { children: string }) {
-  return (
-    <div className="pg-code">
-      <code>{children}</code>
-    </div>
-  );
-}
-
-// ── Hero section ───────────────────────────────
-
-function HeroSection() {
-  const { useSheet } = usePlayground();
-  const actions = useSheet();
+function LeftColumn({
+  config,
+  onConfigChange,
+}: {
+  config: PlaygroundConfig;
+  onConfigChange: (c: PlaygroundConfig) => void;
+}) {
+  const actions = useActions();
   const counterRef = useRef(0);
 
   function handleOpen() {
@@ -395,101 +427,8 @@ function HeroSection() {
     actions.open("Contact", `hero-${Date.now()}`, data as never);
   }
 
-  return (
-    <section className="pg-hero">
-      <h1 className="pg-hero-title">Stacksheet</h1>
-      <p className="pg-hero-tagline">
-        A typed, animated sheet stack for React.
-      </p>
-      <div className="pg-hero-actions">
-        <button className="pg-btn pg-btn--primary" onClick={handleOpen} type="button">
-          Open a sheet
-        </button>
-        <a className="pg-btn pg-btn--secondary" href="/docs">
-          Documentation
-        </a>
-      </div>
-      <a className="pg-hero-gh" href="https://github.com/howells/stacksheet">
-        GitHub
-      </a>
-    </section>
-  );
-}
-
-// ── Position section ───────────────────────────
-
-function PositionSection({
-  config,
-  onConfigChange,
-}: {
-  config: PlaygroundConfig;
-  onConfigChange: (c: PlaygroundConfig) => void;
-}) {
   const sides: PlaygroundConfig["side"][] = ["left", "right", "bottom"];
 
-  return (
-    <section className="pg-section">
-      <h2 className="pg-section-title">Position</h2>
-      <p className="pg-section-desc">
-        Panels slide in from the side you choose. Bottom is default on mobile.
-      </p>
-      <div className="pg-pills">
-        {sides.map((s) => (
-          <Pill
-            key={s}
-            active={config.side === s}
-            onClick={() => onConfigChange({ ...config, side: s })}
-          >
-            {s}
-          </Pill>
-        ))}
-      </div>
-      <Code>{`createStacksheet({ side: "${config.side}" })`}</Code>
-    </section>
-  );
-}
-
-// ── Spring section ─────────────────────────────
-
-function SpringSection({
-  config,
-  onConfigChange,
-}: {
-  config: PlaygroundConfig;
-  onConfigChange: (c: PlaygroundConfig) => void;
-}) {
-  return (
-    <section className="pg-section">
-      <h2 className="pg-section-title">Spring</h2>
-      <p className="pg-section-desc">
-        Seven spring presets from gentle to snappy. Open a sheet to feel the
-        difference.
-      </p>
-      <div className="pg-pills">
-        {springPresets.map((p) => (
-          <Pill
-            key={p}
-            active={config.spring === p}
-            onClick={() => onConfigChange({ ...config, spring: p })}
-          >
-            {p}
-          </Pill>
-        ))}
-      </div>
-      <Code>{`createStacksheet({ spring: "${config.spring}" })`}</Code>
-    </section>
-  );
-}
-
-// ── Config section ─────────────────────────────
-
-function ConfigSection({
-  config,
-  onConfigChange,
-}: {
-  config: PlaygroundConfig;
-  onConfigChange: (c: PlaygroundConfig) => void;
-}) {
   const toggles: { key: keyof PlaygroundConfig; label: string }[] = [
     { key: "showOverlay", label: "overlay" },
     { key: "closeOnBackdrop", label: "backdrop close" },
@@ -497,32 +436,148 @@ function ConfigSection({
   ];
 
   return (
-    <section className="pg-section">
-      <h2 className="pg-section-title">Other</h2>
-      <p className="pg-section-desc">
-        Toggle overlay, backdrop close, and escape close behaviors.
+    <div className="pg-left">
+      <h1 className="pg-title">Stacksheet</h1>
+      <p className="pg-tagline">
+        A typed, animated sheet stack for React.
       </p>
-      <div className="pg-pills">
-        {toggles.map(({ key, label }) => (
-          <Pill
-            key={key}
-            active={config[key] as boolean}
-            onClick={() =>
-              onConfigChange({ ...config, [key]: !config[key] })
-            }
-          >
-            {label}
-          </Pill>
-        ))}
+
+      <div className="pg-controls">
+        <div className="pg-control-group">
+          <p className="pg-label">Position</p>
+          <div className="pg-pills">
+            {sides.map((s) => (
+              <Pill
+                key={s}
+                active={config.side === s}
+                onClick={() =>
+                  onConfigChange({ ...config, side: s })
+                }
+              >
+                {s}
+              </Pill>
+            ))}
+          </div>
+        </div>
+
+        <div className="pg-control-group">
+          <p className="pg-label">Spring</p>
+          <div className="pg-pills">
+            {springPresets.map((p) => (
+              <Pill
+                key={p}
+                active={config.spring === p}
+                onClick={() =>
+                  onConfigChange({ ...config, spring: p })
+                }
+              >
+                {p}
+              </Pill>
+            ))}
+          </div>
+        </div>
+
+        <div className="pg-control-group">
+          <p className="pg-label">Options</p>
+          <div className="pg-pills">
+            {toggles.map(({ key, label }) => (
+              <Pill
+                key={key}
+                active={config[key] as boolean}
+                onClick={() =>
+                  onConfigChange({
+                    ...config,
+                    [key]: !config[key],
+                  })
+                }
+              >
+                {label}
+              </Pill>
+            ))}
+          </div>
+        </div>
       </div>
-    </section>
+
+      <button
+        className="pg-btn pg-btn--primary"
+        onClick={handleOpen}
+        type="button"
+      >
+        Open a sheet
+      </button>
+
+      <div className="pg-links">
+        <a className="pg-btn pg-btn--secondary" href="/docs">
+          Documentation
+        </a>
+        <a
+          className="pg-link"
+          href="https://github.com/howells/stacksheet"
+        >
+          GitHub
+        </a>
+      </div>
+    </div>
+  );
+}
+
+// ── Right Column ───────────────────────────────
+
+function RightColumn({ config }: { config: PlaygroundConfig }) {
+  // Build config code string
+  const configParts: string[] = [];
+  if (config.side !== "right")
+    configParts.push(`side: "${config.side}"`);
+  if (config.spring !== "stiff")
+    configParts.push(`spring: "${config.spring}"`);
+  if (!config.showOverlay) configParts.push("showOverlay: false");
+  if (!config.closeOnBackdrop)
+    configParts.push("closeOnBackdrop: false");
+  if (!config.closeOnEscape) configParts.push("closeOnEscape: false");
+
+  const configCode =
+    configParts.length > 0
+      ? `createStacksheet({\n  ${configParts.join(",\n  ")}\n})`
+      : "createStacksheet()";
+
+  return (
+    <div className="pg-right">
+      <div className="pg-code">
+        <code>{configCode}</code>
+      </div>
+      <div className="pg-install">
+        <code>npm i @howells/stacksheet</code>
+      </div>
+    </div>
+  );
+}
+
+// ── Page Content ───────────────────────────────
+
+function PageContent({
+  config,
+  onConfigChange,
+}: {
+  config: PlaygroundConfig;
+  onConfigChange: (c: PlaygroundConfig) => void;
+}) {
+  const { StacksheetProvider } = usePlayground();
+
+  return (
+    <StacksheetProvider sheets={sheetMap}>
+      <div className="pg-layout">
+        <LeftColumn config={config} onConfigChange={onConfigChange} />
+        <RightColumn config={config} />
+      </div>
+    </StacksheetProvider>
   );
 }
 
 // ── PlaygroundDemo (root) ──────────────────────
 
 export function PlaygroundDemo() {
-  const [config, setConfig] = useState<PlaygroundConfig>(defaultConfig);
+  const [config, setConfig] =
+    useState<PlaygroundConfig>(defaultConfig);
   const [configVersion, setConfigVersion] = useState(0);
 
   function handleConfigChange(next: PlaygroundConfig) {
@@ -532,12 +587,7 @@ export function PlaygroundDemo() {
 
   return (
     <DemoInstance key={configVersion} config={config}>
-      <HeroSection />
-      <div className="pg-sections">
-        <PositionSection config={config} onConfigChange={handleConfigChange} />
-        <SpringSection config={config} onConfigChange={handleConfigChange} />
-        <ConfigSection config={config} onConfigChange={handleConfigChange} />
-      </div>
+      <PageContent config={config} onConfigChange={handleConfigChange} />
     </DemoInstance>
   );
 }

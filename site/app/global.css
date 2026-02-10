@@ -112,11 +112,13 @@
 /* ── Playground page ────────────────────────── */
 
 .pg-page {
-  --pg-bg: #fff;
-  --pg-fg: #0a0a0a;
-  --pg-muted: #f5f5f5;
-  --pg-muted-fg: #737373;
-  --pg-border: #e5e5e5;
+  --pg-bg: #fafafa;
+  --pg-surface: #fff;
+  --pg-fg: #111;
+  --pg-fg-secondary: #6b6b6b;
+  --pg-fg-tertiary: #999;
+  --pg-muted: #f2f2f2;
+  --pg-border: #e8e8e8;
 
   min-height: 100dvh;
   background: var(--pg-bg);
@@ -124,118 +126,72 @@
   color-scheme: light;
 }
 
-/* Hero */
+/* Layout */
 
-.pg-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 6rem 1.5rem 4rem;
-  text-align: center;
+.pg-layout {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px;
+  min-height: 100dvh;
+  align-items: start;
 }
 
-.pg-hero-title {
-  font-size: 3.5rem;
+.pg-left {
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 48px;
+}
+
+.pg-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 0.5rem;
+}
+
+/* Title + tagline */
+
+.pg-title {
+  font-size: 2.5rem;
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
   margin: 0 0 0.75rem;
 }
 
-.pg-hero-tagline {
-  font-size: 1.125rem;
-  color: var(--pg-muted-fg);
-  margin: 0 0 2rem;
-  max-width: 28rem;
-}
-
-.pg-hero-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-}
-
-.pg-hero-gh {
-  font-size: 0.875rem;
-  color: var(--pg-muted-fg);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.pg-hero-gh:hover {
-  color: var(--pg-fg);
-}
-
-/* Buttons */
-
-.pg-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 2.75rem;
-  padding: 0 1.75rem;
+.pg-tagline {
   font-size: 0.9375rem;
-  font-weight: 500;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: opacity 0.15s, background 0.15s;
-  text-decoration: none;
-}
-
-.pg-btn--primary {
-  background: var(--pg-fg);
-  color: var(--pg-bg);
-  border: none;
-}
-
-.pg-btn--primary:hover {
-  opacity: 0.85;
-}
-
-.pg-btn--secondary {
-  background: transparent;
-  color: var(--pg-fg);
-  border: 1px solid var(--pg-border);
-}
-
-.pg-btn--secondary:hover {
-  background: var(--pg-muted);
-}
-
-/* Sections */
-
-.pg-sections {
-  max-width: 42rem;
-  margin: 0 auto;
-  padding: 0 1.5rem 6rem;
-}
-
-.pg-section {
-  padding: 3rem 0;
-}
-
-.pg-section + .pg-section {
-  border-top: 1px solid var(--pg-border);
-}
-
-.pg-section-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin: 0 0 0.5rem;
-}
-
-.pg-section-desc {
-  font-size: 0.9375rem;
-  color: var(--pg-muted-fg);
-  margin: 0 0 1.25rem;
+  color: var(--pg-fg-secondary);
   line-height: 1.6;
+  margin: 0 0 2rem;
 }
 
-.pg-section-hint {
-  font-size: 0.8125rem;
-  color: var(--pg-muted-fg);
-  margin: 0.75rem 0 0;
+/* Controls */
+
+.pg-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.pg-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pg-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pg-fg-tertiary);
+  margin: 0;
 }
 
 /* Pill buttons */
@@ -244,7 +200,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.375rem;
-  margin-bottom: 1rem;
 }
 
 .pg-pill {
@@ -280,15 +235,88 @@
   background: var(--pg-muted);
   border-radius: 8px;
   padding: 0.75rem 1rem;
+  margin-bottom: 16px;
 }
 
 .pg-code code {
   font-size: 0.8125rem;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-  color: var(--pg-muted-fg);
+  color: var(--pg-fg-secondary);
+  white-space: pre;
 }
 
-/* Sheet content (inside opened panels) */
+/* Buttons */
+
+.pg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.75rem;
+  padding: 0 1.75rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+  text-decoration: none;
+}
+
+.pg-btn--primary {
+  background: var(--pg-fg);
+  color: var(--pg-surface);
+  border: none;
+  margin-bottom: 16px;
+  align-self: flex-start;
+}
+
+.pg-btn--primary:hover {
+  opacity: 0.85;
+}
+
+.pg-btn--secondary {
+  background: transparent;
+  color: var(--pg-fg);
+  border: 1px solid var(--pg-border);
+}
+
+.pg-btn--secondary:hover {
+  background: var(--pg-muted);
+}
+
+/* Links */
+
+.pg-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  align-self: flex-start;
+}
+
+.pg-link {
+  font-size: 0.875rem;
+  color: var(--pg-fg-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.pg-link:hover {
+  color: var(--pg-fg);
+}
+
+/* Install command */
+
+.pg-install {
+  text-align: center;
+  padding: 4px 0;
+}
+
+.pg-install code {
+  font-size: 0.8125rem;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  color: var(--pg-fg-tertiary);
+}
+
+/* ── Sheet content (inside opened panels) ──── */
 
 .pg-sheet {
   padding: 1.5rem;
@@ -344,8 +372,6 @@
   margin: 0 0 1rem;
 }
 
-/* Sheet fields (key-value pairs) */
-
 .pg-sheet-fields {
   display: flex;
   flex-direction: column;
@@ -371,8 +397,6 @@
   font-size: 0.875rem;
   color: #0a0a0a;
 }
-
-/* Sheet toggle rows (settings) */
 
 .pg-sheet-toggle-row {
   display: flex;
@@ -416,15 +440,11 @@
   transform: translateX(1rem);
 }
 
-/* Sheet divider */
-
 .pg-sheet-divider {
   height: 1px;
   background: #f0f0f0;
   margin: 1.25rem 0;
 }
-
-/* Sheet labels */
 
 .pg-sheet-label {
   font-size: 0.6875rem;
@@ -450,8 +470,6 @@
   margin-left: 0.25rem;
   vertical-align: middle;
 }
-
-/* Sheet action buttons */
 
 .pg-sheet-actions {
   display: flex;
@@ -553,34 +571,22 @@
 
 /* Responsive */
 
-@media (max-width: 640px) {
-  .pg-hero {
-    padding: 4rem 1.25rem 3rem;
+@media (max-width: 768px) {
+  .pg-layout {
+    grid-template-columns: 1fr;
+    padding: 24px 20px;
+    gap: 32px;
   }
 
-  .pg-hero-title {
-    font-size: 2.5rem;
+  .pg-left {
+    position: static;
   }
 
-  .pg-hero-tagline {
-    font-size: 1rem;
+  .pg-right {
+    position: static;
   }
 
-  .pg-hero-actions {
-    flex-direction: column;
-    width: 100%;
-    max-width: 18rem;
-  }
-
-  .pg-btn {
-    width: 100%;
-  }
-
-  .pg-sections {
-    padding: 0 1.25rem 4rem;
-  }
-
-  .pg-section {
-    padding: 2rem 0;
+  .pg-title {
+    font-size: 2rem;
   }
 }
