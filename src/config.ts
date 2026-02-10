@@ -1,25 +1,19 @@
+import { springs } from "./springs";
 import type {
   ResolvedConfig,
   ResponsiveSide,
   SheetStackConfig,
   StackingConfig,
-  SpringConfig,
-} from "./types.js";
+} from "./types";
 
 // ── Defaults ────────────────────────────────────
 
 const DEFAULT_STACKING: StackingConfig = {
   scaleStep: 0.04,
-  offsetStep: 24,
-  opacityStep: 0.15,
+  offsetStep: 36,
+  opacityStep: 0,
   radius: 12,
   renderThreshold: 5,
-};
-
-const DEFAULT_SPRING: SpringConfig = {
-  damping: 30,
-  stiffness: 170,
-  mass: 0.8,
 };
 
 const DEFAULT_SIDE: ResponsiveSide = {
@@ -35,17 +29,26 @@ export function resolveConfig(config: SheetStackConfig = {}): ResolvedConfig {
       ? { desktop: config.side, mobile: config.side }
       : { ...DEFAULT_SIDE, ...config.side };
 
+  const spring =
+    typeof config.spring === "string"
+      ? springs[config.spring]
+      : { ...springs.stiff, ...config.spring };
+
   return {
-    maxDepth: config.maxDepth ?? Infinity,
+    maxDepth: config.maxDepth ?? Number.POSITIVE_INFINITY,
     closeOnEscape: config.closeOnEscape ?? true,
     closeOnBackdrop: config.closeOnBackdrop ?? true,
+    showOverlay: config.showOverlay ?? true,
     lockScroll: config.lockScroll ?? true,
     width: config.width ?? 420,
     maxWidth: config.maxWidth ?? "90vw",
     breakpoint: config.breakpoint ?? 768,
     side,
     stacking: { ...DEFAULT_STACKING, ...config.stacking },
-    spring: { ...DEFAULT_SPRING, ...config.spring },
+    spring,
     zIndex: config.zIndex ?? 100,
+    ariaLabel: config.ariaLabel ?? "Sheet dialog",
+    onOpenComplete: config.onOpenComplete,
+    onCloseComplete: config.onCloseComplete,
   };
 }

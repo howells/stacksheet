@@ -1,25 +1,32 @@
-export { createSheetStack } from "./create.js";
-export { resolveConfig } from "./config.js";
-export { getStackTransform, getSlideFrom, getPanelStyles } from "./stacking.js";
-export { useIsMobile, useResolvedSide } from "./media.js";
-
+export { resolveConfig } from "./config";
+export { createSheetStack } from "./create";
+export { useIsMobile, useResolvedSide } from "./media";
+export type { SpringPreset } from "./springs";
+export { springs } from "./springs";
+export { getPanelStyles, getSlideFrom, getStackTransform } from "./stacking";
 export type {
-  // Core types
-  SheetItem,
-  Side,
-  ResponsiveSide,
-  SideConfig,
-  // Config
-  StackingConfig,
-  SpringConfig,
-  SheetStackConfig,
+  ContentMap,
+  HeaderRenderProps,
   ResolvedConfig,
+  ResponsiveSide,
+  SheetActions,
+  // Theming
+  SheetClassNames,
+  // Ad-hoc component push
+  SheetComponentProps,
   // Components
   SheetContentComponent,
-  ContentMap,
+  // Core types
+  SheetItem,
+  // Factory
+  SheetProviderProps,
   // Store
   SheetSnapshot,
-  SheetActions,
-  // Factory
+  SheetStackConfig,
   SheetStackInstance,
-} from "./types.js";
+  Side,
+  SideConfig,
+  SpringConfig,
+  // Config
+  StackingConfig,
+} from "./types";

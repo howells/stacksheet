@@ -1,28 +1,33 @@
-import { AnimatePresence, m } from "motion/react";
+import FocusTrap from "focus-trap-react";
+import { AnimatePresence, motion as m } from "motion/react";
 import {
   type ComponentType,
   type CSSProperties,
+  useCallback,
   useEffect,
   useRef,
-  useState,
 } from "react";
+import { RemoveScroll } from "react-remove-scroll";
 import type { StoreApi } from "zustand";
 import { useStore } from "zustand";
-import { useResolvedSide } from "./media.js";
+import { useResolvedSide } from "./media";
 import {
+  getPanelStyles,
   getSlideFrom,
   getSlideTarget,
   getStackTransform,
-  getPanelStyles,
-} from "./stacking.js";
+  type SlideValues,
+} from "./stacking";
 import type {
   ContentMap,
+  HeaderRenderProps,
   ResolvedConfig,
   SheetActions,
+  SheetClassNames,
   SheetItem,
   SheetSnapshot,
   Side,
-} from "./types.js";
+} from "./types";
 
 // ── Icons (inline SVG — no external dependency) ─
 
@@ -62,7 +67,7 @@ function XIcon() {
   );
 }
 
-// ── Header button ───────────────────────────────
+// ── Default header ──────────────────────────────
 
 const BUTTON_STYLE: CSSProperties = {
   display: "inline-flex",
@@ -80,18 +85,257 @@ const BUTTON_STYLE: CSSProperties = {
   padding: 0,
 };
 
+function DefaultHeader({ isNested, onBack, onClose }: HeaderRenderProps) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        height: 48,
+        flexShrink: 0,
+        padding: "0 12px",
+        borderBottom: "1px solid var(--border, transparent)",
+      }}
+    >
+      {isNested && (
+        <button
+          aria-label="Back"
+          onClick={onBack}
+          style={BUTTON_STYLE}
+          type="button"
+        >
+          <ArrowLeftIcon />
+        </button>
+      )}
+      <div style={{ flex: 1 }} />
+      <button
+        aria-label="Close"
+        onClick={onClose}
+        style={BUTTON_STYLE}
+        type="button"
+      >
+        <XIcon />
+      </button>
+    </div>
+  );
+}
+
+// ── Resolved classNames ─────────────────────────
+
+type ResolvedClassNames = Required<SheetClassNames>;
+
+const EMPTY_CLASSNAMES: ResolvedClassNames = {
+  backdrop: "",
+  panel: "",
+  header: "",
+};
+
+function resolveClassNames(cn?: SheetClassNames): ResolvedClassNames {
+  if (!cn) {
+    return EMPTY_CLASSNAMES;
+  }
+  return {
+    backdrop: cn.backdrop ?? "",
+    panel: cn.panel ?? "",
+    header: cn.header ?? "",
+  };
+}
+
+// ── SheetPanel ──────────────────────────────────
+
+interface SheetPanelProps {
+  item: SheetItem;
+  index: number;
+  depth: number;
+  isTop: boolean;
+  isNested: boolean;
+  side: Side;
+  config: ResolvedConfig;
+  classNames: ResolvedClassNames;
+  // biome-ignore lint/suspicious/noExplicitAny: heterogeneous content component
+  Content: ComponentType<{ data: any; onClose: () => void }> | undefined;
+  shouldRender: boolean;
+  pop: () => void;
+  close: () => void;
+  renderHeader?: (props: HeaderRenderProps) => React.ReactNode;
+  slideFrom: SlideValues;
+  slideTarget: SlideValues;
+  spring: Record<string, unknown>;
+  stackSpring: Record<string, unknown>;
+  exitSpring: Record<string, unknown>;
+}
+
+function SheetPanel({
+  item,
+  index,
+  depth,
+  isTop,
+  isNested,
+  side,
+  config,
+  classNames,
+  Content,
+  shouldRender,
+  pop,
+  close,
+  renderHeader,
+  slideFrom,
+  slideTarget,
+  spring,
+  stackSpring,
+  exitSpring,
+}: SheetPanelProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const hasEnteredRef = useRef(false);
+
+  const transform = getStackTransform(depth, config.stacking);
+  const panelStyles = getPanelStyles(side, config, depth, index);
+  const stackOffset = getStackingOffset(side, transform.offset);
+
+  // Reset entrance flag when panel moves away from top
+  useEffect(() => {
+    if (!isTop) {
+      hasEnteredRef.current = false;
+    }
+  }, [isTop]);
+
+  const handleAnimationComplete = useCallback(() => {
+    if (isTop && !hasEnteredRef.current) {
+      hasEnteredRef.current = true;
+      config.onOpenComplete?.();
+    }
+  }, [isTop, config]);
+
+  // Per-sheet aria-label: check data.__ariaLabel, fall back to config
+  const ariaLabel =
+    (typeof item.data?.__ariaLabel === "string"
+      ? item.data.__ariaLabel
+      : undefined) ?? config.ariaLabel;
+
+  // Panel: use className if provided, strip inline background
+  const hasPanelClass = classNames.panel !== "";
+  const panelStyle: CSSProperties = {
+    ...panelStyles,
+    boxShadow: isTop ? getShadow(side, false) : getShadow(side, true),
+    pointerEvents: isTop ? "auto" : "none",
+    ...(hasPanelClass
+      ? {}
+      : {
+          background: "var(--background, #fff)",
+          borderColor: "var(--border, transparent)",
+        }),
+  };
+
+  const headerProps: HeaderRenderProps = {
+    isNested,
+    onBack: pop,
+    onClose: close,
+  };
+
+  const panelContent = (
+    <m.div
+      animate={{
+        ...slideTarget,
+        ...stackOffset,
+        scale: transform.scale,
+        opacity: transform.opacity,
+        borderRadius: transform.borderRadius,
+        transition: isTop ? spring : stackSpring,
+      }}
+      aria-label={isTop ? ariaLabel : undefined}
+      aria-modal={isTop ? "true" : undefined}
+      className={classNames.panel || undefined}
+      exit={{
+        ...slideFrom,
+        opacity: 0.6,
+        transition: exitSpring,
+      }}
+      initial={{
+        ...slideFrom,
+        opacity: 0.8,
+      }}
+      key={item.id}
+      onAnimationComplete={handleAnimationComplete}
+      ref={panelRef}
+      role={isTop ? "dialog" : undefined}
+      style={panelStyle}
+      tabIndex={isTop ? -1 : undefined}
+      transition={spring}
+    >
+      {/* Header */}
+      {isTop &&
+        (renderHeader ? (
+          renderHeader(headerProps)
+        ) : (
+          <DefaultHeader {...headerProps} />
+        ))}
+
+      {/* Content */}
+      {shouldRender && Content && (
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            overscrollBehavior: "contain",
+          }}
+        >
+          <Content data={item.data} onClose={close} />
+        </div>
+      )}
+    </m.div>
+  );
+
+  if (!isTop) {
+    return panelContent;
+  }
+
+  return (
+    <FocusTrap
+      focusTrapOptions={{
+        initialFocus: false,
+        returnFocusOnDeactivate: true,
+        escapeDeactivates: false,
+        allowOutsideClick: true,
+        checkCanFocusTrap: () =>
+          new Promise<void>((resolve) =>
+            requestAnimationFrame(() => resolve())
+          ),
+        fallbackFocus: () => {
+          // If no focusable elements exist, focus the panel container itself
+          if (panelRef.current) {
+            return panelRef.current;
+          }
+          // This shouldn't happen, but satisfy the type
+          return document.body;
+        },
+      }}
+    >
+      {panelContent}
+    </FocusTrap>
+  );
+}
+
 // ── Renderer ────────────────────────────────────
 
 interface SheetRendererProps<TMap extends Record<string, unknown>> {
   store: StoreApi<SheetSnapshot<TMap> & SheetActions<TMap>>;
   config: ResolvedConfig;
   content: ContentMap<TMap>;
+  /** Ad-hoc component map (type key → component) */
+  // biome-ignore lint/suspicious/noExplicitAny: heterogeneous component storage
+  componentMap: Map<string, ComponentType<any>>;
+  classNames?: SheetClassNames;
+  renderHeader?: (props: HeaderRenderProps) => React.ReactNode;
 }
 
 export function SheetRenderer<TMap extends Record<string, unknown>>({
   store,
   config,
   content,
+  componentMap,
+  classNames: classNamesProp,
+  renderHeader,
 }: SheetRendererProps<TMap>) {
   const isOpen = useStore(store, (s) => s.isOpen);
   const stack = useStore(store, (s) => s.stack);
@@ -99,46 +343,33 @@ export function SheetRenderer<TMap extends Record<string, unknown>>({
   const pop = useStore(store, (s) => s.pop);
 
   const side = useResolvedSide(config);
+  const classNames = resolveClassNames(classNamesProp);
 
-  // Display stack — keep items during exit animation
-  const [displayStack, setDisplayStack] = useState<
-    SheetItem<Extract<keyof TMap, string>>[]
-  >([]);
-  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Focus restoration: capture the element that was focused when the stack opens.
+  // When the stack fully closes, return focus to that element.
+  const triggerRef = useRef<Element | null>(null);
+  const wasOpenRef = useRef(false);
 
   useEffect(() => {
-    if (stack.length > 0) {
-      if (clearTimerRef.current) {
-        clearTimeout(clearTimerRef.current);
-        clearTimerRef.current = null;
+    if (isOpen && !wasOpenRef.current) {
+      // Stack just opened — capture the trigger element
+      triggerRef.current = document.activeElement;
+    } else if (!isOpen && wasOpenRef.current) {
+      // Stack just closed — restore focus to trigger
+      const el = triggerRef.current;
+      if (el && el instanceof HTMLElement) {
+        el.focus();
       }
-      setDisplayStack(stack);
-    } else {
-      // Delay clearing so exit animations complete
-      clearTimerRef.current = setTimeout(() => {
-        setDisplayStack([]);
-      }, 500);
+      triggerRef.current = null;
     }
-    return () => {
-      if (clearTimerRef.current) {
-        clearTimeout(clearTimerRef.current);
-      }
-    };
-  }, [stack]);
-
-  // Scroll lock
-  useEffect(() => {
-    if (!isOpen || !config.lockScroll) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [isOpen, config.lockScroll]);
+    wasOpenRef.current = isOpen;
+  }, [isOpen]);
 
   // Escape key
   useEffect(() => {
-    if (!isOpen || !config.closeOnEscape) return;
+    if (!(isOpen && config.closeOnEscape)) {
+      return;
+    }
 
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
@@ -157,6 +388,8 @@ export function SheetRenderer<TMap extends Record<string, unknown>>({
 
   const slideFrom = getSlideFrom(side);
   const slideTarget = getSlideTarget();
+
+  // Primary spring — drives the top sheet's entrance slide
   const spring = {
     type: "spring" as const,
     damping: config.spring.damping,
@@ -164,135 +397,129 @@ export function SheetRenderer<TMap extends Record<string, unknown>>({
     mass: config.spring.mass,
   };
 
+  // Slower spring for underlying sheets contracting/expanding (scale, offset, opacity).
+  // ~60% stiffness + higher mass = noticeably lagging behind the incoming sheet.
+  const stackSpring = {
+    type: "spring" as const,
+    damping: config.spring.damping * 1.1,
+    stiffness: config.spring.stiffness * 0.6,
+    mass: config.spring.mass * 1.4,
+  };
+
+  // Softer spring for exit (pop) — less abrupt departure
+  const exitSpring = {
+    type: "spring" as const,
+    damping: config.spring.damping * 0.9,
+    stiffness: config.spring.stiffness * 0.5,
+    mass: config.spring.mass * 1.2,
+  };
+
+  // Backdrop: use className if provided, otherwise inline fallback
+  const hasBackdropClass = classNames.backdrop !== "";
+  const backdropStyle: CSSProperties = {
+    position: "fixed",
+    inset: 0,
+    zIndex: config.zIndex,
+    cursor: config.closeOnBackdrop ? "pointer" : undefined,
+    ...(hasBackdropClass
+      ? {}
+      : { background: "var(--overlay, rgba(0, 0, 0, 0.2))" }),
+  };
+
+  // Handle exit complete — fire onCloseComplete when stack is fully empty
+  const handleExitComplete = useCallback(() => {
+    if (stack.length === 0) {
+      config.onCloseComplete?.();
+    }
+  }, [stack.length, config]);
+
+  // Wrap clip container in RemoveScroll when open + lockScroll
+  const shouldLockScroll = isOpen && config.lockScroll;
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <m.div
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            initial={{ opacity: 0 }}
-            key="stacksheet-backdrop"
-            onClick={config.closeOnBackdrop ? close : undefined}
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: config.zIndex,
-              background: "rgba(0, 0, 0, 0.2)",
-              cursor: config.closeOnBackdrop ? "pointer" : undefined,
-            }}
-            transition={{ duration: 0.2 }}
-          />
-
-          {/* Panels */}
-          {displayStack.map((item, index) => {
-            const depth = displayStack.length - 1 - index;
-            const isTop = depth === 0;
-            const isNested = displayStack.length > 1;
-            const transform = getStackTransform(depth, config.stacking);
-            const panelStyles = getPanelStyles(side, config, depth, index);
-            const shouldRender = depth < config.stacking.renderThreshold;
-
-            // Compute stacking offset for animate
-            const stackOffset = getStackingOffset(side, transform.offset);
-
-            const Content = content[item.type as keyof TMap] as
-              | ComponentType<{
-                  data: unknown;
-                  onClose: () => void;
-                }>
-              | undefined;
-
-            return (
-              <m.div
-                animate={{
-                  ...slideTarget,
-                  ...stackOffset,
-                  scale: transform.scale,
-                  opacity: transform.opacity,
-                  borderRadius: transform.borderRadius,
-                }}
-                aria-modal={isTop ? "true" : undefined}
-                exit={{
-                  ...slideFrom,
-                  opacity: 0.6,
-                }}
-                initial={{
-                  ...slideFrom,
-                  opacity: 0.8,
-                }}
-                key={item.id}
-                role={isTop ? "dialog" : undefined}
-                style={{
-                  ...panelStyles,
-                  boxShadow: isTop
-                    ? getShadow(side, false)
-                    : getShadow(side, true),
-                  pointerEvents: isTop ? "auto" : "none",
-                }}
-                transition={spring}
-              >
-                {/* Header */}
-                {isTop && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      height: 48,
-                      flexShrink: 0,
-                      padding: "0 12px",
-                      borderBottom: "1px solid transparent",
-                    }}
-                  >
-                    {isNested && (
-                      <button
-                        aria-label="Back"
-                        onClick={pop}
-                        style={BUTTON_STYLE}
-                        type="button"
-                      >
-                        <ArrowLeftIcon />
-                      </button>
-                    )}
-                    <div style={{ flex: 1 }} />
-                    <button
-                      aria-label="Close"
-                      onClick={close}
-                      style={BUTTON_STYLE}
-                      type="button"
-                    >
-                      <XIcon />
-                    </button>
-                  </div>
-                )}
-
-                {/* Content */}
-                {shouldRender && Content && (
-                  <div
-                    style={{
-                      flex: 1,
-                      minHeight: 0,
-                      overflowY: "auto",
-                      overscrollBehavior: "contain",
-                    }}
-                  >
-                    <Content data={item.data} onClose={close} />
-                  </div>
-                )}
-              </m.div>
-            );
-          })}
-        </>
+    <>
+      {/* Backdrop — independent AnimatePresence so it fades on its own */}
+      {config.showOverlay && (
+        <AnimatePresence>
+          {isOpen && (
+            <m.div
+              animate={{ opacity: 1 }}
+              className={classNames.backdrop || undefined}
+              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }}
+              key="stacksheet-backdrop"
+              onClick={config.closeOnBackdrop ? close : undefined}
+              style={backdropStyle}
+              transition={spring}
+            />
+          )}
+        </AnimatePresence>
       )}
-    </AnimatePresence>
+
+      {/* Panel clip container — always rendered, invisible when empty */}
+      <RemoveScroll enabled={shouldLockScroll} forwardProps>
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: config.zIndex + 1,
+            overflow: "hidden",
+            pointerEvents: "none",
+          }}
+        >
+          <AnimatePresence onExitComplete={handleExitComplete}>
+            {stack.map((item, index) => {
+              const depth = stack.length - 1 - index;
+              const isTop = depth === 0;
+              const isNested = stack.length > 1;
+              const shouldRender = depth < config.stacking.renderThreshold;
+
+              // Ad-hoc components take priority, then fall back to content map
+              const Content = (componentMap.get(item.type) ??
+                content[item.type as keyof TMap]) as
+                | ComponentType<{
+                    data: unknown;
+                    onClose: () => void;
+                  }>
+                | undefined;
+
+              return (
+                <SheetPanel
+                  Content={Content}
+                  classNames={classNames}
+                  close={close}
+                  config={config}
+                  depth={depth}
+                  exitSpring={exitSpring}
+                  index={index}
+                  isNested={isNested}
+                  isTop={isTop}
+                  item={item}
+                  key={item.id}
+                  pop={pop}
+                  renderHeader={renderHeader}
+                  shouldRender={shouldRender}
+                  side={side}
+                  slideFrom={slideFrom}
+                  slideTarget={slideTarget}
+                  spring={spring}
+                  stackSpring={stackSpring}
+                />
+              );
+            })}
+          </AnimatePresence>
+        </div>
+      </RemoveScroll>
+    </>
   );
 }
 
 // ── Helpers ─────────────────────────────────────
 
 function getStackingOffset(side: Side, offset: number): Record<string, number> {
-  if (offset === 0) return {};
+  if (offset === 0) {
+    return {};
+  }
   switch (side) {
     case "right":
       return { x: -offset };
@@ -300,6 +527,8 @@ function getStackingOffset(side: Side, offset: number): Record<string, number> {
       return { x: offset };
     case "bottom":
       return { y: -offset };
+    default:
+      return {};
   }
 }
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ResolvedConfig, Side } from "./types.js";
+import type { ResolvedConfig, Side } from "./types";
 
 /**
  * Returns true when viewport width is at or below the breakpoint.

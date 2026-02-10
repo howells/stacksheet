@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { ResolvedConfig, Side, StackingConfig } from "./types.js";
+import type { ResolvedConfig, Side, StackingConfig } from "./types";
 
 // ── Depth transforms ────────────────────────────
 
@@ -45,6 +45,8 @@ export function getSlideFrom(side: Side): SlideValues {
       return { x: "-100%" };
     case "bottom":
       return { y: "100%" };
+    default:
+      return { x: "100%" };
   }
 }
 
