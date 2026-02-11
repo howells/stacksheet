@@ -25,7 +25,7 @@ function Trigger() {
   const { open } = useSheet();
   return (
     <button
-      className="demo-btn"
+      className="demo-btn demo-btn-primary"
       onClick={() => open(ProfileSheet, { name: "Jane Doe" })}
       type="button"
     >

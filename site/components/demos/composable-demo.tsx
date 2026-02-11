@@ -31,7 +31,7 @@ function DetailSheet({ title }: { title: string }) {
         <div style={{ padding: "0 16px" }}>
           <Sheet.Description>
             <span
-              style={{ fontSize: 13, color: "var(--fd-muted-foreground, #666)" }}
+              style={{ fontSize: 13, color: "#71717a" }}
             >
               {isNested
                 ? "This is a stacked sheet. Notice the back button appeared automatically via Sheet.Back."
@@ -44,7 +44,7 @@ function DetailSheet({ title }: { title: string }) {
                 key={i}
                 style={{
                   fontSize: 13,
-                  color: "var(--fd-muted-foreground, #666)",
+                  color: "#71717a",
                   lineHeight: 1.6,
                   marginBottom: 12,
                 }}
@@ -60,7 +60,7 @@ function DetailSheet({ title }: { title: string }) {
         <div
           style={{
             padding: "12px 16px",
-            borderTop: "1px solid var(--fd-border, #e5e5e5)",
+            borderTop: "1px solid #e4e4e7",
           }}
         >
           <FooterAction />
@@ -95,7 +95,7 @@ function Triggers() {
   const { open } = useSheet();
   return (
     <button
-      className="demo-btn"
+      className="demo-btn demo-btn-primary"
       onClick={() => open(DetailSheet, { title: "Composable Sheet" })}
       type="button"
     >
