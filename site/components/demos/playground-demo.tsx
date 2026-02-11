@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type MutableRefObject,
   type ReactNode,
   createContext,
   useContext,
@@ -15,78 +16,65 @@ import {
   type Side,
   type SpringPreset,
   createStacksheet,
-  useSheetPanel,
 } from "@howells/stacksheet";
 
 // ── Type registry ──────────────────────────────
 
 type SheetTypeMap = {
-  Contact: { name: string; email: string; role: string; location: string };
-  Settings: { section: string; description: string };
-  Alert: { title: string; message: string; severity: string };
+  Push: { description: string };
+  Navigate: { description: string };
+  Replace: { description: string };
+  Swap: { description: string };
+  Pop: { description: string };
+  Close: { description: string };
+  Composable: { variant: string; parts: string[] };
+  Stacking: { description: string };
+  Config: { category: string; description: string };
 };
 
 type SheetKey = keyof SheetTypeMap;
 
+// ── Tour order ─────────────────────────────────
+
+const tourOrder: SheetKey[] = [
+  "Push", "Navigate", "Replace", "Swap", "Pop", "Close",
+  "Composable", "Stacking", "Config",
+];
+
 // ── Data presets ───────────────────────────────
 
 const presets: Record<SheetKey, SheetTypeMap[SheetKey][]> = {
-  Contact: [
-    {
-      name: "Jane Cooper",
-      email: "jane@example.com",
-      role: "Product Designer",
-      location: "San Francisco, CA",
-    },
-    {
-      name: "Alex Rivera",
-      email: "alex@company.io",
-      role: "Staff Engineer",
-      location: "Austin, TX",
-    },
-    {
-      name: "Sam Chen",
-      email: "sam.chen@mail.dev",
-      role: "Engineering Manager",
-      location: "Seattle, WA",
-    },
+  Push: [{ description: "Adds a sheet on top of the stack." }],
+  Navigate: [{ description: "Replaces the stack above the current sheet." }],
+  Replace: [{ description: "Swaps the current sheet in-place." }],
+  Swap: [{ description: "Changes the type and data of the current sheet." }],
+  Pop: [{ description: "Removes the topmost sheet from the stack." }],
+  Close: [{ description: "Clears the entire stack." }],
+  Composable: [
+    { variant: "Full layout", parts: ["Handle", "Back", "Title", "Close", "Body", "Footer"] },
+    { variant: "Minimal", parts: ["Title", "Close", "Body"] },
+    { variant: "With footer", parts: ["Back", "Title", "Close", "Body", "Footer"] },
   ],
-  Settings: [
-    {
-      section: "General",
-      description:
-        "Language, timezone, and display preferences for your account.",
-    },
-    {
-      section: "Notifications",
-      description:
-        "Control which emails, push, and in-app alerts you receive.",
-    },
-    {
-      section: "Privacy",
-      description:
-        "Manage data sharing, visibility, and third-party access.",
-    },
+  Stacking: [{ description: "Depth-aware stack behavior." }],
+  Config: [
+    { category: "Position", description: "Side placement, breakpoints, and responsive behavior." },
+    { category: "Animation", description: "Spring presets, drag thresholds, and velocity." },
+    { category: "Behavior", description: "Overlay, scroll lock, escape close, and modal mode." },
   ],
-  Alert: [
-    {
-      title: "Trial expiring",
-      message:
-        "Your free trial ends in 3 days. Upgrade to keep access to all features.",
-      severity: "warning",
-    },
-    {
-      title: "Update available",
-      message:
-        "Version 2.4 includes performance improvements and bug fixes.",
-      severity: "info",
-    },
-    {
-      title: "New team member",
-      message: "Jordan Lee has joined the Engineering team.",
-      severity: "success",
-    },
-  ],
+};
+
+// ── Dot colors ─────────────────────────────────
+
+const dotColors: Record<string, string> = {
+  Push: "bg-blue-500",
+  Navigate: "bg-blue-500",
+  Replace: "bg-blue-500",
+  Swap: "bg-blue-500",
+  Pop: "bg-blue-500",
+  Close: "bg-blue-500",
+  Composable: "bg-violet-500",
+  Stacking: "bg-amber-500",
+  Config: "bg-emerald-500",
 };
 
 // ── Playground context ─────────────────────────
@@ -96,6 +84,7 @@ type StacksheetReturn = ReturnType<typeof createStacksheet<SheetTypeMap>>;
 interface PlaygroundCtx {
   store: StacksheetReturn["store"];
   StacksheetProvider: StacksheetReturn["StacksheetProvider"];
+  visitedRef: MutableRefObject<Set<string>>;
 }
 
 const PlaygroundContext = createContext<PlaygroundCtx | null>(null);
@@ -133,7 +122,27 @@ function useStack() {
   );
 }
 
-// ── Toggle (decorative) ──────────────────────
+// ── useNextSheet hook ──────────────────────────
+
+function useNextSheet(): { nextKey: string | null; goNext: () => void } | null {
+  const stack = useStack();
+  const actions = useActions();
+  if (stack.length === 0) return null;
+  const currentType = stack[stack.length - 1].type as SheetKey;
+  const idx = tourOrder.indexOf(currentType);
+  if (idx === -1) return null;
+  if (idx === tourOrder.length - 1) {
+    return { nextKey: null, goNext: () => actions.close() };
+  }
+  const nextKey = tourOrder[idx + 1];
+  const data = presets[nextKey][0];
+  return {
+    nextKey,
+    goNext: () => actions.push(nextKey, `tour-${Date.now()}`, data as never),
+  };
+}
+
+// ── Toggle (config panel) ────────────────────
 
 function Toggle({ on }: { on?: boolean }) {
   return (
@@ -147,16 +156,33 @@ function Toggle({ on }: { on?: boolean }) {
   );
 }
 
+// ── Scroll area (native) ─────────────────────
+
+const scrollLight = {
+  scrollbarWidth: "thin",
+  scrollbarColor: "rgba(161,161,170,0.5) transparent",
+} as const;
+
+const scrollDark = {
+  scrollbarWidth: "thin",
+  scrollbarColor: "rgba(82,82,91,0.4) transparent",
+} as const;
+
 // ── Shared sheet controls ─────────────────────
 
 function SheetControls({ children }: { children: ReactNode }) {
   const actions = useActions();
   const stack = useStack();
+  const { visitedRef } = usePlayground();
   const counterRef = useRef(0);
 
+  // Mark current type as visited
+  if (stack.length > 0) {
+    visitedRef.current.add(stack[stack.length - 1].type);
+  }
+
   function doAction(name: "push" | "navigate" | "replace") {
-    const keys: SheetKey[] = ["Contact", "Settings", "Alert"];
-    const key = keys[counterRef.current % keys.length];
+    const key = tourOrder[counterRef.current % tourOrder.length];
     const list = presets[key];
     const data = list[counterRef.current % list.length];
     counterRef.current++;
@@ -164,19 +190,12 @@ function SheetControls({ children }: { children: ReactNode }) {
   }
 
   function doSwap() {
-    const keys: SheetKey[] = ["Contact", "Settings", "Alert"];
-    const key = keys[counterRef.current % keys.length];
+    const key = tourOrder[counterRef.current % tourOrder.length];
     const list = presets[key];
     const data = list[counterRef.current % list.length];
     counterRef.current++;
     actions.swap(key, data as never);
   }
-
-  const dotColors: Record<string, string> = {
-    Contact: "bg-blue-500",
-    Settings: "bg-violet-500",
-    Alert: "bg-amber-500",
-  };
 
   return (
     <div>
@@ -184,14 +203,14 @@ function SheetControls({ children }: { children: ReactNode }) {
 
       <div className="h-px bg-zinc-100 my-5" />
 
-      <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-400 mb-2.5">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400 mb-2.5">
         Try an action
       </p>
       <div className="flex flex-wrap gap-1.5">
         {(["push", "navigate", "replace"] as const).map((name) => (
           <button
             key={name}
-            className="inline-flex items-center h-[30px] px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
+            className="inline-flex items-center h-7 px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
             style={{ fontFamily: "var(--font-mono)" }}
             onClick={() => doAction(name)}
             type="button"
@@ -200,7 +219,7 @@ function SheetControls({ children }: { children: ReactNode }) {
           </button>
         ))}
         <button
-          className="inline-flex items-center h-[30px] px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
+          className="inline-flex items-center h-7 px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
           style={{ fontFamily: "var(--font-mono)" }}
           onClick={() => doSwap()}
           type="button"
@@ -208,7 +227,7 @@ function SheetControls({ children }: { children: ReactNode }) {
           swap
         </button>
         <button
-          className="inline-flex items-center h-[30px] px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
+          className="inline-flex items-center h-7 px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
           style={{ fontFamily: "var(--font-mono)" }}
           onClick={() => actions.pop()}
           type="button"
@@ -216,7 +235,7 @@ function SheetControls({ children }: { children: ReactNode }) {
           pop
         </button>
         <button
-          className="inline-flex items-center h-[30px] px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
+          className="inline-flex items-center h-7 px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
           style={{ fontFamily: "var(--font-mono)" }}
           onClick={() => actions.close()}
           type="button"
@@ -227,40 +246,48 @@ function SheetControls({ children }: { children: ReactNode }) {
 
       <div className="h-px bg-zinc-100 my-5" />
 
-      <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-400 mb-2.5">
-        Stack{" "}
-        <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-zinc-100 rounded-full text-zinc-500 ml-1 align-middle">
-          {stack.length}
-        </span>
+      <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400 mb-2.5">
+        Contents
       </p>
-      <div className="flex flex-col gap-1">
-        {stack.map((item, i) => (
-          <button
-            className="flex items-center gap-2 py-1.5 px-2.5 border-none rounded-md text-[13px] bg-transparent cursor-pointer w-full text-left transition-colors duration-150 hover:bg-zinc-100 data-[current]:bg-zinc-100 data-[current]:cursor-default data-[current]:hover:bg-zinc-100"
-            key={item.id}
-            data-current={i === stack.length - 1 || undefined}
-            disabled={i === stack.length - 1}
-            onClick={() => {
-              for (let j = stack.length - 1; j > i; j--) {
-                actions.remove(stack[j].id);
-              }
-            }}
-            type="button"
-          >
-            <span
-              className={`w-2 h-2 rounded-full shrink-0 ${dotColors[item.type] || "bg-zinc-300"}`}
-            />
-            <span className="font-medium text-zinc-950">{item.type}</span>
-            <span className="text-zinc-400 text-xs" style={{ fontFamily: "var(--font-mono)" }}>
-              {item.id.split("-")[0]}
-            </span>
-            {i === stack.length - 1 && (
-              <span className="ml-auto text-[11px] font-medium text-zinc-500 bg-zinc-200 px-2 py-0.5 rounded-full">
-                current
+      <div className="flex flex-col gap-0.5">
+        {tourOrder.map((type) => {
+          const isCurrent = stack.length > 0 && stack[stack.length - 1].type === type;
+          const isVisited = !isCurrent && visitedRef.current.has(type);
+          const isLocked = !isCurrent && !isVisited;
+
+          return (
+            <button
+              key={type}
+              className={`flex items-center gap-2 py-1.5 px-2.5 border-none rounded-md text-sm w-full text-left transition-colors duration-150 ${
+                isCurrent
+                  ? "bg-zinc-100 cursor-default"
+                  : isVisited
+                    ? "bg-transparent cursor-pointer hover:bg-zinc-50"
+                    : "bg-transparent cursor-default"
+              }`}
+              disabled={isCurrent || isLocked}
+              onClick={() => {
+                if (isVisited) {
+                  const list = presets[type];
+                  actions.open(type, `revisit-${Date.now()}`, list[0] as never);
+                }
+              }}
+              type="button"
+            >
+              <span
+                className={`w-2 h-2 rounded-full shrink-0 ${isCurrent || isVisited ? dotColors[type] : "bg-zinc-200"}`}
+              />
+              <span className={`font-medium ${isLocked ? "text-zinc-300" : "text-zinc-950"}`}>
+                {type}
               </span>
-            )}
-          </button>
-        ))}
+              {isCurrent && (
+                <span className="ml-auto text-[11px] font-medium text-zinc-500 bg-zinc-200 px-2 py-0.5 rounded-full">
+                  current
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -272,7 +299,7 @@ function SheetControls({ children }: { children: ReactNode }) {
 function HeaderBar({ children }: { children: ReactNode }) {
   return (
     <Sheet.Header
-      className="flex items-center justify-between px-5 py-4 border-b border-zinc-100"
+      className="flex items-center justify-between h-14 px-5 border-b border-zinc-100"
     >
       {children}
     </Sheet.Header>
@@ -299,7 +326,7 @@ function FooterButton({
 }) {
   return (
     <button
-      className={`h-9 px-4 text-sm font-medium rounded-lg cursor-pointer transition-colors duration-150 ${
+      className={`h-9 px-4 text-sm font-medium rounded-full cursor-pointer transition-colors duration-150 ${
         variant === "primary"
           ? "bg-zinc-950 text-white hover:bg-zinc-800"
           : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
@@ -312,166 +339,393 @@ function FooterButton({
   );
 }
 
-// ── Contact: Full composable — Header, Body (scrollable), Footer ──
+// ── Syntax highlighting ──────────────────────────
 
-function ContactSheet({
-  name,
-  email,
-  role,
-  location,
-}: SheetTypeMap["Contact"]) {
-  const { close } = useSheetPanel();
+const syntaxColors = {
+  keyword: "#87a083",   // sage green
+  string: "#c9a87c",    // warm sand
+  comment: "#5a5a62",   // dim stone
+  component: "#8aacbd", // dusty blue
+  boolean: "#b89cb0",   // muted mauve
+  number: "#b89cb0",    // muted mauve
+  plain: "#9a9aa2",     // neutral base
+} as const;
 
-  return (
-    <>
-      <HeaderBar>
-        <div className="flex items-center gap-2">
-          <Sheet.Back className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
-          <Sheet.Title className="text-base font-semibold">Contact</Sheet.Title>
-        </div>
-        <Sheet.Close className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
-      </HeaderBar>
-      <Sheet.Body>
-        <SheetControls>
-          <div className="flex items-center gap-4 mb-5">
-            <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg font-semibold shrink-0">
-              {name.charAt(0)}
-            </div>
-            <div>
-              <p className="text-base font-semibold text-zinc-950">{name}</p>
-              <p className="text-sm text-zinc-500">{role}</p>
-            </div>
-          </div>
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-medium uppercase tracking-widest text-zinc-400">Email</span>
-              <span className="text-sm text-zinc-950">{email}</span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-medium uppercase tracking-widest text-zinc-400">Location</span>
-              <span className="text-sm text-zinc-950">{location}</span>
-            </div>
-          </div>
-        </SheetControls>
-      </Sheet.Body>
-      <FooterBar>
-        <FooterButton variant="primary">Send message</FooterButton>
-        <FooterButton onClick={close}>Close</FooterButton>
-      </FooterBar>
-    </>
-  );
-}
+const SYNTAX_RE =
+  /(\/\/[^\n]*)|(["'][^"']*["'])|(`[^`]*`)|(\b(?:import|from|const|function|return|export|type)\b)|(\b(?:true|false|undefined|null)\b)|(<\/?[A-Z]\w*)|(\b\d+\.?\d*\b)/g;
 
-// ── Settings: Handle + Header + Body (toggle list) + Footer ──
+function highlightCode(code: string) {
+  const parts: { text: string; color: string }[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
 
-function SettingsSheet({
-  section,
-  description,
-}: SheetTypeMap["Settings"]) {
-  const { close } = useSheetPanel();
-  const [values, setValues] = useState<Record<string, boolean>>({
-    feature: true,
-    digest: false,
-    analytics: true,
-    beta: false,
-  });
-
-  function toggle(key: string) {
-    setValues((prev) => ({ ...prev, [key]: !prev[key] }));
+  SYNTAX_RE.lastIndex = 0;
+  while ((match = SYNTAX_RE.exec(code)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ text: code.slice(lastIndex, match.index), color: syntaxColors.plain });
+    }
+    const color = match[1]
+      ? syntaxColors.comment
+      : match[2] || match[3]
+        ? syntaxColors.string
+        : match[4]
+          ? syntaxColors.keyword
+          : match[5]
+            ? syntaxColors.boolean
+            : match[6]
+              ? syntaxColors.component
+              : match[7]
+                ? syntaxColors.number
+                : syntaxColors.plain;
+    parts.push({ text: match[0], color });
+    lastIndex = SYNTAX_RE.lastIndex;
   }
+  if (lastIndex < code.length) {
+    parts.push({ text: code.slice(lastIndex), color: syntaxColors.plain });
+  }
+  return parts;
+}
 
-  const rows = [
-    { key: "feature", label: "Enable feature", desc: "Turn on the main feature toggle" },
-    { key: "digest", label: "Email digest", desc: "Weekly summary to your inbox" },
-    { key: "analytics", label: "Usage analytics", desc: "Help improve the product" },
-    { key: "beta", label: "Beta features", desc: "Try experimental functionality" },
-  ];
-
+function SyntaxHighlight({ code, className = "text-[13px]" }: { code: string; className?: string }) {
+  const parts = highlightCode(code);
   return (
-    <>
-      <Sheet.Handle />
-      <HeaderBar>
-        <div className="flex items-center gap-2">
-          <Sheet.Back className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
-          <Sheet.Title className="text-base font-semibold">{section}</Sheet.Title>
-        </div>
-        <Sheet.Close className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
-      </HeaderBar>
-      <Sheet.Body>
-        <div className="px-5 pt-4 pb-2">
-          <Sheet.Description className="text-sm text-zinc-500 leading-relaxed mb-5">
-            {description}
-          </Sheet.Description>
-          <div className="flex flex-col">
-            {rows.map(({ key, label, desc }) => (
-              <button
-                key={key}
-                className="flex items-center justify-between py-3 text-left cursor-pointer bg-transparent border-none border-b border-zinc-100 last:border-b-0 w-full"
-                onClick={() => toggle(key)}
-                type="button"
-              >
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm text-zinc-950">{label}</span>
-                  <span className="text-xs text-zinc-400">{desc}</span>
-                </div>
-                <Toggle on={values[key]} />
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="px-5">
-          <SheetControls>{null}</SheetControls>
-        </div>
-      </Sheet.Body>
-      <FooterBar>
-        <FooterButton variant="primary">Save changes</FooterButton>
-        <FooterButton onClick={close}>Cancel</FooterButton>
-      </FooterBar>
-    </>
+    <code className={`${className} whitespace-pre`} style={{ fontFamily: "var(--font-mono)" }}>
+      {parts.map((p, i) => (
+        <span key={i} style={{ color: p.color }}>{p.text}</span>
+      ))}
+    </code>
   );
 }
 
-// ── Alert: Simple — just body content, no header/footer ──
+// ── CodeBlock ─────────────────────────────────
 
-const severityStyles: Record<string, { bg: string; text: string; icon: string }> = {
-  warning: { bg: "bg-amber-50", text: "text-amber-700", icon: "⚠" },
-  info: { bg: "bg-blue-50", text: "text-blue-700", icon: "ℹ" },
-  success: { bg: "bg-green-50", text: "text-green-700", icon: "✓" },
+function CodeBlock({ children }: { children: string }) {
+  return (
+    <div className="rounded-lg p-3.5 text-xs leading-relaxed whitespace-pre overflow-x-auto" style={{ backgroundColor: "#1c1c1e", fontFamily: "var(--font-mono)" }}>
+      <SyntaxHighlight code={children} className="text-xs" />
+    </div>
+  );
+}
+
+// ── NextFooter ────────────────────────────────
+
+function NextFooter() {
+  const next = useNextSheet();
+  if (!next) return null;
+  return (
+    <FooterBar>
+      <FooterButton variant="primary" onClick={next.goNext}>
+        {next.nextKey ? `Next: ${next.nextKey} \u2192` : "Finish"}
+      </FooterButton>
+    </FooterBar>
+  );
+}
+
+// ── Action content ────────────────────────────
+
+const actionContent: Record<string, {
+  snippet: string;
+  explanation: string;
+  related: { name: string; detail: string }[];
+}> = {
+  Push: {
+    snippet: `// Push adds a new sheet on top
+actions.push("Settings", {
+  category: "Position"
+})`,
+    explanation: "Push adds a new sheet to the top of the stack. The stack grows by one \u2014 use it to show additional detail without losing the current view.",
+    related: [
+      { name: "push", detail: "Add a sheet on top of the stack" },
+      { name: "pop", detail: "Remove the top sheet" },
+      { name: "close", detail: "Clear the entire stack" },
+    ],
+  },
+  Navigate: {
+    snippet: `// Navigate replaces everything above
+actions.navigate("Profile", {
+  userId: "abc-123"
+})`,
+    explanation: "Navigate replaces the entire stack above the current sheet with a new one. Like push, but clears anything stacked on top first.",
+    related: [
+      { name: "navigate", detail: "Replace everything above current" },
+      { name: "open", detail: "Clear stack, open fresh" },
+      { name: "remove", detail: "Remove a sheet by ID" },
+    ],
+  },
+  Replace: {
+    snippet: `// Replace swaps the current sheet
+actions.replace("Confirm", {
+  action: "delete"
+})`,
+    explanation: "Replace swaps the current sheet with a new one in-place. The stack depth stays the same \u2014 the old sheet is removed and the new one takes its position.",
+    related: [
+      { name: "replace", detail: "Swap current sheet in-place" },
+      { name: "swap", detail: "Change type & data of current" },
+      { name: "setData", detail: "Update data without replacing" },
+    ],
+  },
+  Swap: {
+    snippet: `// Swap changes type and data in-place
+actions.swap("Alert", {
+  message: "Saved!"
+})`,
+    explanation: "Swap changes the type and data of the current sheet without replacing it. The sheet ID stays the same \u2014 a lighter-weight alternative to replace.",
+    related: [
+      { name: "swap", detail: "Change type & data of current" },
+      { name: "replace", detail: "Swap current sheet entirely" },
+      { name: "setData", detail: "Update data only" },
+    ],
+  },
+  Pop: {
+    snippet: `// Pop removes the top sheet
+actions.pop()`,
+    explanation: "Pop removes the topmost sheet from the stack, revealing the one beneath it. If only one sheet remains, pop closes everything.",
+    related: [
+      { name: "pop", detail: "Remove the top sheet" },
+      { name: "remove", detail: "Remove a specific sheet by ID" },
+      { name: "close", detail: "Clear the entire stack" },
+    ],
+  },
+  Close: {
+    snippet: `// Close clears the entire stack
+actions.close()`,
+    explanation: "Close removes all sheets from the stack at once. The panel animates out completely \u2014 use it when the user is done with the entire flow.",
+    related: [
+      { name: "close", detail: "Clear the entire stack" },
+      { name: "pop", detail: "Remove just the top sheet" },
+      { name: "open", detail: "Clear and open a fresh sheet" },
+    ],
+  },
 };
 
-function AlertSheet({
-  title,
-  message,
-  severity,
-}: SheetTypeMap["Alert"]) {
-  const { close } = useSheetPanel();
-  const styles = severityStyles[severity] || severityStyles.info;
+// ── Action sheet ──────────────────────────────
+
+function ActionSheet(_props: { description: string }) {
+  const stack = useStack();
+  const currentType = stack.length > 0 ? (stack[stack.length - 1].type as string) : "Push";
+  const content = actionContent[currentType] || actionContent.Push;
+  const highlight = currentType.toLowerCase();
 
   return (
-    <Sheet.Body>
-      <div className="p-5">
-        <div className={`${styles.bg} rounded-lg p-4 mb-5`}>
-          <div className="flex items-start gap-3">
-            <span className={`text-lg ${styles.text}`}>{styles.icon}</span>
-            <div>
-              <p className={`text-sm font-semibold ${styles.text} mb-1`}>{title}</p>
-              <p className={`text-sm ${styles.text} opacity-80 leading-relaxed`}>{message}</p>
+    <>
+      <HeaderBar>
+        <div className="flex items-center gap-2">
+          <Sheet.Back className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+          <Sheet.Title className="text-sm font-semibold">{currentType}</Sheet.Title>
+        </div>
+        <Sheet.Close className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+      </HeaderBar>
+      <Sheet.Body>
+        <div className="px-5 py-4">
+          <SheetControls>
+            <p className="text-sm text-zinc-500 leading-relaxed mb-4">
+              {content.explanation}
+            </p>
+
+            <div className="flex flex-col mb-4">
+              {content.related.map(({ name, detail }) => (
+                <div
+                  key={name}
+                  className={`flex items-center justify-between py-2.5 border-b border-zinc-100 last:border-b-0 ${name === highlight ? "bg-blue-50 -mx-2 px-2 rounded-md border-transparent" : ""}`}
+                >
+                  <code className={`text-[13px] font-medium ${name === highlight ? "text-blue-600" : "text-zinc-950"}`} style={{ fontFamily: "var(--font-mono)" }}>
+                    {name}
+                  </code>
+                  <span className="text-xs text-zinc-500">{detail}</span>
+                </div>
+              ))}
             </div>
-          </div>
+
+            <CodeBlock>{content.snippet}</CodeBlock>
+          </SheetControls>
         </div>
-        <div className="flex gap-2 mb-5">
-          <FooterButton variant="primary" onClick={close}>Dismiss</FooterButton>
+      </Sheet.Body>
+      <NextFooter />
+    </>
+  );
+}
+
+// ── Composable sheet ──────────────────────────
+
+function ComposableSheet({ variant, parts }: SheetTypeMap["Composable"]) {
+  const hasPart = (p: string) => parts.includes(p);
+
+  return (
+    <>
+      {hasPart("Handle") && <Sheet.Handle />}
+      <HeaderBar>
+        <div className="flex items-center gap-2">
+          {hasPart("Back") && (
+            <Sheet.Back className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+          )}
+          {hasPart("Title") && (
+            <Sheet.Title className="text-sm font-semibold">Composable</Sheet.Title>
+          )}
         </div>
-        <SheetControls>{null}</SheetControls>
-      </div>
-    </Sheet.Body>
+        {hasPart("Close") && (
+          <Sheet.Close className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+        )}
+      </HeaderBar>
+      <Sheet.Body>
+        <div className="px-5 py-4">
+          <SheetControls>
+            <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400 mb-1">
+              {variant}
+            </p>
+            <p className="text-sm text-zinc-500 leading-relaxed mb-4">
+              Compose sheets from <code className="text-zinc-700" style={{ fontFamily: "var(--font-mono)" }}>Sheet.*</code> parts.
+              Each part reads from the central store to know its context.
+            </p>
+
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {["Handle", "Back", "Title", "Close", "Body", "Footer"].map((p) => (
+                <span
+                  key={p}
+                  className={`inline-flex items-center h-7 px-3 text-xs font-medium rounded-full ${
+                    hasPart(p)
+                      ? "bg-violet-100 text-violet-700"
+                      : "bg-zinc-100 text-zinc-400"
+                  }`}
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  Sheet.{p}
+                </span>
+              ))}
+            </div>
+
+            <CodeBlock>{`<Sheet.Header>\n  <Sheet.Back />\n  <Sheet.Title>Title</Sheet.Title>\n  <Sheet.Close />\n</Sheet.Header>\n<Sheet.Body>\n  {/* Your content */}\n</Sheet.Body>${hasPart("Footer") ? "\n<Sheet.Footer>\n  {/* Actions */}\n</Sheet.Footer>" : ""}`}</CodeBlock>
+          </SheetControls>
+        </div>
+      </Sheet.Body>
+      <NextFooter />
+    </>
+  );
+}
+
+// ── Stacking sheet ────────────────────────────
+
+function StackingSheet({ description }: SheetTypeMap["Stacking"]) {
+  const stack = useStack();
+  const actualDepth = stack.length;
+
+  return (
+    <>
+      <HeaderBar>
+        <div className="flex items-center gap-2">
+          <Sheet.Back className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+          <Sheet.Title className="text-sm font-semibold">Stacking</Sheet.Title>
+        </div>
+        <Sheet.Close className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+      </HeaderBar>
+      <Sheet.Body>
+        <div className="px-5 py-4">
+          <SheetControls>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 text-amber-700 text-lg font-bold">
+                {actualDepth}
+              </span>
+              <div>
+                <p className="text-sm font-medium text-zinc-950">
+                  {actualDepth === 1 ? "Root sheet" : `${actualDepth} sheets deep`}
+                </p>
+                <p className="text-xs text-zinc-500">
+                  {description}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm text-zinc-500 leading-relaxed mb-4">
+              The stack is the store. Every sheet knows its position,
+              and the visualization below is a direct read of store state.
+            </p>
+
+            <CodeBlock>{`// Stack config\ncreateStacksheet({\n  stacking: {\n    scaleStep: 0.04,\n    offsetStep: 36,\n    radius: 12,\n  }\n})`}</CodeBlock>
+          </SheetControls>
+        </div>
+      </Sheet.Body>
+      <NextFooter />
+    </>
+  );
+}
+
+// ── Config sheet ──────────────────────────────
+
+const configSnippets: Record<string, string> = {
+  Position: `createStacksheet({\n  side: { desktop: "right", mobile: "bottom" },\n  width: 420,\n  breakpoint: 768,\n})`,
+  Animation: `createStacksheet({\n  spring: "stiff",\n  closeThreshold: 0.25,\n  velocityThreshold: 0.5,\n})`,
+  Behavior: `createStacksheet({\n  modal: true,\n  closeOnBackdrop: true,\n  closeOnEscape: true,\n  lockScroll: true,\n})`,
+};
+
+const configRows: Record<string, { key: string; value: string }[]> = {
+  Position: [
+    { key: "side", value: '"right" | "left" | "bottom"' },
+    { key: "width", value: "420" },
+    { key: "breakpoint", value: "768" },
+    { key: "maxWidth", value: '"90vw"' },
+  ],
+  Animation: [
+    { key: "spring", value: '"stiff" | "snappy" | "natural" | ...' },
+    { key: "closeThreshold", value: "0.25" },
+    { key: "velocityThreshold", value: "0.5" },
+  ],
+  Behavior: [
+    { key: "modal", value: "true" },
+    { key: "closeOnBackdrop", value: "true" },
+    { key: "closeOnEscape", value: "true" },
+    { key: "lockScroll", value: "true" },
+  ],
+};
+
+function ConfigSheet({ category, description }: SheetTypeMap["Config"]) {
+  const snippet = configSnippets[category] || configSnippets.Position;
+  const rows = configRows[category] || configRows.Position;
+
+  return (
+    <>
+      <Sheet.Body>
+        <div className="p-5">
+          <SheetControls>
+            <div className="rounded-lg bg-emerald-50 p-4 mb-4">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-emerald-600 mb-1">
+                {category}
+              </p>
+              <p className="text-sm text-emerald-700 leading-relaxed">
+                {description}
+              </p>
+            </div>
+
+            <p className="text-sm text-zinc-500 leading-relaxed mb-4">
+              Config is set once when creating the store. Every sheet inherits it — no per-sheet overrides needed.
+            </p>
+
+            <div className="flex flex-col mb-4">
+              {rows.map(({ key, value }) => (
+                <div key={key} className="flex items-center justify-between py-2 border-b border-zinc-100 last:border-b-0">
+                  <code className="text-[13px] font-medium text-zinc-950" style={{ fontFamily: "var(--font-mono)" }}>{key}</code>
+                  <code className="text-[13px] text-zinc-500" style={{ fontFamily: "var(--font-mono)" }}>{value}</code>
+                </div>
+              ))}
+            </div>
+
+            <CodeBlock>{snippet}</CodeBlock>
+          </SheetControls>
+        </div>
+      </Sheet.Body>
+      <NextFooter />
+    </>
   );
 }
 
 const sheetMap = {
-  Contact: ContactSheet,
-  Settings: SettingsSheet,
-  Alert: AlertSheet,
+  Push: ActionSheet,
+  Navigate: ActionSheet,
+  Replace: ActionSheet,
+  Swap: ActionSheet,
+  Pop: ActionSheet,
+  Close: ActionSheet,
+  Composable: ComposableSheet,
+  Stacking: StackingSheet,
+  Config: ConfigSheet,
 } as const;
 
 // ── Spring presets ─────────────────────────────
@@ -526,7 +780,7 @@ const defaultConfig: PlaygroundConfig = {
   dismissible: true,
   modal: true,
   shouldScaleBackground: false,
-  width: 420,
+  width: 480,
   maxWidth: "90vw",
   breakpoint: 768,
   zIndex: 100,
@@ -552,6 +806,7 @@ function DemoInstance({
   children: ReactNode;
 }) {
   const instanceRef = useRef<StacksheetReturn | null>(null);
+  const visitedRef = useRef(new Set<string>());
   if (!instanceRef.current) {
     const sideConfig =
       config.desktopSide === config.mobileSide
@@ -591,7 +846,7 @@ function DemoInstance({
   const { StacksheetProvider, store } = instanceRef.current;
 
   return (
-    <PlaygroundContext.Provider value={{ store, StacksheetProvider }}>
+    <PlaygroundContext.Provider value={{ store, StacksheetProvider, visitedRef }}>
       {children}
     </PlaygroundContext.Provider>
   );
@@ -641,7 +896,7 @@ function NumInput({
   placeholder?: string;
 }) {
   return (
-    <label className="flex items-center justify-between text-[13px] py-1.5">
+    <label className="flex items-center justify-between text-sm py-1.5">
       <span className="text-zinc-500">{label}</span>
       <input
         className="w-20 h-7 px-2 text-right text-[13px] bg-zinc-50 border border-zinc-200 rounded-md text-zinc-950 outline-none focus:ring-1 focus:ring-zinc-400"
@@ -667,7 +922,7 @@ function TextInput({
   onChange: (v: string) => void;
 }) {
   return (
-    <label className="flex items-center justify-between text-[13px] py-1.5">
+    <label className="flex items-center justify-between text-sm py-1.5">
       <span className="text-zinc-500">{label}</span>
       <input
         className="w-24 h-7 px-2 text-right text-[13px] bg-zinc-50 border border-zinc-200 rounded-md text-zinc-950 outline-none focus:ring-1 focus:ring-zinc-400"
@@ -682,7 +937,7 @@ function TextInput({
 
 function SectionHeader({ children }: { children: ReactNode }) {
   return (
-    <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-400">
+    <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400">
       {children}
     </p>
   );
@@ -704,7 +959,7 @@ function Collapsible({
   return (
     <div>
       <button
-        className="flex items-center gap-2 w-full text-left py-2 cursor-pointer bg-transparent border-none text-[10px] font-medium uppercase tracking-widest text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
+        className="flex items-center gap-2 w-full text-left py-2 cursor-pointer bg-transparent border-none text-[11px] font-medium uppercase tracking-widest text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
         onClick={onToggle}
         type="button"
       >
@@ -744,7 +999,6 @@ function LeftColumn({
   onConfigChange: (c: PlaygroundConfig) => void;
 }) {
   const actions = useActions();
-  const counterRef = useRef(0);
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
 
   function toggleSection(key: string) {
@@ -757,10 +1011,7 @@ function LeftColumn({
   }
 
   function handleOpen() {
-    const list = presets.Contact;
-    const data = list[counterRef.current % list.length];
-    counterRef.current++;
-    actions.open("Contact", `hero-${Date.now()}`, data as never);
+    actions.open("Push", `tour-${Date.now()}`, presets.Push[0] as never);
   }
 
   const sides: Side[] = ["left", "right", "bottom"];
@@ -778,32 +1029,26 @@ function LeftColumn({
 
   return (
     <div className="flex flex-col">
-      <h1 className="text-[40px] font-semibold tracking-tight leading-none mb-3">
-        Stacksheet
-      </h1>
-      <p className="text-[15px] text-zinc-500 leading-relaxed mb-8">
-        A typed, animated sheet stack for React.
+      <p className="text-sm text-zinc-500 leading-relaxed mb-6">
+        A single store manages every sheet in your app. Fully typed, stack-based, composable. Powered by{" "}
+        <a className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors" href="https://zustand.docs.pmnd.rs">Zustand</a>,{" "}
+        <a className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors" href="https://motion.dev">Motion</a>,
+        and a bit of <a className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors" href="https://www.radix-ui.com">Radix</a>. All wired up.
       </p>
 
       <div className="flex flex-wrap items-center gap-3 mb-10">
         <button
-          className="inline-flex items-center justify-center h-11 px-7 text-[15px] font-medium rounded-full bg-zinc-950 text-zinc-50 border-none cursor-pointer transition-all duration-150 hover:opacity-85 active:scale-[0.97]"
+          className="inline-flex items-center justify-center h-10 px-6 text-sm font-medium rounded-full bg-zinc-950 text-zinc-50 border-none cursor-pointer transition-all duration-150 hover:opacity-85 active:scale-[0.97]"
           onClick={handleOpen}
           type="button"
         >
           Open a sheet
         </button>
         <a
-          className="inline-flex items-center justify-center h-11 px-7 text-[15px] font-medium rounded-full bg-transparent text-zinc-950 border border-zinc-200 cursor-pointer transition-colors duration-150 hover:bg-zinc-100 no-underline"
+          className="inline-flex items-center justify-center h-10 px-6 text-sm font-medium rounded-full bg-transparent text-zinc-950 border border-zinc-200 cursor-pointer transition-colors duration-150 hover:bg-zinc-100 no-underline"
           href="/docs"
         >
           Documentation
-        </a>
-        <a
-          className="text-sm text-zinc-500 underline underline-offset-[3px] hover:text-zinc-950 transition-colors duration-150"
-          href="https://github.com/howells/stacksheet"
-        >
-          GitHub
         </a>
       </div>
 
@@ -873,7 +1118,7 @@ function LeftColumn({
           {toggles.map(({ key, label }) => (
             <button
               key={key}
-              className="flex items-center justify-between py-2.5 text-[13px] text-zinc-950 cursor-pointer bg-transparent border-none border-b border-zinc-100 last:border-b-0 w-full text-left"
+              className="flex items-center justify-between py-2.5 text-sm text-zinc-950 cursor-pointer bg-transparent border-none border-b border-zinc-100 last:border-b-0 w-full text-left"
               onClick={() =>
                 onConfigChange({
                   ...config,
@@ -1016,7 +1261,20 @@ function LeftColumn({
 
 // ── Right Column ───────────────────────────────
 
-function RightColumn({ config }: { config: PlaygroundConfig }) {
+// ── Action snippets for USE ACTIONS panel ────
+
+const actionSnippets: Record<string, string> = {
+  push: `const { actions } = useSheet()\n\nactions.push("Settings", {\n  category: "Position"\n})`,
+  navigate: `const { actions } = useSheet()\n\nactions.navigate("Profile", {\n  userId: "abc-123"\n})`,
+  replace: `const { actions } = useSheet()\n\nactions.replace("Confirm", {\n  action: "delete"\n})`,
+  swap: `const { actions } = useSheet()\n\nactions.swap("Alert", {\n  message: "Saved!"\n})`,
+  pop: `const { actions } = useSheet()\n\nactions.pop()`,
+  close: `const { actions } = useSheet()\n\nactions.close()`,
+};
+
+const actionKeys = ["push", "navigate", "replace", "swap", "pop", "close"] as const;
+
+function useConfigCode(config: PlaygroundConfig): string {
   const configParts: string[] = [];
 
   if (config.desktopSide !== "right" || config.mobileSide !== "bottom") {
@@ -1041,7 +1299,7 @@ function RightColumn({ config }: { config: PlaygroundConfig }) {
   if (config.shouldScaleBackground)
     configParts.push("shouldScaleBackground: true");
 
-  if (config.width !== 420) configParts.push(`width: ${config.width}`);
+  if (config.width !== 480) configParts.push(`width: ${config.width}`);
   if (config.maxWidth !== "90vw")
     configParts.push(`maxWidth: "${config.maxWidth}"`);
   if (config.breakpoint !== 768)
@@ -1078,24 +1336,132 @@ function RightColumn({ config }: { config: PlaygroundConfig }) {
     );
   }
 
-  const configCode =
-    configParts.length > 0
-      ? `createStacksheet({\n  ${configParts.join(",\n  ")}\n})`
-      : "createStacksheet()";
+  const call = configParts.length > 0
+    ? `createStacksheet({\n  ${configParts.join(",\n  ")}\n})`
+    : "createStacksheet()";
+
+  return `import { createStacksheet } from "@howells/stacksheet"\n\nconst {\n  StacksheetProvider,\n  useSheet,\n} = ${call}`;
+}
+
+const defineCode = `import { Sheet } from "@howells/stacksheet"
+
+function SettingsSheet({ category }) {
+  const { close } = useSheet()
 
   return (
-    <div className="flex flex-col gap-4 pt-2 md:sticky md:top-16">
-      <div className="rounded-xl p-6" style={{ backgroundColor: "#1c1c1e" }}>
-        <code className="text-sm text-zinc-300 whitespace-pre" style={{ fontFamily: "var(--font-mono)" }}>
-          {configCode}
-        </code>
-      </div>
-      <div className="text-center py-1">
-        <code className="text-[13px] text-zinc-400" style={{ fontFamily: "var(--font-mono)" }}>
-          npm i @howells/stacksheet
-        </code>
+    <>
+      <Sheet.Header>
+        <Sheet.Title>{category}</Sheet.Title>
+        <Sheet.Close />
+      </Sheet.Header>
+      <Sheet.Body>
+        {/* Your content */}
+      </Sheet.Body>
+    </>
+  )
+}`;
+
+const provideCode = `<StacksheetProvider
+  sheets={{
+    Settings: SettingsSheet,
+    Profile: ProfileSheet,
+  }}
+>
+  <App />
+</StacksheetProvider>`;
+
+function CodePanel({
+  label,
+  code,
+  toolbar,
+}: {
+  label?: string;
+  code: string;
+  toolbar?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col min-h-0 min-w-0">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400 mb-2 shrink-0">
+        {label}
+      </p>
+      <div
+        className="flex-1 flex flex-col rounded-xl overflow-y-auto"
+        style={{ backgroundColor: "#1c1c1e", ...scrollDark }}
+      >
+        {toolbar && <div className="px-5 pt-4 pb-2 shrink-0">{toolbar}</div>}
+        <div className="px-5 pb-5" style={toolbar ? undefined : { paddingTop: "1.25rem" }}>
+          <SyntaxHighlight code={code} />
+        </div>
       </div>
     </div>
+  );
+}
+
+function RightColumn({ config }: { config: PlaygroundConfig }) {
+  const [activeAction, setActiveAction] = useState<typeof actionKeys[number]>("push");
+  const configCode = useConfigCode(config);
+
+  return (
+    <div className="grid grid-cols-1 @min-[1080px]:grid-cols-2 @min-[1080px]:grid-rows-2 @min-[1080px]:h-full gap-3 p-8">
+      <CodePanel label="Create" code={configCode} />
+      <CodePanel label="Define" code={defineCode} />
+      <CodePanel label="Provide" code={provideCode} />
+      <CodePanel
+        label="Use"
+        code={actionSnippets[activeAction]}
+        toolbar={
+          <div className="flex flex-wrap gap-1">
+            {actionKeys.map((key) => (
+              <button
+                key={key}
+                className={`inline-flex items-center h-6 px-2.5 text-[11px] font-medium rounded-full cursor-pointer transition-colors duration-150 ${
+                  activeAction === key
+                    ? "bg-white/15 text-zinc-200"
+                    : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+                }`}
+                style={{ fontFamily: "var(--font-mono)" }}
+                onClick={() => setActiveAction(key)}
+                type="button"
+              >
+                {key}
+              </button>
+            ))}
+          </div>
+        }
+      />
+    </div>
+  );
+}
+
+// ── Page Content ───────────────────────────────
+
+// ── Header ──────────────────────────────────────
+
+function PageHeader() {
+  return (
+    <header className="flex items-center justify-between h-14 px-8 border-b border-zinc-200">
+      <span className="text-xl font-semibold tracking-tight">Stacksheet</span>
+      <nav className="flex items-center gap-6">
+        <a
+          className="text-sm text-zinc-500 no-underline hover:text-zinc-950 transition-colors duration-150"
+          href="/docs"
+        >
+          Docs
+        </a>
+        <a
+          className="text-sm text-zinc-500 no-underline hover:text-zinc-950 transition-colors duration-150"
+          href="https://github.com/howells/stacksheet"
+        >
+          GitHub
+        </a>
+        <a
+          className="text-sm text-zinc-400 no-underline hover:text-zinc-950 transition-colors duration-150"
+          href="https://danielhowells.com"
+        >
+          by Howells
+        </a>
+      </nav>
+    </header>
   );
 }
 
@@ -1112,12 +1478,19 @@ function PageContent({
 
   return (
     <StacksheetProvider sheets={sheetMap} renderHeader={false}>
-      <div
-        data-stacksheet-wrapper=""
-        className="grid grid-cols-1 md:grid-cols-[420px_1fr] gap-12 md:gap-20 max-w-6xl mx-auto p-8 md:p-16 min-h-dvh items-start"
-      >
-        <LeftColumn config={config} onConfigChange={onConfigChange} />
-        <RightColumn config={config} />
+      <div data-stacksheet-wrapper="" className="flex flex-col h-dvh overflow-hidden">
+        <PageHeader />
+        <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[420px_1fr] grid-rows-[1fr]">
+          <div
+            className="border-r border-zinc-200 overflow-y-auto p-8"
+            style={scrollLight}
+          >
+            <LeftColumn config={config} onConfigChange={onConfigChange} />
+          </div>
+          <div className="@container min-h-0 overflow-y-auto" style={scrollLight}>
+            <RightColumn config={config} />
+          </div>
+        </div>
       </div>
     </StacksheetProvider>
   );

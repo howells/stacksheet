@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@howells/stacksheet": "workspace:*",
+    "@radix-ui/react-scroll-area": "^1.2.10",
     "fumadocs-core": "^16.5.2",
     "fumadocs-mdx": "^14.2.7",
     "fumadocs-ui": "^16.5.2",
