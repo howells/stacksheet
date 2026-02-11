@@ -1581,7 +1581,7 @@ function RightColumn({ config }: { config: PlaygroundConfig }) {
 function PageHeader() {
   return (
     <header className="flex items-center justify-between h-14 px-8 border-b border-zinc-200">
-      <span className="text-xl font-semibold tracking-tight">Stacksheet</span>
+      <span className="text-sm font-semibold tracking-tight">Stacksheet</span>
       <nav className="flex items-center gap-6">
         <a
           className="text-sm text-zinc-500 no-underline hover:text-zinc-950 transition-colors duration-150"

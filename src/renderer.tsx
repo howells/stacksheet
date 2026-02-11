@@ -242,7 +242,6 @@ function SheetPanel({
   const transform = getStackTransform(depth, config.stacking);
   const panelStyles = getPanelStyles(side, config, depth, index);
 
-
   // Reset entrance flag when panel moves away from top
   useEffect(() => {
     if (!isTop) {
@@ -326,7 +325,11 @@ function SheetPanel({
   const baseSpring = dragState.isDragging
     ? { type: "tween" as const, duration: 0 }
     : selectSpring(isTop, spring, stackSpring);
-  const visualTween = { type: "tween" as const, duration: 0.25, ease: "easeOut" as const };
+  const visualTween = {
+    type: "tween" as const,
+    duration: 0.25,
+    ease: "easeOut" as const,
+  };
   const transition = dragState.isDragging
     ? baseSpring
     : { ...baseSpring, borderRadius: visualTween, boxShadow: visualTween };
