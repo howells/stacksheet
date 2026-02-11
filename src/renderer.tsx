@@ -326,8 +326,7 @@ function SheetPanel({
     ? { type: "tween" as const, duration: 0 }
     : selectSpring(isTop, spring, stackSpring);
 
-  // Border radius must be in the animate target (not static CSS) for
-  // Motion to apply scale correction. See: motion.dev/docs/react-layout-animations#scale-correction
+  // Explicit radius target to avoid undefined -> value interpolation.
   const animatedRadius = getAnimatedBorderRadius(side, depth, config.stacking);
 
   // Merge drag offset into the animate target
@@ -341,6 +340,8 @@ function SheetPanel({
     transition,
   };
 
+  const initialRadius = getInitialRadius(side);
+
   const panelContent = (
     <m.div
       animate={animateTarget}
@@ -353,6 +354,7 @@ function SheetPanel({
       initial={{
         ...slideFrom,
         opacity: 0.8,
+        ...initialRadius,
       }}
       key={item.id}
       onAnimationComplete={handleAnimationComplete}
@@ -625,7 +627,10 @@ export function SheetRenderer<TMap extends object>({
               const depth = stack.length - 1 - index;
               const isTop = depth === 0;
               const isNested = stack.length > 1;
-              const shouldRender = depth < config.stacking.renderThreshold;
+              // Keep one extra hidden panel mounted as a warm buffer.
+              // Without this, popping from deep stacks can mount content on the
+              // same frame it becomes visible, which can cause a reverse jank.
+              const shouldRender = depth <= config.stacking.renderThreshold;
 
               // Ad-hoc components take priority, then fall back to sheets map
               const Content = (componentMap.get(item.type) ??
@@ -680,6 +685,18 @@ function getStackingOffset(side: Side, offset: number): Record<string, number> {
     default:
       return {};
   }
+}
+
+function getInitialRadius(side: Side): Record<string, number> {
+  if (side === "bottom") {
+    return {
+      borderTopLeftRadius: 0,
+      borderTopRightRadius: 0,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+    };
+  }
+  return { borderRadius: 0 };
 }
 
 function getShadow(side: Side, isNested: boolean): string {
