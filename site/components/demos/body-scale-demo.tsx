@@ -30,16 +30,20 @@ function BottomSheet() {
               transition. This creates an iOS-style depth effect.
             </span>
           </Sheet.Description>
-          <button
-            className="demo-btn"
-            onClick={close}
-            type="button"
-            style={{ marginTop: 16 }}
-          >
+        </div>
+      </Sheet.Body>
+      <Sheet.Footer>
+        <div
+          style={{
+            padding: "12px 16px",
+            borderTop: "1px solid var(--fd-border, #e5e5e5)",
+          }}
+        >
+          <button className="demo-btn" onClick={close} type="button">
             Close
           </button>
         </div>
-      </Sheet.Body>
+      </Sheet.Footer>
     </>
   );
 }

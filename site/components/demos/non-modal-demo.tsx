@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createStacksheet } from "@howells/stacksheet";
+import { Sheet, createStacksheet } from "@howells/stacksheet";
 
 const { StacksheetProvider, useSheet } = createStacksheet({
   modal: false,
@@ -12,17 +12,58 @@ const { StacksheetProvider, useSheet } = createStacksheet({
 function SidebarSheet() {
   const { close } = useSheet();
   return (
-    <div className="sheet-content">
-      <h3>Sidebar</h3>
-      <p>
-        This is a non-modal sheet. The page behind it remains fully interactive —
-        try clicking the counter or typing in the input.
-      </p>
-      <p>No overlay, no scroll lock, no focus trap.</p>
-      <button className="demo-btn" onClick={close} type="button">
-        Close
-      </button>
-    </div>
+    <>
+      <Sheet.Header>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            padding: "0 12px",
+            height: 48,
+            gap: 8,
+          }}
+        >
+          <Sheet.Title>
+            <span style={{ fontSize: 15, fontWeight: 600 }}>Sidebar</span>
+          </Sheet.Title>
+          <div style={{ flex: 1 }} />
+          <Sheet.Close />
+        </div>
+      </Sheet.Header>
+      <Sheet.Body>
+        <div style={{ padding: "0 16px" }}>
+          <Sheet.Description>
+            <span
+              style={{ fontSize: 13, color: "var(--fd-muted-foreground, #666)" }}
+            >
+              This is a non-modal sheet. The page behind it remains fully
+              interactive — try clicking the counter or typing in the input.
+            </span>
+          </Sheet.Description>
+          <p
+            style={{
+              fontSize: 13,
+              color: "var(--fd-muted-foreground, #666)",
+              marginTop: 12,
+            }}
+          >
+            No overlay, no scroll lock, no focus trap.
+          </p>
+        </div>
+      </Sheet.Body>
+      <Sheet.Footer>
+        <div
+          style={{
+            padding: "12px 16px",
+            borderTop: "1px solid var(--fd-border, #e5e5e5)",
+          }}
+        >
+          <button className="demo-btn" onClick={close} type="button">
+            Close sidebar
+          </button>
+        </div>
+      </Sheet.Footer>
+    </>
   );
 }
 
@@ -92,7 +133,7 @@ function InteractiveContent() {
 
 export function NonModalDemo() {
   return (
-    <StacksheetProvider>
+    <StacksheetProvider renderHeader={false}>
       <div className="demo-preview" style={{ flexDirection: "column", gap: 8 }}>
         <InteractiveContent />
       </div>
