@@ -293,7 +293,6 @@ function SheetPanel({
   const dragOffset = getDragTransform(side, dragState.offset);
   const panelStyle: CSSProperties = {
     ...panelStyles,
-    boxShadow: isTop ? getShadow(side, false) : getShadow(side, true),
     pointerEvents: isTop ? "auto" : "none",
     // During drag, disable spring transition for immediate feedback
     ...(dragState.isDragging ? { transition: "none" } : {}),
@@ -327,7 +326,7 @@ function SheetPanel({
     : selectSpring(isTop, spring, stackSpring);
 
   // Explicit radius target to avoid undefined -> value interpolation.
-  const animatedRadius = getAnimatedBorderRadius(side, depth, config.stacking);
+  const _animatedRadius = getAnimatedBorderRadius(side, depth, config.stacking);
 
   // Merge drag offset into the animate target
   const animateTarget = {
@@ -336,11 +335,12 @@ function SheetPanel({
     ...dragOffset,
     scale: transform.scale,
     opacity: transform.opacity,
-    ...animatedRadius,
+    // ...animatedRadius,
+    boxShadow: getShadow(side, !isTop),
     transition,
   };
 
-  const initialRadius = getInitialRadius(side);
+  const _initialRadius = getInitialRadius(side);
 
   const panelContent = (
     <m.div
@@ -349,19 +349,20 @@ function SheetPanel({
       exit={{
         ...slideFrom,
         opacity: 0.6,
+        boxShadow: getShadow(side, false),
         transition: exitSpring,
       }}
       initial={{
         ...slideFrom,
         opacity: 0.8,
-        ...initialRadius,
+        // ...initialRadius,
+        boxShadow: getShadow(side, false),
       }}
       key={item.id}
       onAnimationComplete={handleAnimationComplete}
       ref={panelRef}
       style={panelStyle}
       tabIndex={isTop ? -1 : undefined}
-      transition={spring}
       {...ariaProps}
     >
       {isComposable ? (
