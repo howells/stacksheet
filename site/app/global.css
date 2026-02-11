@@ -2,6 +2,13 @@
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
 
+/* ── Font ──────────────────────────────── */
+
+body {
+  font-family: "InterVariable", "Inter", system-ui, sans-serif;
+  font-feature-settings: "liga" 1, "calt" 1, "cv11" 1;
+}
+
 /* ── Theme overrides ────────────────────── */
 
 @theme {
