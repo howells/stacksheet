@@ -10,10 +10,12 @@ import {
   useSyncExternalStore,
 } from "react";
 import {
+  Sheet,
   type SheetActions,
   type Side,
   type SpringPreset,
   createStacksheet,
+  useSheetPanel,
 } from "@howells/stacksheet";
 
 // ── Type registry ──────────────────────────────
@@ -136,10 +138,10 @@ function useStack() {
 function Toggle({ on }: { on?: boolean }) {
   return (
     <span
-      className={`inline-block w-9 h-5 rounded-full relative ${on ? "bg-zinc-950" : "bg-zinc-200"}`}
+      className={`inline-block w-9 h-5 rounded-full relative transition-colors duration-150 ${on ? "bg-zinc-950" : "bg-zinc-300"}`}
     >
       <span
-        className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 rounded-full bg-white transition-transform duration-150 ${on ? "translate-x-4" : ""}`}
+        className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-150 ${on ? "translate-x-3.5" : ""}`}
       />
     </span>
   );
@@ -177,52 +179,45 @@ function SheetControls({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="p-6">
+    <div>
       {children}
 
       <div className="h-px bg-zinc-100 my-5" />
 
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-2.5">
+      <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-400 mb-2.5">
         Try an action
       </p>
       <div className="flex flex-wrap gap-1.5">
+        {(["push", "navigate", "replace"] as const).map((name) => (
+          <button
+            key={name}
+            className="inline-flex items-center h-[30px] px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
+            style={{ fontFamily: "var(--font-mono)" }}
+            onClick={() => doAction(name)}
+            type="button"
+          >
+            {name}
+          </button>
+        ))}
         <button
-          className="inline-flex items-center h-[30px] px-3 text-xs font-medium font-mono border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
-          onClick={() => doAction("push")}
-          type="button"
-        >
-          push
-        </button>
-        <button
-          className="inline-flex items-center h-[30px] px-3 text-xs font-medium font-mono border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
-          onClick={() => doAction("navigate")}
-          type="button"
-        >
-          navigate
-        </button>
-        <button
-          className="inline-flex items-center h-[30px] px-3 text-xs font-medium font-mono border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
-          onClick={() => doAction("replace")}
-          type="button"
-        >
-          replace
-        </button>
-        <button
-          className="inline-flex items-center h-[30px] px-3 text-xs font-medium font-mono border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
+          className="inline-flex items-center h-[30px] px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
+          style={{ fontFamily: "var(--font-mono)" }}
           onClick={() => doSwap()}
           type="button"
         >
           swap
         </button>
         <button
-          className="inline-flex items-center h-[30px] px-3 text-xs font-medium font-mono border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
+          className="inline-flex items-center h-[30px] px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
+          style={{ fontFamily: "var(--font-mono)" }}
           onClick={() => actions.pop()}
           type="button"
         >
           pop
         </button>
         <button
-          className="inline-flex items-center h-[30px] px-3 text-xs font-medium font-mono border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
+          className="inline-flex items-center h-[30px] px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
+          style={{ fontFamily: "var(--font-mono)" }}
           onClick={() => actions.close()}
           type="button"
         >
@@ -232,7 +227,7 @@ function SheetControls({ children }: { children: ReactNode }) {
 
       <div className="h-px bg-zinc-100 my-5" />
 
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 mb-2.5">
+      <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-400 mb-2.5">
         Stack{" "}
         <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-zinc-100 rounded-full text-zinc-500 ml-1 align-middle">
           {stack.length}
@@ -241,7 +236,7 @@ function SheetControls({ children }: { children: ReactNode }) {
       <div className="flex flex-col gap-1">
         {stack.map((item, i) => (
           <button
-            className="flex items-center gap-2 py-1.5 px-2.5 border-none rounded-md text-[13px] font-inherit bg-transparent cursor-pointer w-full text-left transition-colors duration-150 hover:bg-zinc-100 data-[current]:bg-zinc-100 data-[current]:cursor-default data-[current]:hover:bg-zinc-100"
+            className="flex items-center gap-2 py-1.5 px-2.5 border-none rounded-md text-[13px] bg-transparent cursor-pointer w-full text-left transition-colors duration-150 hover:bg-zinc-100 data-[current]:bg-zinc-100 data-[current]:cursor-default data-[current]:hover:bg-zinc-100"
             key={item.id}
             data-current={i === stack.length - 1 || undefined}
             disabled={i === stack.length - 1}
@@ -256,7 +251,7 @@ function SheetControls({ children }: { children: ReactNode }) {
               className={`w-2 h-2 rounded-full shrink-0 ${dotColors[item.type] || "bg-zinc-300"}`}
             />
             <span className="font-medium text-zinc-950">{item.type}</span>
-            <span className="text-zinc-400 text-xs font-mono">
+            <span className="text-zinc-400 text-xs" style={{ fontFamily: "var(--font-mono)" }}>
               {item.id.split("-")[0]}
             </span>
             {i === stack.length - 1 && (
@@ -273,25 +268,51 @@ function SheetControls({ children }: { children: ReactNode }) {
 
 // ── Sheet components ───────────────────────────
 
-const badgeVariants: Record<string, string> = {
-  blue: "bg-blue-100 text-blue-700",
-  purple: "bg-violet-100 text-violet-700",
-  amber: "bg-amber-100 text-amber-700",
-  green: "bg-green-100 text-green-700",
-};
-
-function Badge({
-  variant,
-  children,
-}: { variant: string; children: ReactNode }) {
+// Shared header bar used by composable sheets
+function HeaderBar({ children }: { children: ReactNode }) {
   return (
-    <span
-      className={`inline-block text-[11px] font-semibold uppercase tracking-wide px-2.5 py-0.5 rounded-full mb-3 ${badgeVariants[variant] || badgeVariants.blue}`}
+    <Sheet.Header
+      className="flex items-center justify-between px-5 py-4 border-b border-zinc-100"
     >
       {children}
-    </span>
+    </Sheet.Header>
   );
 }
+
+// Shared footer bar
+function FooterBar({ children }: { children: ReactNode }) {
+  return (
+    <Sheet.Footer className="flex items-center gap-2 px-5 py-4 border-t border-zinc-100">
+      {children}
+    </Sheet.Footer>
+  );
+}
+
+function FooterButton({
+  children,
+  variant = "secondary",
+  onClick,
+}: {
+  children: ReactNode;
+  variant?: "primary" | "secondary";
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      className={`h-9 px-4 text-sm font-medium rounded-lg cursor-pointer transition-colors duration-150 ${
+        variant === "primary"
+          ? "bg-zinc-950 text-white hover:bg-zinc-800"
+          : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+      }`}
+      onClick={onClick}
+      type="button"
+    >
+      {children}
+    </button>
+  );
+}
+
+// ── Contact: Full composable — Header, Body (scrollable), Footer ──
 
 function ContactSheet({
   name,
@@ -299,72 +320,151 @@ function ContactSheet({
   role,
   location,
 }: SheetTypeMap["Contact"]) {
+  const { close } = useSheetPanel();
+
   return (
-    <SheetControls>
-      <Badge variant="blue">Contact</Badge>
-      <h3 className="text-lg font-semibold mb-1">{name}</h3>
-      <p className="text-sm text-zinc-500 mb-4">{role}</p>
-      <div className="flex flex-col gap-3 mb-1">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-            Email
-          </span>
-          <span className="text-sm text-zinc-950">{email}</span>
+    <>
+      <HeaderBar>
+        <div className="flex items-center gap-2">
+          <Sheet.Back className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+          <Sheet.Title className="text-base font-semibold">Contact</Sheet.Title>
         </div>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-            Location
-          </span>
-          <span className="text-sm text-zinc-950">{location}</span>
-        </div>
-      </div>
-    </SheetControls>
+        <Sheet.Close className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+      </HeaderBar>
+      <Sheet.Body>
+        <SheetControls>
+          <div className="flex items-center gap-4 mb-5">
+            <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg font-semibold shrink-0">
+              {name.charAt(0)}
+            </div>
+            <div>
+              <p className="text-base font-semibold text-zinc-950">{name}</p>
+              <p className="text-sm text-zinc-500">{role}</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-medium uppercase tracking-widest text-zinc-400">Email</span>
+              <span className="text-sm text-zinc-950">{email}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-medium uppercase tracking-widest text-zinc-400">Location</span>
+              <span className="text-sm text-zinc-950">{location}</span>
+            </div>
+          </div>
+        </SheetControls>
+      </Sheet.Body>
+      <FooterBar>
+        <FooterButton variant="primary">Send message</FooterButton>
+        <FooterButton onClick={close}>Close</FooterButton>
+      </FooterBar>
+    </>
   );
 }
+
+// ── Settings: Handle + Header + Body (toggle list) + Footer ──
 
 function SettingsSheet({
   section,
   description,
 }: SheetTypeMap["Settings"]) {
+  const { close } = useSheetPanel();
+  const [values, setValues] = useState<Record<string, boolean>>({
+    feature: true,
+    digest: false,
+    analytics: true,
+    beta: false,
+  });
+
+  function toggle(key: string) {
+    setValues((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  const rows = [
+    { key: "feature", label: "Enable feature", desc: "Turn on the main feature toggle" },
+    { key: "digest", label: "Email digest", desc: "Weekly summary to your inbox" },
+    { key: "analytics", label: "Usage analytics", desc: "Help improve the product" },
+    { key: "beta", label: "Beta features", desc: "Try experimental functionality" },
+  ];
+
   return (
-    <SheetControls>
-      <Badge variant="purple">Settings</Badge>
-      <h3 className="text-lg font-semibold mb-1">{section}</h3>
-      <p className="text-sm text-zinc-500 leading-relaxed mb-4">
-        {description}
-      </p>
-      <div className="flex flex-col gap-3 mb-1">
-        <div className="flex items-center justify-between text-sm text-zinc-950 py-2">
-          <span>Enable feature</span>
-          <Toggle on />
+    <>
+      <Sheet.Handle />
+      <HeaderBar>
+        <div className="flex items-center gap-2">
+          <Sheet.Back className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+          <Sheet.Title className="text-base font-semibold">{section}</Sheet.Title>
         </div>
-        <div className="flex items-center justify-between text-sm text-zinc-950 py-2 border-t border-zinc-100">
-          <span>Send digest</span>
-          <Toggle />
+        <Sheet.Close className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+      </HeaderBar>
+      <Sheet.Body>
+        <div className="px-5 pt-4 pb-2">
+          <Sheet.Description className="text-sm text-zinc-500 leading-relaxed mb-5">
+            {description}
+          </Sheet.Description>
+          <div className="flex flex-col">
+            {rows.map(({ key, label, desc }) => (
+              <button
+                key={key}
+                className="flex items-center justify-between py-3 text-left cursor-pointer bg-transparent border-none border-b border-zinc-100 last:border-b-0 w-full"
+                onClick={() => toggle(key)}
+                type="button"
+              >
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm text-zinc-950">{label}</span>
+                  <span className="text-xs text-zinc-400">{desc}</span>
+                </div>
+                <Toggle on={values[key]} />
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
-    </SheetControls>
+        <div className="px-5">
+          <SheetControls>{null}</SheetControls>
+        </div>
+      </Sheet.Body>
+      <FooterBar>
+        <FooterButton variant="primary">Save changes</FooterButton>
+        <FooterButton onClick={close}>Cancel</FooterButton>
+      </FooterBar>
+    </>
   );
 }
+
+// ── Alert: Simple — just body content, no header/footer ──
+
+const severityStyles: Record<string, { bg: string; text: string; icon: string }> = {
+  warning: { bg: "bg-amber-50", text: "text-amber-700", icon: "⚠" },
+  info: { bg: "bg-blue-50", text: "text-blue-700", icon: "ℹ" },
+  success: { bg: "bg-green-50", text: "text-green-700", icon: "✓" },
+};
 
 function AlertSheet({
   title,
   message,
   severity,
 }: SheetTypeMap["Alert"]) {
-  const variant =
-    severity === "warning"
-      ? "amber"
-      : severity === "success"
-        ? "green"
-        : "blue";
+  const { close } = useSheetPanel();
+  const styles = severityStyles[severity] || severityStyles.info;
 
   return (
-    <SheetControls>
-      <Badge variant={variant}>{severity}</Badge>
-      <h3 className="text-lg font-semibold mb-1">{title}</h3>
-      <p className="text-sm text-zinc-500 leading-relaxed mb-4">{message}</p>
-    </SheetControls>
+    <Sheet.Body>
+      <div className="p-5">
+        <div className={`${styles.bg} rounded-lg p-4 mb-5`}>
+          <div className="flex items-start gap-3">
+            <span className={`text-lg ${styles.text}`}>{styles.icon}</span>
+            <div>
+              <p className={`text-sm font-semibold ${styles.text} mb-1`}>{title}</p>
+              <p className={`text-sm ${styles.text} opacity-80 leading-relaxed`}>{message}</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-2 mb-5">
+          <FooterButton variant="primary" onClick={close}>Dismiss</FooterButton>
+        </div>
+        <SheetControls>{null}</SheetControls>
+      </div>
+    </Sheet.Body>
   );
 }
 
@@ -387,12 +487,9 @@ const springPresets: SpringPreset[] = [
 // ── Config state ───────────────────────────────
 
 interface PlaygroundConfig {
-  // Position (responsive)
   desktopSide: Side;
   mobileSide: Side;
-  // Spring
   spring: SpringPreset;
-  // Behavior toggles
   showOverlay: boolean;
   closeOnBackdrop: boolean;
   closeOnEscape: boolean;
@@ -401,24 +498,19 @@ interface PlaygroundConfig {
   dismissible: boolean;
   modal: boolean;
   shouldScaleBackground: boolean;
-  // Layout
   width: number;
   maxWidth: string;
   breakpoint: number;
   zIndex: number;
-  // Drag tuning
   closeThreshold: number;
   velocityThreshold: number;
-  // Limits & stacking
-  maxDepth: number; // 0 = Infinity (unlimited)
+  maxDepth: number;
   stackScaleStep: number;
   stackOffsetStep: number;
   stackOpacityStep: number;
   stackRadius: number;
   stackRenderThreshold: number;
-  // Body scale
   scaleBackgroundAmount: number;
-  // Accessibility
   ariaLabel: string;
 }
 
@@ -518,7 +610,7 @@ function Pill({
 }) {
   return (
     <button
-      className={`inline-flex items-center h-[34px] px-4 text-[13px] font-medium rounded-full cursor-pointer transition-colors duration-150 ${
+      className={`inline-flex items-center h-7 px-3 text-xs font-medium rounded-full cursor-pointer transition-colors duration-150 ${
         active
           ? "bg-zinc-950 text-zinc-50"
           : "shadow-[0_0_0_1px_rgba(0,0,0,0.08)] text-zinc-950 hover:bg-zinc-100"
@@ -549,10 +641,11 @@ function NumInput({
   placeholder?: string;
 }) {
   return (
-    <label className="flex items-center justify-between text-[13px] py-1">
+    <label className="flex items-center justify-between text-[13px] py-1.5">
       <span className="text-zinc-500">{label}</span>
       <input
-        className="w-20 h-7 px-2 text-right text-[13px] font-mono bg-zinc-50 border border-zinc-200 rounded-md text-zinc-950 outline-none focus:ring-1 focus:ring-zinc-400"
+        className="w-20 h-7 px-2 text-right text-[13px] bg-zinc-50 border border-zinc-200 rounded-md text-zinc-950 outline-none focus:ring-1 focus:ring-zinc-400"
+        style={{ fontFamily: "var(--font-mono)" }}
         min={min}
         onChange={(e) => onChange(Number(e.target.value))}
         placeholder={placeholder}
@@ -574,10 +667,11 @@ function TextInput({
   onChange: (v: string) => void;
 }) {
   return (
-    <label className="flex items-center justify-between text-[13px] py-1">
+    <label className="flex items-center justify-between text-[13px] py-1.5">
       <span className="text-zinc-500">{label}</span>
       <input
-        className="w-24 h-7 px-2 text-right text-[13px] font-mono bg-zinc-50 border border-zinc-200 rounded-md text-zinc-950 outline-none focus:ring-1 focus:ring-zinc-400"
+        className="w-24 h-7 px-2 text-right text-[13px] bg-zinc-50 border border-zinc-200 rounded-md text-zinc-950 outline-none focus:ring-1 focus:ring-zinc-400"
+        style={{ fontFamily: "var(--font-mono)" }}
         onChange={(e) => onChange(e.target.value)}
         type="text"
         value={value}
@@ -588,9 +682,55 @@ function TextInput({
 
 function SectionHeader({ children }: { children: ReactNode }) {
   return (
-    <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400">
+    <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-400">
       {children}
     </p>
+  );
+}
+
+// ── Collapsible section ────────────────────────
+
+function Collapsible({
+  label,
+  open,
+  onToggle,
+  children,
+}: {
+  label: string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div>
+      <button
+        className="flex items-center gap-2 w-full text-left py-2 cursor-pointer bg-transparent border-none text-[10px] font-medium uppercase tracking-widest text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
+        onClick={onToggle}
+        type="button"
+      >
+        <svg
+          className="transition-transform duration-200"
+          style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)" }}
+          width="10"
+          height="10"
+          viewBox="0 0 10 10"
+          fill="none"
+        >
+          <path d="M3 1.5L7 5L3 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        {label}
+      </button>
+      <div
+        className="grid transition-[grid-template-rows] duration-200 ease-out"
+        style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
+      >
+        <div className="overflow-hidden">
+          <div className="flex flex-col gap-0.5 pb-2">
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -605,6 +745,16 @@ function LeftColumn({
 }) {
   const actions = useActions();
   const counterRef = useRef(0);
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+
+  function toggleSection(key: string) {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   function handleOpen() {
     const list = presets.Contact;
@@ -628,14 +778,14 @@ function LeftColumn({
 
   return (
     <div className="flex flex-col">
-      <h1 className="text-5xl font-bold tracking-tight leading-none mb-3">
+      <h1 className="text-[40px] font-semibold tracking-tight leading-none mb-3">
         Stacksheet
       </h1>
-      <p className="text-[15px] text-zinc-500 leading-relaxed mb-6">
+      <p className="text-[15px] text-zinc-500 leading-relaxed mb-8">
         A typed, animated sheet stack for React.
       </p>
 
-      <div className="flex flex-wrap items-center gap-3 mb-8">
+      <div className="flex flex-wrap items-center gap-3 mb-10">
         <button
           className="inline-flex items-center justify-center h-11 px-7 text-[15px] font-medium rounded-full bg-zinc-950 text-zinc-50 border-none cursor-pointer transition-all duration-150 hover:opacity-85 active:scale-[0.97]"
           onClick={handleOpen}
@@ -650,7 +800,7 @@ function LeftColumn({
           Documentation
         </a>
         <a
-          className="text-sm text-zinc-500 underline underline-offset-[3px] hover:text-zinc-950"
+          className="text-sm text-zinc-500 underline underline-offset-[3px] hover:text-zinc-950 transition-colors duration-150"
           href="https://github.com/howells/stacksheet"
         >
           GitHub
@@ -658,9 +808,9 @@ function LeftColumn({
       </div>
 
       {/* ── Position ────────────────────────── */}
-      <div className="flex flex-col gap-4 mb-5">
+      <div className="grid grid-cols-2 gap-6 mb-6">
         <div className="flex flex-col gap-2">
-          <SectionHeader>Position — Desktop</SectionHeader>
+          <SectionHeader>Desktop</SectionHeader>
           <div className="flex flex-wrap gap-1.5">
             {sides.map((s) => (
               <Pill
@@ -677,7 +827,7 @@ function LeftColumn({
         </div>
 
         <div className="flex flex-col gap-2">
-          <SectionHeader>Position — Mobile</SectionHeader>
+          <SectionHeader>Mobile</SectionHeader>
           <div className="flex flex-wrap gap-1.5">
             {sides.map((s) => (
               <Pill
@@ -694,10 +844,10 @@ function LeftColumn({
         </div>
       </div>
 
-      <div className="h-px bg-zinc-100 my-3" />
+      <div className="h-px bg-zinc-200 my-3" />
 
       {/* ── Spring ──────────────────────────── */}
-      <div className="flex flex-col gap-2 mb-5">
+      <div className="flex flex-col gap-2 mb-6">
         <SectionHeader>Spring</SectionHeader>
         <div className="flex flex-wrap gap-1.5">
           {springPresets.map((p) => (
@@ -714,144 +864,151 @@ function LeftColumn({
         </div>
       </div>
 
-      <div className="h-px bg-zinc-100 my-3" />
+      <div className="h-px bg-zinc-200 my-3" />
 
       {/* ── Behavior ────────────────────────── */}
-      <div className="flex flex-col gap-2 mb-5">
+      <div className="flex flex-col gap-0 mb-6">
         <SectionHeader>Behavior</SectionHeader>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-col">
           {toggles.map(({ key, label }) => (
-            <Pill
+            <button
               key={key}
-              active={config[key] as boolean}
+              className="flex items-center justify-between py-2.5 text-[13px] text-zinc-950 cursor-pointer bg-transparent border-none border-b border-zinc-100 last:border-b-0 w-full text-left"
               onClick={() =>
                 onConfigChange({
                   ...config,
                   [key]: !config[key],
                 })
               }
+              type="button"
             >
-              {label}
-            </Pill>
+              <span>{label}</span>
+              <Toggle on={config[key] as boolean} />
+            </button>
           ))}
         </div>
       </div>
 
-      <div className="h-px bg-zinc-100 my-3" />
+      <div className="h-px bg-zinc-200 my-3" />
 
-      {/* ── Layout ──────────────────────────── */}
-      <div className="flex flex-col gap-1 mb-5">
-        <SectionHeader>Layout</SectionHeader>
-        <NumInput
-          label="width"
-          min={100}
-          onChange={(v) => onConfigChange({ ...config, width: v })}
-          step={10}
-          value={config.width}
-        />
-        <TextInput
-          label="maxWidth"
-          onChange={(v) => onConfigChange({ ...config, maxWidth: v })}
-          value={config.maxWidth}
-        />
-        <NumInput
-          label="breakpoint"
-          min={0}
-          onChange={(v) => onConfigChange({ ...config, breakpoint: v })}
-          value={config.breakpoint}
-        />
-        <NumInput
-          label="zIndex"
-          min={0}
-          onChange={(v) => onConfigChange({ ...config, zIndex: v })}
-          value={config.zIndex}
-        />
-      </div>
-
-      <div className="h-px bg-zinc-100 my-3" />
-
-      {/* ── Drag tuning ─────────────────────── */}
-      <div className="flex flex-col gap-1 mb-5">
-        <SectionHeader>Drag</SectionHeader>
-        <NumInput
-          label="closeThreshold"
-          min={0}
-          onChange={(v) => onConfigChange({ ...config, closeThreshold: v })}
-          step={0.05}
-          value={config.closeThreshold}
-        />
-        <NumInput
-          label="velocityThreshold"
-          min={0}
-          onChange={(v) => onConfigChange({ ...config, velocityThreshold: v })}
-          step={0.1}
-          value={config.velocityThreshold}
-        />
-      </div>
-
-      <div className="h-px bg-zinc-100 my-3" />
-
-      {/* ── Stacking ────────────────────────── */}
-      <div className="flex flex-col gap-1 mb-5">
-        <SectionHeader>Stacking</SectionHeader>
-        <NumInput
-          label="maxDepth"
-          min={0}
-          onChange={(v) => onConfigChange({ ...config, maxDepth: v })}
-          placeholder="∞"
-          value={config.maxDepth}
-        />
-        <NumInput
-          label="scaleStep"
-          min={0}
-          onChange={(v) => onConfigChange({ ...config, stackScaleStep: v })}
-          step={0.01}
-          value={config.stackScaleStep}
-        />
-        <NumInput
-          label="offsetStep"
-          min={0}
-          onChange={(v) => onConfigChange({ ...config, stackOffsetStep: v })}
-          value={config.stackOffsetStep}
-        />
-        <NumInput
-          label="opacityStep"
-          min={0}
-          onChange={(v) => onConfigChange({ ...config, stackOpacityStep: v })}
-          step={0.1}
-          value={config.stackOpacityStep}
-        />
-        <NumInput
-          label="radius"
-          min={0}
-          onChange={(v) => onConfigChange({ ...config, stackRadius: v })}
-          value={config.stackRadius}
-        />
-        <NumInput
-          label="renderThreshold"
-          min={1}
-          onChange={(v) => onConfigChange({ ...config, stackRenderThreshold: v })}
-          value={config.stackRenderThreshold}
-        />
-      </div>
-
-      <div className="h-px bg-zinc-100 my-3" />
-
-      {/* ── Advanced ────────────────────────── */}
+      {/* ── Collapsible sections ─────────────── */}
       <div className="flex flex-col gap-1">
-        <SectionHeader>Advanced</SectionHeader>
-        <NumInput
-          label="scaleBackgroundAmount"
-          min={0}
-          onChange={(v) => onConfigChange({ ...config, scaleBackgroundAmount: v })}
-          step={0.01}
-          value={config.scaleBackgroundAmount}
-        />
-        <TextInput
-          label="ariaLabel"
-          onChange={(v) => onConfigChange({ ...config, ariaLabel: v })}
-          value={config.ariaLabel}
-        />
+        <Collapsible
+          label="Layout"
+          open={openSections.has("layout")}
+          onToggle={() => toggleSection("layout")}
+        >
+          <NumInput
+            label="width"
+            min={100}
+            onChange={(v) => onConfigChange({ ...config, width: v })}
+            step={10}
+            value={config.width}
+          />
+          <TextInput
+            label="maxWidth"
+            onChange={(v) => onConfigChange({ ...config, maxWidth: v })}
+            value={config.maxWidth}
+          />
+          <NumInput
+            label="breakpoint"
+            min={0}
+            onChange={(v) => onConfigChange({ ...config, breakpoint: v })}
+            value={config.breakpoint}
+          />
+          <NumInput
+            label="zIndex"
+            min={0}
+            onChange={(v) => onConfigChange({ ...config, zIndex: v })}
+            value={config.zIndex}
+          />
+        </Collapsible>
+
+        <Collapsible
+          label="Drag"
+          open={openSections.has("drag")}
+          onToggle={() => toggleSection("drag")}
+        >
+          <NumInput
+            label="closeThreshold"
+            min={0}
+            onChange={(v) => onConfigChange({ ...config, closeThreshold: v })}
+            step={0.05}
+            value={config.closeThreshold}
+          />
+          <NumInput
+            label="velocityThreshold"
+            min={0}
+            onChange={(v) => onConfigChange({ ...config, velocityThreshold: v })}
+            step={0.1}
+            value={config.velocityThreshold}
+          />
+        </Collapsible>
+
+        <Collapsible
+          label="Stacking"
+          open={openSections.has("stacking")}
+          onToggle={() => toggleSection("stacking")}
+        >
+          <NumInput
+            label="maxDepth"
+            min={0}
+            onChange={(v) => onConfigChange({ ...config, maxDepth: v })}
+            placeholder="∞"
+            value={config.maxDepth}
+          />
+          <NumInput
+            label="scaleStep"
+            min={0}
+            onChange={(v) => onConfigChange({ ...config, stackScaleStep: v })}
+            step={0.01}
+            value={config.stackScaleStep}
+          />
+          <NumInput
+            label="offsetStep"
+            min={0}
+            onChange={(v) => onConfigChange({ ...config, stackOffsetStep: v })}
+            value={config.stackOffsetStep}
+          />
+          <NumInput
+            label="opacityStep"
+            min={0}
+            onChange={(v) => onConfigChange({ ...config, stackOpacityStep: v })}
+            step={0.1}
+            value={config.stackOpacityStep}
+          />
+          <NumInput
+            label="radius"
+            min={0}
+            onChange={(v) => onConfigChange({ ...config, stackRadius: v })}
+            value={config.stackRadius}
+          />
+          <NumInput
+            label="renderThreshold"
+            min={1}
+            onChange={(v) => onConfigChange({ ...config, stackRenderThreshold: v })}
+            value={config.stackRenderThreshold}
+          />
+        </Collapsible>
+
+        <Collapsible
+          label="Advanced"
+          open={openSections.has("advanced")}
+          onToggle={() => toggleSection("advanced")}
+        >
+          <NumInput
+            label="scaleBackgroundAmount"
+            min={0}
+            onChange={(v) => onConfigChange({ ...config, scaleBackgroundAmount: v })}
+            step={0.01}
+            value={config.scaleBackgroundAmount}
+          />
+          <TextInput
+            label="ariaLabel"
+            onChange={(v) => onConfigChange({ ...config, ariaLabel: v })}
+            value={config.ariaLabel}
+          />
+        </Collapsible>
       </div>
     </div>
   );
@@ -862,7 +1019,6 @@ function LeftColumn({
 function RightColumn({ config }: { config: PlaygroundConfig }) {
   const configParts: string[] = [];
 
-  // Side — only show when different from library default { desktop: "right", mobile: "bottom" }
   if (config.desktopSide !== "right" || config.mobileSide !== "bottom") {
     if (config.desktopSide === config.mobileSide) {
       configParts.push(`side: "${config.desktopSide}"`);
@@ -873,10 +1029,8 @@ function RightColumn({ config }: { config: PlaygroundConfig }) {
     }
   }
 
-  // Spring
   if (config.spring !== "stiff") configParts.push(`spring: "${config.spring}"`);
 
-  // Booleans (show when different from default)
   if (!config.showOverlay) configParts.push("showOverlay: false");
   if (!config.closeOnBackdrop) configParts.push("closeOnBackdrop: false");
   if (!config.closeOnEscape) configParts.push("closeOnEscape: false");
@@ -887,7 +1041,6 @@ function RightColumn({ config }: { config: PlaygroundConfig }) {
   if (config.shouldScaleBackground)
     configParts.push("shouldScaleBackground: true");
 
-  // Layout
   if (config.width !== 420) configParts.push(`width: ${config.width}`);
   if (config.maxWidth !== "90vw")
     configParts.push(`maxWidth: "${config.maxWidth}"`);
@@ -895,24 +1048,19 @@ function RightColumn({ config }: { config: PlaygroundConfig }) {
     configParts.push(`breakpoint: ${config.breakpoint}`);
   if (config.zIndex !== 100) configParts.push(`zIndex: ${config.zIndex}`);
 
-  // Drag
   if (config.closeThreshold !== 0.25)
     configParts.push(`closeThreshold: ${config.closeThreshold}`);
   if (config.velocityThreshold !== 0.5)
     configParts.push(`velocityThreshold: ${config.velocityThreshold}`);
 
-  // Max depth
   if (config.maxDepth > 0) configParts.push(`maxDepth: ${config.maxDepth}`);
 
-  // Body scale amount
   if (config.scaleBackgroundAmount !== 0.97)
     configParts.push(`scaleBackgroundAmount: ${config.scaleBackgroundAmount}`);
 
-  // Aria label
   if (config.ariaLabel !== "Sheet dialog")
     configParts.push(`ariaLabel: "${config.ariaLabel}"`);
 
-  // Stacking sub-config
   const stackingParts: string[] = [];
   if (config.stackScaleStep !== 0.04)
     stackingParts.push(`scaleStep: ${config.stackScaleStep}`);
@@ -936,14 +1084,14 @@ function RightColumn({ config }: { config: PlaygroundConfig }) {
       : "createStacksheet()";
 
   return (
-    <div className="flex flex-col gap-4 pt-2 md:sticky md:top-12">
-      <div className="bg-zinc-900 rounded-xl p-5">
-        <code className="text-sm font-mono text-zinc-300 whitespace-pre">
+    <div className="flex flex-col gap-4 pt-2 md:sticky md:top-16">
+      <div className="rounded-xl p-6" style={{ backgroundColor: "#1c1c1e" }}>
+        <code className="text-sm text-zinc-300 whitespace-pre" style={{ fontFamily: "var(--font-mono)" }}>
           {configCode}
         </code>
       </div>
       <div className="text-center py-1">
-        <code className="text-[13px] font-mono text-zinc-400">
+        <code className="text-[13px] text-zinc-400" style={{ fontFamily: "var(--font-mono)" }}>
           npm i @howells/stacksheet
         </code>
       </div>
@@ -963,10 +1111,10 @@ function PageContent({
   const { StacksheetProvider } = usePlayground();
 
   return (
-    <StacksheetProvider sheets={sheetMap}>
+    <StacksheetProvider sheets={sheetMap} renderHeader={false}>
       <div
         data-stacksheet-wrapper=""
-        className="grid grid-cols-1 md:grid-cols-[400px_1fr] gap-8 md:gap-16 max-w-5xl mx-auto p-6 md:p-12 min-h-dvh items-start"
+        className="grid grid-cols-1 md:grid-cols-[420px_1fr] gap-12 md:gap-20 max-w-6xl mx-auto p-8 md:p-16 min-h-dvh items-start"
       >
         <LeftColumn config={config} onConfigChange={onConfigChange} />
         <RightColumn config={config} />
