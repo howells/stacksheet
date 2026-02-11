@@ -467,7 +467,7 @@ function useBodyScale(config: ResolvedConfig, isOpen: boolean) {
 
 // ── Renderer ────────────────────────────────────
 
-interface SheetRendererProps<TMap extends Record<string, unknown>> {
+interface SheetRendererProps<TMap extends object> {
   store: StoreApi<StacksheetSnapshot<TMap> & SheetActions<TMap>>;
   config: ResolvedConfig;
   sheets: ContentMap<TMap>;
@@ -478,7 +478,7 @@ interface SheetRendererProps<TMap extends Record<string, unknown>> {
   renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
 }
 
-export function SheetRenderer<TMap extends Record<string, unknown>>({
+export function SheetRenderer<TMap extends object>({
   store,
   config,
   sheets,

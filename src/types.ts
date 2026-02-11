@@ -160,20 +160,20 @@ export type SheetContentComponent<TData = unknown> = ComponentType<
 >;
 
 /** Map of sheet type → content component */
-export type ContentMap<TMap extends Record<string, unknown>> = {
+export type ContentMap<TMap extends object> = {
   [K in keyof TMap]: SheetContentComponent<TMap[K]>;
 };
 
 // ── Store state + actions ───────────────────────
 
-export interface StacksheetSnapshot<TMap extends Record<string, unknown>> {
+export interface StacksheetSnapshot<TMap extends object> {
   /** Current sheet stack, ordered bottom to top */
   stack: SheetItem<Extract<keyof TMap, string>>[];
   /** Whether any sheets are currently visible */
   isOpen: boolean;
 }
 
-export interface SheetActions<TMap extends Record<string, unknown>> {
+export interface SheetActions<TMap extends object> {
   /** Replace stack with a single item */
   open<K extends Extract<keyof TMap, string>>(
     type: K,
@@ -277,7 +277,7 @@ export interface SheetActions<TMap extends Record<string, unknown>> {
 
 // ── Factory return type ─────────────────────────
 
-export interface StacksheetProviderProps<TMap extends Record<string, unknown>> {
+export interface StacksheetProviderProps<TMap extends object> {
   /** Map of sheet type keys to content components (optional — only needed for type registry pattern) */
   sheets?: ContentMap<TMap>;
   /** Your application content */
@@ -293,7 +293,7 @@ export interface StacksheetProviderProps<TMap extends Record<string, unknown>> {
   renderHeader?: false | ((props: HeaderRenderProps) => ReactNode);
 }
 
-export interface StacksheetInstance<TMap extends Record<string, unknown>> {
+export interface StacksheetInstance<TMap extends object> {
   /** Provider component — wrap your app, pass sheets map */
   StacksheetProvider: ComponentType<StacksheetProviderProps<TMap>>;
   /** Hook returning sheet actions */

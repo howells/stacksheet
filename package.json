@@ -1,6 +1,6 @@
 {
   "name": "@howells/stacksheet",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
   "description": "Typed, animated sheet stack system. Zustand store + Motion animations with Apple-style depth stacking.",
   "type": "module",

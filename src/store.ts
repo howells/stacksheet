@@ -12,11 +12,11 @@ import type {
 // biome-ignore lint/suspicious/noExplicitAny: maps store heterogeneous components — type safety is at the call site
 type AnyComponent = ComponentType<any>;
 
-type StoreState<TMap extends Record<string, unknown>> =
-  StacksheetSnapshot<TMap> & SheetActions<TMap>;
+type StoreState<TMap extends object> = StacksheetSnapshot<TMap> &
+  SheetActions<TMap>;
 
 /** Return type of createSheetStore — store plus ad-hoc component maps */
-export interface SheetStoreBundle<TMap extends Record<string, unknown>> {
+export interface SheetStoreBundle<TMap extends object> {
   store: StoreApi<StoreState<TMap>>;
   /** Component → generated type key (dedup) */
   componentRegistry: Map<AnyComponent, string>;
@@ -122,7 +122,7 @@ interface ResolvedItem {
 /**
  * Create an isolated Zustand store for a sheet stack instance.
  */
-export function createSheetStore<TMap extends Record<string, unknown>>(
+export function createSheetStore<TMap extends object>(
   config: ResolvedConfig
 ): SheetStoreBundle<TMap> {
   type Item = SheetItem<Extract<keyof TMap, string>>;

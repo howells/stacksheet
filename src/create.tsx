@@ -16,20 +16,40 @@ import type {
   StacksheetSnapshot,
 } from "./types";
 
-type StoreState<TMap extends Record<string, unknown>> =
-  StacksheetSnapshot<TMap> & SheetActions<TMap>;
+type StoreState<TMap extends object> = StacksheetSnapshot<TMap> &
+  SheetActions<TMap>;
 
 /**
  * Create an isolated sheet stack instance with typed store, hooks, and provider.
  *
+ * Works with both `interface` and `type` definitions:
+ *
  * ```ts
- * const { StacksheetProvider, useSheet, useStacksheetState } = createStacksheet<{
+ * // Using an interface
+ * interface SheetDataMap {
  *   "bucket-create": { onCreated?: (b: Bucket) => void };
  *   "bucket-edit": { bucket: Bucket };
- * }>();
+ * }
+ *
+ * // Using a type alias
+ * type SheetDataMap = {
+ *   "bucket-create": { onCreated?: (b: Bucket) => void };
+ *   "bucket-edit": { bucket: Bucket };
+ * };
+ *
+ * const { StacksheetProvider, useSheet, useStacksheetState } =
+ *   createStacksheet<SheetDataMap>();
  * ```
+ *
+ * Sheet content components receive their data as **spread props**:
+ * ```ts
+ * // Data map defines: "bucket-edit": { bucket: Bucket }
+ * // Component receives:  ({ bucket }: { bucket: Bucket }) => JSX.Element
+ * ```
+ *
+ * Use `useSheetPanel()` inside content components to access `close()` and `back()`.
  */
-export function createStacksheet<TMap extends Record<string, unknown>>(
+export function createStacksheet<TMap extends object>(
   config?: StacksheetConfig
 ): StacksheetInstance<TMap> {
   const resolved = resolveConfig(config);
