@@ -174,75 +174,15 @@ function SheetControls({ children }: { children: ReactNode }) {
   const actions = useActions();
   const stack = useStack();
   const { visitedRef } = usePlayground();
-  const counterRef = useRef(0);
 
   // Mark current type as visited
   if (stack.length > 0) {
     visitedRef.current.add(stack[stack.length - 1].type);
   }
 
-  function doAction(name: "push" | "navigate" | "replace") {
-    const key = tourOrder[counterRef.current % tourOrder.length];
-    const list = presets[key];
-    const data = list[counterRef.current % list.length];
-    counterRef.current++;
-    actions[name](key, `sheet-${Date.now()}`, data as never);
-  }
-
-  function doSwap() {
-    const key = tourOrder[counterRef.current % tourOrder.length];
-    const list = presets[key];
-    const data = list[counterRef.current % list.length];
-    counterRef.current++;
-    actions.swap(key, data as never);
-  }
-
   return (
     <div>
       {children}
-
-      <div className="h-px bg-zinc-100 my-5" />
-
-      <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400 mb-2.5">
-        Try an action
-      </p>
-      <div className="flex flex-wrap gap-1.5">
-        {(["push", "navigate", "replace"] as const).map((name) => (
-          <button
-            key={name}
-            className="inline-flex items-center h-7 px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
-            style={{ fontFamily: "var(--font-mono)" }}
-            onClick={() => doAction(name)}
-            type="button"
-          >
-            {name}
-          </button>
-        ))}
-        <button
-          className="inline-flex items-center h-7 px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
-          style={{ fontFamily: "var(--font-mono)" }}
-          onClick={() => doSwap()}
-          type="button"
-        >
-          swap
-        </button>
-        <button
-          className="inline-flex items-center h-7 px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
-          style={{ fontFamily: "var(--font-mono)" }}
-          onClick={() => actions.pop()}
-          type="button"
-        >
-          pop
-        </button>
-        <button
-          className="inline-flex items-center h-7 px-3 text-xs font-medium border border-zinc-200 rounded-full bg-white text-zinc-950 cursor-pointer transition-colors duration-150 hover:bg-zinc-50 hover:border-zinc-300"
-          style={{ fontFamily: "var(--font-mono)" }}
-          onClick={() => actions.close()}
-          type="button"
-        >
-          close
-        </button>
-      </div>
 
       <div className="h-px bg-zinc-100 my-5" />
 
@@ -306,6 +246,8 @@ function HeaderBar({ children }: { children: ReactNode }) {
   );
 }
 
+const iconBtnCls = "w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500";
+
 // Shared footer bar
 function FooterBar({ children }: { children: ReactNode }) {
   return (
@@ -315,25 +257,33 @@ function FooterBar({ children }: { children: ReactNode }) {
   );
 }
 
-function FooterButton({
+function Button({
   children,
   variant = "secondary",
   onClick,
+  href,
 }: {
   children: ReactNode;
   variant?: "primary" | "secondary";
   onClick?: () => void;
+  href?: string;
 }) {
+  const cls = `inline-flex items-center justify-center h-10 px-6 text-sm font-medium rounded-full cursor-pointer transition-all duration-150 active:scale-[0.97] ${
+    variant === "primary"
+      ? "bg-zinc-950 text-zinc-50 border-none hover:opacity-85"
+      : "bg-transparent text-zinc-950 border border-zinc-200 hover:bg-zinc-100"
+  }`;
+
+  if (href) {
+    return (
+      <a className={`${cls} no-underline`} href={href}>
+        {children}
+      </a>
+    );
+  }
+
   return (
-    <button
-      className={`h-9 px-4 text-sm font-medium rounded-full cursor-pointer transition-colors duration-150 ${
-        variant === "primary"
-          ? "bg-zinc-950 text-white hover:bg-zinc-800"
-          : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
-      }`}
-      onClick={onClick}
-      type="button"
-    >
+    <button className={cls} onClick={onClick} type="button">
       {children}
     </button>
   );
@@ -414,9 +364,9 @@ function NextFooter() {
   if (!next) return null;
   return (
     <FooterBar>
-      <FooterButton variant="primary" onClick={next.goNext}>
+      <Button variant="primary" onClick={next.goNext}>
         {next.nextKey ? `Next: ${next.nextKey} \u2192` : "Finish"}
-      </FooterButton>
+      </Button>
     </FooterBar>
   );
 }
@@ -510,10 +460,10 @@ function ActionSheet(_props: { description: string }) {
     <>
       <HeaderBar>
         <div className="flex items-center gap-2">
-          <Sheet.Back className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+          <Sheet.Back className={iconBtnCls} />
           <Sheet.Title className="text-sm font-semibold">{currentType}</Sheet.Title>
         </div>
-        <Sheet.Close className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+        <Sheet.Close className={iconBtnCls} />
       </HeaderBar>
       <Sheet.Body>
         <div className="px-5 py-4">
@@ -556,14 +506,14 @@ function ComposableSheet({ variant, parts }: SheetTypeMap["Composable"]) {
       <HeaderBar>
         <div className="flex items-center gap-2">
           {hasPart("Back") && (
-            <Sheet.Back className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+            <Sheet.Back className={iconBtnCls} />
           )}
           {hasPart("Title") && (
             <Sheet.Title className="text-sm font-semibold">Composable</Sheet.Title>
           )}
         </div>
         {hasPart("Close") && (
-          <Sheet.Close className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+          <Sheet.Close className={iconBtnCls} />
         )}
       </HeaderBar>
       <Sheet.Body>
@@ -612,10 +562,10 @@ function StackingSheet({ description }: SheetTypeMap["Stacking"]) {
     <>
       <HeaderBar>
         <div className="flex items-center gap-2">
-          <Sheet.Back className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+          <Sheet.Back className={iconBtnCls} />
           <Sheet.Title className="text-sm font-semibold">Stacking</Sheet.Title>
         </div>
-        <Sheet.Close className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500" />
+        <Sheet.Close className={iconBtnCls} />
       </HeaderBar>
       <Sheet.Body>
         <div className="px-5 py-4">
@@ -1037,19 +987,8 @@ function LeftColumn({
       </p>
 
       <div className="flex flex-wrap items-center gap-3 mb-10">
-        <button
-          className="inline-flex items-center justify-center h-10 px-6 text-sm font-medium rounded-full bg-zinc-950 text-zinc-50 border-none cursor-pointer transition-all duration-150 hover:opacity-85 active:scale-[0.97]"
-          onClick={handleOpen}
-          type="button"
-        >
-          Open a sheet
-        </button>
-        <a
-          className="inline-flex items-center justify-center h-10 px-6 text-sm font-medium rounded-full bg-transparent text-zinc-950 border border-zinc-200 cursor-pointer transition-colors duration-150 hover:bg-zinc-100 no-underline"
-          href="/docs"
-        >
-          Documentation
-        </a>
+        <Button variant="primary" onClick={handleOpen}>Open a sheet</Button>
+        <Button href="/docs">Documentation</Button>
       </div>
 
       {/* ── Position ────────────────────────── */}
@@ -1264,12 +1203,39 @@ function LeftColumn({
 // ── Action snippets for USE ACTIONS panel ────
 
 const actionSnippets: Record<string, string> = {
-  push: `const { actions } = useSheet()\n\nactions.push("Settings", {\n  category: "Position"\n})`,
-  navigate: `const { actions } = useSheet()\n\nactions.navigate("Profile", {\n  userId: "abc-123"\n})`,
-  replace: `const { actions } = useSheet()\n\nactions.replace("Confirm", {\n  action: "delete"\n})`,
-  swap: `const { actions } = useSheet()\n\nactions.swap("Alert", {\n  message: "Saved!"\n})`,
-  pop: `const { actions } = useSheet()\n\nactions.pop()`,
-  close: `const { actions } = useSheet()\n\nactions.close()`,
+  push: `const { actions } = useSheet()
+
+// "settings" matches the key in your sheets map.
+// { heading } is spread as props onto SettingsSheet.
+actions.push("settings", {
+  heading: "position"
+})`,
+  navigate: `const { actions } = useSheet()
+
+// Clears the stack above, opens ProfileSheet.
+actions.navigate("profile", {
+  userId: "abc-123"
+})`,
+  replace: `const { actions } = useSheet()
+
+// Swaps the current sheet in-place.
+actions.replace("confirm", {
+  action: "delete"
+})`,
+  swap: `const { actions } = useSheet()
+
+// Same sheet slot, different type and props.
+actions.swap("alert", {
+  message: "Saved!"
+})`,
+  pop: `const { actions } = useSheet()
+
+// Removes the top sheet from the stack.
+actions.pop()`,
+  close: `const { actions } = useSheet()
+
+// Closes the entire stack.
+actions.close()`,
 };
 
 const actionKeys = ["push", "navigate", "replace", "swap", "pop", "close"] as const;
@@ -1340,18 +1306,32 @@ function useConfigCode(config: PlaygroundConfig): string {
     ? `createStacksheet({\n  ${configParts.join(",\n  ")}\n})`
     : "createStacksheet()";
 
-  return `import { createStacksheet } from "@howells/stacksheet"\n\nconst {\n  StacksheetProvider,\n  useSheet,\n} = ${call}`;
+  const generic = configParts.length > 0
+    ? `createStacksheet<Sheets>({\n  ${configParts.join(",\n  ")}\n})`
+    : "createStacksheet<Sheets>()";
+
+  return `import { createStacksheet } from "@howells/stacksheet"
+
+// Optional: type your sheets for autocomplete.
+type Sheets = {
+  settings: { heading: string }
+  profile: { userId: string }
+}
+
+const {
+  StacksheetProvider,
+  useSheet,
+} = ${generic}`;
 }
 
 const defineCode = `import { Sheet } from "@howells/stacksheet"
 
-function SettingsSheet({ category }) {
-  const { close } = useSheet()
-
+// Props are spread directly from the action call.
+function SettingsSheet({ heading }) {
   return (
     <>
       <Sheet.Header>
-        <Sheet.Title>{category}</Sheet.Title>
+        <Sheet.Title>{heading}</Sheet.Title>
         <Sheet.Close />
       </Sheet.Header>
       <Sheet.Body>
@@ -1361,14 +1341,23 @@ function SettingsSheet({ category }) {
   )
 }`;
 
-const provideCode = `<StacksheetProvider
-  sheets={{
-    Settings: SettingsSheet,
-    Profile: ProfileSheet,
-  }}
->
-  <App />
-</StacksheetProvider>`;
+const provideCode = `import { StacksheetProvider } from "./stacksheet"
+import { SettingsSheet } from "./sheets/settings"
+
+// sheets is optional — you can also push
+// components directly without registering them.
+export default function Layout({ children }) {
+  return (
+    <StacksheetProvider
+      sheets={{ settings: SettingsSheet }}
+    >
+      {children}
+    </StacksheetProvider>
+  )
+}
+
+// Ad-hoc: no registration needed.
+actions.push(ProfileSheet, { userId: "abc" })`;
 
 function CodePanel({
   label,
