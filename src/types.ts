@@ -49,8 +49,6 @@ export type SideConfig = Side | ResponsiveSide;
 export interface StackingConfig {
   /** Scale reduction per depth level (default: 0.04) */
   scaleStep: number;
-  /** Horizontal/vertical offset per depth level in px (default: 24) */
-  offsetStep: number;
   /** Opacity reduction per depth level (default: 0) */
   opacityStep: number;
   /** Border radius applied to stacked panels in px (default: 12) */

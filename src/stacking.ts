@@ -5,7 +5,6 @@ import type { ResolvedConfig, Side, StackingConfig } from "./types";
 
 export interface StackTransform {
   scale: number;
-  offset: number;
   opacity: number;
   borderRadius: number;
 }
@@ -20,7 +19,7 @@ export function getStackTransform(
   stacking: StackingConfig
 ): StackTransform {
   if (depth <= 0) {
-    return { scale: 1, offset: 0, opacity: 1, borderRadius: 0 };
+    return { scale: 1, opacity: 1, borderRadius: 0 };
   }
 
   const beyondThreshold = depth >= stacking.renderThreshold;
@@ -29,7 +28,6 @@ export function getStackTransform(
 
   return {
     scale: Math.max(0.5, 1 - visualDepth * stacking.scaleStep),
-    offset: visualDepth * stacking.offsetStep,
     opacity: beyondThreshold
       ? 0
       : Math.max(0, 1 - visualDepth * stacking.opacityStep),

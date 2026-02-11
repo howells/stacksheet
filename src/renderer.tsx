@@ -241,7 +241,7 @@ function SheetPanel({
 
   const transform = getStackTransform(depth, config.stacking);
   const panelStyles = getPanelStyles(side, config, depth, index);
-  const stackOffset = getStackingOffset(side, transform.offset);
+
 
   // Reset entrance flag when panel moves away from top
   useEffect(() => {
@@ -320,27 +320,32 @@ function SheetPanel({
     panelId
   );
 
-  // Pick transition: immediate during drag, spring otherwise
-  const transition = dragState.isDragging
+  // Pick transition: immediate during drag, spring otherwise.
+  // Use per-property transitions so borderRadius/boxShadow tween smoothly
+  // instead of springing (which causes visible overshoot/wobble).
+  const baseSpring = dragState.isDragging
     ? { type: "tween" as const, duration: 0 }
     : selectSpring(isTop, spring, stackSpring);
+  const visualTween = { type: "tween" as const, duration: 0.25, ease: "easeOut" as const };
+  const transition = dragState.isDragging
+    ? baseSpring
+    : { ...baseSpring, borderRadius: visualTween, boxShadow: visualTween };
 
   // Explicit radius target to avoid undefined -> value interpolation.
-  const _animatedRadius = getAnimatedBorderRadius(side, depth, config.stacking);
+  const animatedRadius = getAnimatedBorderRadius(side, depth, config.stacking);
 
   // Merge drag offset into the animate target
   const animateTarget = {
     ...slideTarget,
-    ...stackOffset,
     ...dragOffset,
     scale: transform.scale,
     opacity: transform.opacity,
-    // ...animatedRadius,
+    ...animatedRadius,
     boxShadow: getShadow(side, !isTop),
     transition,
   };
 
-  const _initialRadius = getInitialRadius(side);
+  const initialRadius = getInitialRadius(side);
 
   const panelContent = (
     <m.div
@@ -350,12 +355,12 @@ function SheetPanel({
         ...slideFrom,
         opacity: 0.6,
         boxShadow: getShadow(side, false),
-        transition: exitSpring,
+        transition: { ...exitSpring, boxShadow: visualTween },
       }}
       initial={{
         ...slideFrom,
         opacity: 0.8,
-        // ...initialRadius,
+        ...initialRadius,
         boxShadow: getShadow(side, false),
       }}
       key={item.id}
@@ -671,22 +676,6 @@ export function SheetRenderer<TMap extends object>({
 }
 
 // ── Helpers ─────────────────────────────────────
-
-function getStackingOffset(side: Side, offset: number): Record<string, number> {
-  if (offset === 0) {
-    return {};
-  }
-  switch (side) {
-    case "right":
-      return { x: -offset };
-    case "left":
-      return { x: offset };
-    case "bottom":
-      return { y: -offset };
-    default:
-      return {};
-  }
-}
 
 function getInitialRadius(side: Side): Record<string, number> {
   if (side === "bottom") {
