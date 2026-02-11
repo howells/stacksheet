@@ -1,4 +1,5 @@
 import { RootProvider } from "fumadocs-ui/provider/next";
+import { GeistMono } from "geist/font/mono";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./global.css";
@@ -41,7 +42,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <link href="https://rsms.me/" rel="preconnect" />
         <link href="https://rsms.me/inter/inter.css" rel="stylesheet" />
       </head>
-      <body className="flex flex-col min-h-screen">
+      <body className={`${GeistMono.variable} flex flex-col min-h-screen`}>
         <RootProvider>{children}</RootProvider>
       </body>
     </html>

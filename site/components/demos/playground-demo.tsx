@@ -11,6 +11,31 @@ import {
   useSyncExternalStore,
 } from "react";
 import {
+  Root as CollapsibleRoot,
+  Content as CollapsibleContent,
+  Trigger as CollapsibleTrigger,
+} from "@radix-ui/react-collapsible";
+import {
+  Root as ScrollAreaRoot,
+  Scrollbar as ScrollAreaScrollbar,
+  Thumb as ScrollAreaThumb,
+  Viewport as ScrollAreaViewport,
+} from "@radix-ui/react-scroll-area";
+import {
+  Root as SwitchRoot,
+  Thumb as SwitchThumb,
+} from "@radix-ui/react-switch";
+import {
+  Root as TabsRoot,
+  Content as TabsContent,
+  List as TabsList,
+  Trigger as TabsTrigger,
+} from "@radix-ui/react-tabs";
+import {
+  Root as ToggleGroupRoot,
+  Item as ToggleGroupItem,
+} from "@radix-ui/react-toggle-group";
+import {
   Sheet,
   type SheetActions,
   type Side,
@@ -144,29 +169,64 @@ function useNextSheet(): { nextKey: string | null; goNext: () => void } | null {
 
 // ── Toggle (config panel) ────────────────────
 
-function Toggle({ on }: { on?: boolean }) {
+function Toggle({
+  id,
+  on,
+  onToggle,
+}: {
+  id: string;
+  on: boolean;
+  onToggle: (checked: boolean) => void;
+}) {
   return (
-    <span
-      className={`inline-block w-9 h-5 rounded-full relative transition-colors duration-150 ${on ? "bg-zinc-950" : "bg-zinc-300"}`}
+    <SwitchRoot
+      id={id}
+      checked={on}
+      onCheckedChange={onToggle}
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 ${
+        on ? "bg-zinc-600" : "bg-zinc-300"
+      }`}
     >
-      <span
-        className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-150 ${on ? "translate-x-3.5" : ""}`}
+      <SwitchThumb
+        className={`pointer-events-none absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-150 ${
+          on ? "translate-x-3.5" : "translate-x-0"
+        }`}
       />
-    </span>
+    </SwitchRoot>
   );
 }
 
-// ── Scroll area (native) ─────────────────────
+// ── Scroll area blocks ───────────────────────
 
-const scrollLight = {
-  scrollbarWidth: "thin",
-  scrollbarColor: "rgba(161,161,170,0.5) transparent",
-} as const;
-
-const scrollDark = {
-  scrollbarWidth: "thin",
-  scrollbarColor: "rgba(82,82,91,0.4) transparent",
-} as const;
+function BlockScrollArea({
+  children,
+  className,
+  thumbClassName = "bg-zinc-300/70",
+  viewportClassName,
+  scrollbarClassName,
+}: {
+  children: ReactNode;
+  className?: string;
+  thumbClassName?: string;
+  viewportClassName?: string;
+  scrollbarClassName?: string;
+}) {
+  return (
+    <ScrollAreaRoot className={`min-h-0 overflow-hidden ${className ?? ""}`}>
+      <ScrollAreaViewport
+        className={`h-full w-full overscroll-contain ${viewportClassName ?? ""}`}
+      >
+        {children}
+      </ScrollAreaViewport>
+      <ScrollAreaScrollbar
+        orientation="vertical"
+        className={`flex w-2 select-none touch-none ${scrollbarClassName ?? ""}`}
+      >
+        <ScrollAreaThumb className={`relative flex-1 rounded-full ${thumbClassName}`} />
+      </ScrollAreaScrollbar>
+    </ScrollAreaRoot>
+  );
+}
 
 // ── Shared sheet controls ─────────────────────
 
@@ -262,17 +322,19 @@ function Button({
   variant = "secondary",
   onClick,
   href,
+  className,
 }: {
   children: ReactNode;
   variant?: "primary" | "secondary";
   onClick?: () => void;
   href?: string;
+  className?: string;
 }) {
   const cls = `inline-flex items-center justify-center h-10 px-6 text-sm font-medium rounded-full cursor-pointer transition-all duration-150 active:scale-[0.97] ${
     variant === "primary"
       ? "bg-zinc-950 text-zinc-50 border-none hover:opacity-85"
       : "bg-transparent text-zinc-950 border border-zinc-200 hover:bg-zinc-100"
-  }`;
+  } ${className ?? ""}`;
 
   if (href) {
     return (
@@ -750,9 +812,11 @@ const defaultConfig: PlaygroundConfig = {
 
 function DemoInstance({
   config,
+  storeRef,
   children,
 }: {
   config: PlaygroundConfig;
+  storeRef: MutableRefObject<StacksheetReturn["store"] | null>;
   children: ReactNode;
 }) {
   const instanceRef = useRef<StacksheetReturn | null>(null);
@@ -794,10 +858,13 @@ function DemoInstance({
   }
 
   const { StacksheetProvider, store } = instanceRef.current;
+  storeRef.current = store;
 
   return (
     <PlaygroundContext.Provider value={{ store, StacksheetProvider, visitedRef }}>
-      {children}
+      <StacksheetProvider sheets={sheetMap} renderHeader={false}>
+        {children}
+      </StacksheetProvider>
     </PlaygroundContext.Provider>
   );
 }
@@ -806,25 +873,54 @@ function DemoInstance({
 
 function Pill({
   children,
-  active,
-  onClick,
+  value,
 }: {
   children: ReactNode;
-  active?: boolean;
-  onClick: () => void;
+  value: string;
 }) {
   return (
-    <button
-      className={`inline-flex items-center h-7 px-3 text-xs font-medium rounded-full cursor-pointer transition-colors duration-150 ${
-        active
-          ? "bg-zinc-950 text-zinc-50"
-          : "shadow-[0_0_0_1px_rgba(0,0,0,0.08)] text-zinc-950 hover:bg-zinc-100"
-      }`}
-      onClick={onClick}
-      type="button"
+    <ToggleGroupItem
+      value={value}
+      className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-full cursor-pointer transition-colors duration-150 shadow-[0_0_0_1px_rgba(0,0,0,0.08)] text-zinc-950 hover:bg-zinc-100 data-[state=on]:bg-zinc-200 data-[state=on]:text-zinc-900 data-[state=on]:shadow-[0_0_0_1px_rgba(0,0,0,0.12)] data-[state=on]:hover:bg-zinc-300"
     >
       {children}
-    </button>
+    </ToggleGroupItem>
+  );
+}
+
+// ── Segmented control ────────────────────────────
+
+function SegmentedControl({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: readonly string[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <ToggleGroupRoot
+      type="single"
+      value={value}
+      onValueChange={(next) => {
+        if (next) onChange(next);
+      }}
+      className="inline-flex h-7 rounded-md bg-zinc-100/80 p-0.5"
+      role="radiogroup"
+    >
+      {options.map((opt) => (
+        <ToggleGroupItem
+          key={opt}
+          value={opt}
+          role="radio"
+          aria-checked={value === opt}
+          className="px-2.5 text-xs font-medium rounded transition-all duration-150 cursor-pointer border-none bg-transparent text-zinc-400 hover:text-zinc-600 data-[state=on]:bg-white data-[state=on]:text-zinc-900 data-[state=on]:shadow-[0_0_0_1px_rgba(0,0,0,0.14)]"
+        >
+          {opt}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroupRoot>
   );
 }
 
@@ -907,49 +1003,60 @@ function Collapsible({
   children: ReactNode;
 }) {
   return (
-    <div>
-      <button
-        className="flex items-center gap-2 w-full text-left py-2 cursor-pointer bg-transparent border-none text-[11px] font-medium uppercase tracking-widest text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
-        onClick={onToggle}
-        type="button"
-      >
-        <svg
-          className="transition-transform duration-200"
-          style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)" }}
-          width="10"
-          height="10"
-          viewBox="0 0 10 10"
-          fill="none"
+    <CollapsibleRoot open={open} onOpenChange={() => onToggle()}>
+      <CollapsibleTrigger asChild>
+        <button
+          className="flex items-center gap-2 w-full text-left py-2 cursor-pointer bg-transparent border-none text-[11px] font-medium uppercase tracking-widest text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
+          type="button"
         >
-          <path d="M3 1.5L7 5L3 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        {label}
-      </button>
-      <div
-        className="grid transition-[grid-template-rows] duration-200 ease-out"
-        style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
-      >
-        <div className="overflow-hidden">
+          <svg
+            className="transition-transform duration-200"
+            style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)" }}
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="none"
+          >
+            <path d="M3 1.5L7 5L3 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {label}
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="overflow-hidden">
+        <div className="grid transition-[grid-template-rows] duration-200 ease-out" style={{ gridTemplateRows: open ? "1fr" : "0fr" }}>
           <div className="flex flex-col gap-0.5 pb-2">
             {children}
           </div>
         </div>
-      </div>
-    </div>
+      </CollapsibleContent>
+    </CollapsibleRoot>
   );
 }
+
+// ── Install data ───────────────────────────────
+
+const pmOptions = ["pnpm", "npm", "yarn", "bun"] as const;
+
+const installCommands: Record<string, string> = {
+  pnpm: "pnpm add @howells/stacksheet",
+  npm: "npm install @howells/stacksheet",
+  yarn: "yarn add @howells/stacksheet",
+  bun: "bun add @howells/stacksheet",
+};
 
 // ── Left Column ────────────────────────────────
 
 function LeftColumn({
   config,
   onConfigChange,
+  onOpen,
 }: {
   config: PlaygroundConfig;
   onConfigChange: (c: PlaygroundConfig) => void;
+  onOpen: () => void;
 }) {
-  const actions = useActions();
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const [pm, setPm] = useState("pnpm");
 
   function toggleSection(key: string) {
     setOpenSections((prev) => {
@@ -958,10 +1065,6 @@ function LeftColumn({
       else next.add(key);
       return next;
     });
-  }
-
-  function handleOpen() {
-    actions.open("Push", `tour-${Date.now()}`, presets.Push[0] as never);
   }
 
   const sides: Side[] = ["left", "right", "bottom"];
@@ -978,222 +1081,257 @@ function LeftColumn({
   ];
 
   return (
-    <div className="flex flex-col">
-      <p className="text-sm text-zinc-500 leading-relaxed mb-6">
-        A single store manages every sheet in your app. Fully typed, stack-based, composable. Powered by{" "}
-        <a className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors" href="https://zustand.docs.pmnd.rs">Zustand</a>,{" "}
-        <a className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors" href="https://motion.dev">Motion</a>,
-        and a bit of <a className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors" href="https://www.radix-ui.com">Radix</a>. All wired up.
-      </p>
+    <div className="grid lg:h-full lg:min-h-0 grid-rows-[auto_auto_auto] lg:grid-rows-[auto_auto_minmax(0,1fr)]">
+      <section className="border-b border-zinc-200 px-8 pt-6 pb-5">
+        <SectionHeader>Introduction</SectionHeader>
+        <p className="mt-3 text-sm text-zinc-500 leading-relaxed">
+          A single store manages every sheet in your app. Fully typed, stack-based, composable. Powered by{" "}
+          <a className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors" href="https://zustand.docs.pmnd.rs">Zustand</a>,{" "}
+          <a className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors" href="https://motion.dev">Motion</a>,
+          and a bit of <a className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors" href="https://www.radix-ui.com">Radix</a>. All wired up.
+        </p>
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <Button className="w-full" variant="primary" onClick={onOpen}>Open a sheet</Button>
+          <Button className="w-full" href="/docs">Documentation</Button>
+        </div>
+      </section>
 
-      <div className="flex flex-wrap items-center gap-3 mb-10">
-        <Button variant="primary" onClick={handleOpen}>Open a sheet</Button>
-        <Button href="/docs">Documentation</Button>
-      </div>
-
-      {/* ── Position ────────────────────────── */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
-        <div className="flex flex-col gap-2">
-          <SectionHeader>Desktop</SectionHeader>
-          <div className="flex flex-wrap gap-1.5">
-            {sides.map((s) => (
-              <Pill
-                key={s}
-                active={config.desktopSide === s}
-                onClick={() =>
-                  onConfigChange({ ...config, desktopSide: s })
-                }
-              >
-                {s}
-              </Pill>
-            ))}
+      <section className="border-b border-zinc-200 px-8 py-5">
+        <TabsRoot value={pm} onValueChange={setPm}>
+          <div className="mb-3 flex items-center justify-between">
+            <SectionHeader>Install</SectionHeader>
+            <TabsList className="inline-flex h-7 rounded-md bg-zinc-100/80 p-0.5" aria-label="Package manager">
+              {pmOptions.map((option) => (
+                <TabsTrigger
+                  key={option}
+                  value={option}
+                  className="px-2.5 text-xs font-medium rounded transition-all duration-150 cursor-pointer border-none bg-transparent text-zinc-400 hover:text-zinc-600 data-[state=active]:bg-white data-[state=active]:text-zinc-900 data-[state=active]:shadow-[0_0_0_1px_rgba(0,0,0,0.14)]"
+                >
+                  {option}
+                </TabsTrigger>
+              ))}
+            </TabsList>
           </div>
-        </div>
+          {pmOptions.map((option) => (
+            <TabsContent key={option} value={option}>
+              <div className="flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-100/70 px-4 py-3">
+                <code className="text-[13px] text-zinc-700" style={{ fontFamily: "var(--font-mono)" }}>
+                  {installCommands[option]}
+                </code>
+                <button
+                  className="ml-3 shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 transition-colors duration-150 cursor-pointer bg-transparent border-none"
+                  onClick={() => navigator.clipboard.writeText(installCommands[option])}
+                  type="button"
+                  aria-label="Copy install command"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                  </svg>
+                </button>
+              </div>
+            </TabsContent>
+          ))}
+        </TabsRoot>
+      </section>
 
-        <div className="flex flex-col gap-2">
-          <SectionHeader>Mobile</SectionHeader>
-          <div className="flex flex-wrap gap-1.5">
-            {sides.map((s) => (
-              <Pill
-                key={s}
-                active={config.mobileSide === s}
-                onClick={() =>
-                  onConfigChange({ ...config, mobileSide: s })
-                }
+      <section className="grid lg:min-h-0 lg:grid-rows-[minmax(0,1fr)] pl-8 pr-0">
+        <BlockScrollArea className="min-h-0" viewportClassName="pr-8">
+          <div className="pt-5 pb-8 pr-3">
+            <div className="flex flex-col gap-2.5 mb-4">
+              <SectionHeader>Position</SectionHeader>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-zinc-500">Desktop</span>
+                <SegmentedControl
+                  value={config.desktopSide}
+                  options={sides}
+                  onChange={(s) => onConfigChange({ ...config, desktopSide: s as Side })}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-zinc-500">Mobile</span>
+                <SegmentedControl
+                  value={config.mobileSide}
+                  options={sides}
+                  onChange={(s) => onConfigChange({ ...config, mobileSide: s as Side })}
+                />
+              </div>
+            </div>
+
+            <div className="h-px bg-zinc-200 my-3" />
+
+            <div className="flex flex-col gap-2 mb-6">
+              <SectionHeader>Spring</SectionHeader>
+              <ToggleGroupRoot
+                type="single"
+                value={config.spring}
+                onValueChange={(next) => {
+                  if (next) onConfigChange({ ...config, spring: next as SpringPreset });
+                }}
+                className="flex flex-wrap gap-1.5"
               >
-                {s}
-              </Pill>
-            ))}
+                {springPresets.map((p) => (
+                  <Pill
+                    key={p}
+                    value={p}
+                  >
+                    {p}
+                  </Pill>
+                ))}
+              </ToggleGroupRoot>
+            </div>
+
+            <div className="h-px bg-zinc-200 my-3" />
+
+            <div className="flex flex-col gap-0 mb-6">
+              <SectionHeader>Behavior</SectionHeader>
+              <div className="flex flex-col">
+                {toggles.map(({ key, label }) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between py-2.5 text-sm text-zinc-950 border-b border-zinc-100 last:border-b-0"
+                  >
+                    <label htmlFor={`behavior-${key}`} className="cursor-pointer">
+                      {label}
+                    </label>
+                    <Toggle
+                      id={`behavior-${key}`}
+                      on={config[key] as boolean}
+                      onToggle={(checked) =>
+                        onConfigChange({
+                          ...config,
+                          [key]: checked,
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="h-px bg-zinc-200 my-3" />
+
+            <div className="flex flex-col gap-1">
+              <Collapsible
+                label="Layout"
+                open={openSections.has("layout")}
+                onToggle={() => toggleSection("layout")}
+              >
+                <NumInput
+                  label="width"
+                  min={100}
+                  onChange={(v) => onConfigChange({ ...config, width: v })}
+                  step={10}
+                  value={config.width}
+                />
+                <TextInput
+                  label="maxWidth"
+                  onChange={(v) => onConfigChange({ ...config, maxWidth: v })}
+                  value={config.maxWidth}
+                />
+                <NumInput
+                  label="breakpoint"
+                  min={0}
+                  onChange={(v) => onConfigChange({ ...config, breakpoint: v })}
+                  value={config.breakpoint}
+                />
+                <NumInput
+                  label="zIndex"
+                  min={0}
+                  onChange={(v) => onConfigChange({ ...config, zIndex: v })}
+                  value={config.zIndex}
+                />
+              </Collapsible>
+
+              <Collapsible
+                label="Drag"
+                open={openSections.has("drag")}
+                onToggle={() => toggleSection("drag")}
+              >
+                <NumInput
+                  label="closeThreshold"
+                  min={0}
+                  onChange={(v) => onConfigChange({ ...config, closeThreshold: v })}
+                  step={0.05}
+                  value={config.closeThreshold}
+                />
+                <NumInput
+                  label="velocityThreshold"
+                  min={0}
+                  onChange={(v) => onConfigChange({ ...config, velocityThreshold: v })}
+                  step={0.1}
+                  value={config.velocityThreshold}
+                />
+              </Collapsible>
+
+              <Collapsible
+                label="Stacking"
+                open={openSections.has("stacking")}
+                onToggle={() => toggleSection("stacking")}
+              >
+                <NumInput
+                  label="maxDepth"
+                  min={0}
+                  onChange={(v) => onConfigChange({ ...config, maxDepth: v })}
+                  placeholder="∞"
+                  value={config.maxDepth}
+                />
+                <NumInput
+                  label="scaleStep"
+                  min={0}
+                  onChange={(v) => onConfigChange({ ...config, stackScaleStep: v })}
+                  step={0.01}
+                  value={config.stackScaleStep}
+                />
+                <NumInput
+                  label="offsetStep"
+                  min={0}
+                  onChange={(v) => onConfigChange({ ...config, stackOffsetStep: v })}
+                  value={config.stackOffsetStep}
+                />
+                <NumInput
+                  label="opacityStep"
+                  min={0}
+                  onChange={(v) => onConfigChange({ ...config, stackOpacityStep: v })}
+                  step={0.1}
+                  value={config.stackOpacityStep}
+                />
+                <NumInput
+                  label="radius"
+                  min={0}
+                  onChange={(v) => onConfigChange({ ...config, stackRadius: v })}
+                  value={config.stackRadius}
+                />
+                <NumInput
+                  label="renderThreshold"
+                  min={1}
+                  onChange={(v) => onConfigChange({ ...config, stackRenderThreshold: v })}
+                  value={config.stackRenderThreshold}
+                />
+              </Collapsible>
+
+              <Collapsible
+                label="Advanced"
+                open={openSections.has("advanced")}
+                onToggle={() => toggleSection("advanced")}
+              >
+                <NumInput
+                  label="scaleBackgroundAmount"
+                  min={0}
+                  onChange={(v) => onConfigChange({ ...config, scaleBackgroundAmount: v })}
+                  step={0.01}
+                  value={config.scaleBackgroundAmount}
+                />
+                <TextInput
+                  label="ariaLabel"
+                  onChange={(v) => onConfigChange({ ...config, ariaLabel: v })}
+                  value={config.ariaLabel}
+                />
+              </Collapsible>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div className="h-px bg-zinc-200 my-3" />
-
-      {/* ── Spring ──────────────────────────── */}
-      <div className="flex flex-col gap-2 mb-6">
-        <SectionHeader>Spring</SectionHeader>
-        <div className="flex flex-wrap gap-1.5">
-          {springPresets.map((p) => (
-            <Pill
-              key={p}
-              active={config.spring === p}
-              onClick={() =>
-                onConfigChange({ ...config, spring: p })
-              }
-            >
-              {p}
-            </Pill>
-          ))}
-        </div>
-      </div>
-
-      <div className="h-px bg-zinc-200 my-3" />
-
-      {/* ── Behavior ────────────────────────── */}
-      <div className="flex flex-col gap-0 mb-6">
-        <SectionHeader>Behavior</SectionHeader>
-        <div className="flex flex-col">
-          {toggles.map(({ key, label }) => (
-            <button
-              key={key}
-              className="flex items-center justify-between py-2.5 text-sm text-zinc-950 cursor-pointer bg-transparent border-none border-b border-zinc-100 last:border-b-0 w-full text-left"
-              onClick={() =>
-                onConfigChange({
-                  ...config,
-                  [key]: !config[key],
-                })
-              }
-              type="button"
-            >
-              <span>{label}</span>
-              <Toggle on={config[key] as boolean} />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="h-px bg-zinc-200 my-3" />
-
-      {/* ── Collapsible sections ─────────────── */}
-      <div className="flex flex-col gap-1">
-        <Collapsible
-          label="Layout"
-          open={openSections.has("layout")}
-          onToggle={() => toggleSection("layout")}
-        >
-          <NumInput
-            label="width"
-            min={100}
-            onChange={(v) => onConfigChange({ ...config, width: v })}
-            step={10}
-            value={config.width}
-          />
-          <TextInput
-            label="maxWidth"
-            onChange={(v) => onConfigChange({ ...config, maxWidth: v })}
-            value={config.maxWidth}
-          />
-          <NumInput
-            label="breakpoint"
-            min={0}
-            onChange={(v) => onConfigChange({ ...config, breakpoint: v })}
-            value={config.breakpoint}
-          />
-          <NumInput
-            label="zIndex"
-            min={0}
-            onChange={(v) => onConfigChange({ ...config, zIndex: v })}
-            value={config.zIndex}
-          />
-        </Collapsible>
-
-        <Collapsible
-          label="Drag"
-          open={openSections.has("drag")}
-          onToggle={() => toggleSection("drag")}
-        >
-          <NumInput
-            label="closeThreshold"
-            min={0}
-            onChange={(v) => onConfigChange({ ...config, closeThreshold: v })}
-            step={0.05}
-            value={config.closeThreshold}
-          />
-          <NumInput
-            label="velocityThreshold"
-            min={0}
-            onChange={(v) => onConfigChange({ ...config, velocityThreshold: v })}
-            step={0.1}
-            value={config.velocityThreshold}
-          />
-        </Collapsible>
-
-        <Collapsible
-          label="Stacking"
-          open={openSections.has("stacking")}
-          onToggle={() => toggleSection("stacking")}
-        >
-          <NumInput
-            label="maxDepth"
-            min={0}
-            onChange={(v) => onConfigChange({ ...config, maxDepth: v })}
-            placeholder="∞"
-            value={config.maxDepth}
-          />
-          <NumInput
-            label="scaleStep"
-            min={0}
-            onChange={(v) => onConfigChange({ ...config, stackScaleStep: v })}
-            step={0.01}
-            value={config.stackScaleStep}
-          />
-          <NumInput
-            label="offsetStep"
-            min={0}
-            onChange={(v) => onConfigChange({ ...config, stackOffsetStep: v })}
-            value={config.stackOffsetStep}
-          />
-          <NumInput
-            label="opacityStep"
-            min={0}
-            onChange={(v) => onConfigChange({ ...config, stackOpacityStep: v })}
-            step={0.1}
-            value={config.stackOpacityStep}
-          />
-          <NumInput
-            label="radius"
-            min={0}
-            onChange={(v) => onConfigChange({ ...config, stackRadius: v })}
-            value={config.stackRadius}
-          />
-          <NumInput
-            label="renderThreshold"
-            min={1}
-            onChange={(v) => onConfigChange({ ...config, stackRenderThreshold: v })}
-            value={config.stackRenderThreshold}
-          />
-        </Collapsible>
-
-        <Collapsible
-          label="Advanced"
-          open={openSections.has("advanced")}
-          onToggle={() => toggleSection("advanced")}
-        >
-          <NumInput
-            label="scaleBackgroundAmount"
-            min={0}
-            onChange={(v) => onConfigChange({ ...config, scaleBackgroundAmount: v })}
-            step={0.01}
-            value={config.scaleBackgroundAmount}
-          />
-          <TextInput
-            label="ariaLabel"
-            onChange={(v) => onConfigChange({ ...config, ariaLabel: v })}
-            value={config.ariaLabel}
-          />
-        </Collapsible>
-      </div>
+        </BlockScrollArea>
+      </section>
     </div>
   );
 }
@@ -1369,18 +1507,30 @@ function CodePanel({
   toolbar?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-0 min-w-0">
+    <div className="flex flex-col min-h-[200px] lg:min-h-0 min-w-0">
       <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400 mb-2 shrink-0">
         {label}
       </p>
       <div
-        className="flex-1 flex flex-col rounded-xl overflow-y-auto"
-        style={{ backgroundColor: "#1c1c1e", ...scrollDark }}
+        className="flex-1 min-h-0 rounded-xl overflow-hidden grid"
+        style={{
+          backgroundColor: "#1c1c1e",
+          gridTemplateRows: toolbar ? "auto minmax(0,1fr)" : "minmax(0,1fr)",
+        }}
       >
         {toolbar && <div className="px-5 pt-4 pb-2 shrink-0">{toolbar}</div>}
-        <div className="px-5 pb-5" style={toolbar ? undefined : { paddingTop: "1.25rem" }}>
-          <SyntaxHighlight code={code} />
-        </div>
+        <BlockScrollArea
+          className="min-h-0"
+          thumbClassName="bg-zinc-600/60"
+          viewportClassName="px-5 pb-5"
+        >
+          <div
+            className="min-w-max"
+            style={{ paddingTop: toolbar ? "0.5rem" : "1.25rem" }}
+          >
+            <SyntaxHighlight code={code} />
+          </div>
+        </BlockScrollArea>
       </div>
     </div>
   );
@@ -1391,34 +1541,36 @@ function RightColumn({ config }: { config: PlaygroundConfig }) {
   const configCode = useConfigCode(config);
 
   return (
-    <div className="grid grid-cols-1 @min-[1080px]:grid-cols-2 @min-[1080px]:grid-rows-2 @min-[1080px]:h-full gap-3 p-8">
-      <CodePanel label="Create" code={configCode} />
-      <CodePanel label="Define" code={defineCode} />
-      <CodePanel label="Provide" code={provideCode} />
-      <CodePanel
-        label="Use"
-        code={actionSnippets[activeAction]}
-        toolbar={
-          <div className="flex flex-wrap gap-1">
-            {actionKeys.map((key) => (
-              <button
-                key={key}
-                className={`inline-flex items-center h-6 px-2.5 text-[11px] font-medium rounded-full cursor-pointer transition-colors duration-150 ${
-                  activeAction === key
-                    ? "bg-white/15 text-zinc-200"
-                    : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
-                }`}
-                style={{ fontFamily: "var(--font-mono)" }}
-                onClick={() => setActiveAction(key)}
-                type="button"
-              >
-                {key}
-              </button>
-            ))}
-          </div>
-        }
-      />
-    </div>
+    <section className="grid lg:h-full lg:min-h-0 lg:grid-rows-[minmax(0,1fr)] px-8 py-6">
+      <div className="grid lg:min-h-0 grid-cols-1 gap-3 lg:grid-cols-2 lg:grid-rows-2">
+        <CodePanel label="Create" code={configCode} />
+        <CodePanel label="Define" code={defineCode} />
+        <CodePanel label="Provide" code={provideCode} />
+        <CodePanel
+          label="Use"
+          code={actionSnippets[activeAction]}
+          toolbar={
+            <div className="flex flex-wrap gap-1">
+              {actionKeys.map((key) => (
+                <button
+                  key={key}
+                  className={`inline-flex items-center h-6 px-2.5 text-[11px] font-medium rounded-full cursor-pointer transition-colors duration-150 ${
+                    activeAction === key
+                      ? "bg-white/15 text-zinc-200"
+                      : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+                  }`}
+                  style={{ fontFamily: "var(--font-mono)" }}
+                  onClick={() => setActiveAction(key)}
+                  type="button"
+                >
+                  {key}
+                </button>
+              ))}
+            </div>
+          }
+        />
+      </div>
+    </section>
   );
 }
 
@@ -1454,52 +1606,36 @@ function PageHeader() {
   );
 }
 
-// ── Page Content ───────────────────────────────
-
-function PageContent({
-  config,
-  onConfigChange,
-}: {
-  config: PlaygroundConfig;
-  onConfigChange: (c: PlaygroundConfig) => void;
-}) {
-  const { StacksheetProvider } = usePlayground();
-
-  return (
-    <StacksheetProvider sheets={sheetMap} renderHeader={false}>
-      <div data-stacksheet-wrapper="" className="flex flex-col h-dvh overflow-hidden">
-        <PageHeader />
-        <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[420px_1fr] grid-rows-[1fr]">
-          <div
-            className="border-r border-zinc-200 overflow-y-auto p-8"
-            style={scrollLight}
-          >
-            <LeftColumn config={config} onConfigChange={onConfigChange} />
-          </div>
-          <div className="@container min-h-0 overflow-y-auto" style={scrollLight}>
-            <RightColumn config={config} />
-          </div>
-        </div>
-      </div>
-    </StacksheetProvider>
-  );
-}
-
 // ── PlaygroundDemo (root) ──────────────────────
 
 export function PlaygroundDemo() {
   const [config, setConfig] =
     useState<PlaygroundConfig>(defaultConfig);
   const [configVersion, setConfigVersion] = useState(0);
+  const storeRef = useRef<StacksheetReturn["store"] | null>(null);
 
   function handleConfigChange(next: PlaygroundConfig) {
     setConfig(next);
     setConfigVersion((v) => v + 1);
   }
 
+  function handleOpen() {
+    storeRef.current?.getState().open("Push", `tour-${Date.now()}`, presets.Push[0] as never);
+  }
+
   return (
-    <DemoInstance key={configVersion} config={config}>
-      <PageContent config={config} onConfigChange={handleConfigChange} />
-    </DemoInstance>
+    <div data-stacksheet-wrapper="" className="grid min-h-dvh lg:h-dvh lg:overflow-hidden grid-rows-[auto_1fr] lg:grid-rows-[auto_minmax(0,1fr)]">
+      <PageHeader />
+      <div className="grid lg:min-h-0 grid-cols-1 lg:grid-cols-[420px_minmax(0,1fr)]">
+        <div className="lg:min-h-0 border-b border-zinc-200 lg:border-b-0 lg:border-r">
+          <LeftColumn config={config} onConfigChange={handleConfigChange} onOpen={handleOpen} />
+        </div>
+        <div className="@container lg:min-h-0 lg:overflow-hidden">
+          <DemoInstance key={configVersion} config={config} storeRef={storeRef}>
+            <RightColumn config={config} />
+          </DemoInstance>
+        </div>
+      </div>
+    </div>
   );
 }
