@@ -55,9 +55,10 @@ Replace the default back/close header with the `renderHeader` prop:
 
 ```tsx
 <StacksheetProvider
-  renderHeader={({ isNested, onBack, onClose }) => (
+  renderHeader={({ isNested, onBack, onClose, side }) => (
     <header className="my-header">
       {isNested && <button onClick={onBack}>Back</button>}
+      <span>Side: {side}</span>
       <button onClick={onClose}>Close</button>
     </header>
   )}
@@ -71,6 +72,7 @@ Replace the default back/close header with the `renderHeader` prop:
 | `isNested` | `boolean` | `true` when the stack has more than one sheet |
 | `onBack` | `() => void` | Pop the top sheet (go back one level) |
 | `onClose` | `() => void` | Close the entire sheet stack |
+| `side` | `Side` | Current resolved side (`"left"`, `"right"`, or `"bottom"`) |
 
 The default header is a 48px bar with icon buttons — a back arrow (shown when nested) and a close X.
 

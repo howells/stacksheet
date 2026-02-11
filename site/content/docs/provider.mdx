@@ -32,11 +32,12 @@ Override styles with `classNames` and `renderHeader`:
     backdrop: "my-backdrop",
     panel: "my-panel",
   }}
-  renderHeader={({ isNested, onBack, onClose }) => (
+  renderHeader={({ isNested, onBack, onClose, side }) => (
     <MyCustomHeader
       isNested={isNested}
       onBack={onBack}
       onClose={onClose}
+      side={side}
     />
   )}
 >

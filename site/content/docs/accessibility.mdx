@@ -50,13 +50,14 @@ Configure the dialog's accessible name:
 createStacksheet({ ariaLabel: "Settings panel" });
 ```
 
-Per-sheet override via the `__ariaLabel` data property:
+Per-sheet override via the `__ariaLabel` prop:
 
 ```tsx
-open("user-profile", "u1", {
-  userId: "abc",
-  __ariaLabel: "User profile for John",
-});
+// Component-direct pattern
+open(UserProfile, { userId: "abc", __ariaLabel: "User profile for John" });
+
+// Type registry pattern
+open("user-profile", { userId: "abc", __ariaLabel: "User profile for John" });
 ```
 
 The per-sheet label takes priority over the global config.
