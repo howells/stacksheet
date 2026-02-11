@@ -18,6 +18,8 @@ export interface HeaderRenderProps {
   onBack: () => void;
   /** Close the entire sheet stack */
   onClose: () => void;
+  /** Current resolved side (left/right/bottom) */
+  side: import("./types").Side;
 }
 
 // ── Sheet item ──────────────────────────────────

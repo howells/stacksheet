@@ -159,7 +159,11 @@ const THUMB_STYLE: CSSProperties = {
 function SheetBody({ asChild, className, style, children }: SheetBodyProps) {
   if (asChild) {
     return (
-      <Slot className={className} style={{ ...BODY_STYLE, ...style }}>
+      <Slot
+        className={className}
+        data-stacksheet-no-drag=""
+        style={{ ...BODY_STYLE, ...style }}
+      >
         {children}
       </Slot>
     );
@@ -168,6 +172,7 @@ function SheetBody({ asChild, className, style, children }: SheetBodyProps) {
   return (
     <ScrollAreaRoot
       className={className}
+      data-stacksheet-no-drag=""
       style={{ ...BODY_STYLE, overflow: "hidden", ...style }}
     >
       <ScrollAreaViewport

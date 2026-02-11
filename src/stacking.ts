@@ -37,6 +37,33 @@ export function getStackTransform(
   };
 }
 
+/**
+ * Border radius values for the animate target.
+ * Must be animated (not static CSS) so Motion applies scale correction
+ * when panels are scaled. See: https://motion.dev/docs/react-layout-animations#scale-correction
+ */
+export function getAnimatedBorderRadius(
+  side: Side,
+  depth: number,
+  stacking: StackingConfig
+): Record<string, number> {
+  if (side === "bottom") {
+    const radius = depth > 0 ? stacking.radius : 16;
+    return {
+      borderTopLeftRadius: radius,
+      borderTopRightRadius: radius,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+    };
+  }
+
+  // Left/right panels: stacked panels get uniform radius, top panel gets none
+  if (depth > 0) {
+    return { borderRadius: stacking.radius };
+  }
+  return { borderRadius: 0 };
+}
+
 // ── Slide directions ────────────────────────────
 
 export interface SlideValues {
@@ -92,8 +119,7 @@ export function getPanelStyles(
       right: 0,
       bottom: 0,
       maxHeight: "85vh",
-      borderTopLeftRadius: depth > 0 ? config.stacking.radius : 16,
-      borderTopRightRadius: depth > 0 ? config.stacking.radius : 16,
+      // borderRadius is animated via Motion's animate prop for scale correction
     };
   }
 

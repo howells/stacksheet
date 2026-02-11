@@ -41,6 +41,10 @@ function isInteractiveElement(el: Element): boolean {
   if ((el as HTMLElement).isContentEditable) {
     return true;
   }
+  // Children of interactive elements (e.g. SVG inside button, span inside link)
+  if (el.closest("button, a, input, textarea, select, [contenteditable]")) {
+    return true;
+  }
   if (el.closest("[data-stacksheet-no-drag]")) {
     return true;
   }

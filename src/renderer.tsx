@@ -16,6 +16,7 @@ import { ArrowLeftIcon, XIcon } from "./icons";
 import { useResolvedSide } from "./media";
 import { SheetPanelContext } from "./panel-context";
 import {
+  getAnimatedBorderRadius,
   getPanelStyles,
   getSlideFrom,
   getSlideTarget,
@@ -52,38 +53,68 @@ const BUTTON_STYLE: CSSProperties = {
   padding: 0,
 };
 
-function DefaultHeader({ isNested, onBack, onClose }: HeaderRenderProps) {
+const HANDLE_BAR_STYLE: CSSProperties = {
+  width: 36,
+  height: 4,
+  borderRadius: 2,
+  background: "var(--muted-foreground, rgba(0, 0, 0, 0.25))",
+};
+
+function DefaultHeader({
+  isNested,
+  onBack,
+  onClose,
+  side,
+}: HeaderRenderProps) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        height: 48,
-        flexShrink: 0,
-        padding: "0 12px",
-        borderBottom: "1px solid var(--border, transparent)",
-      }}
-    >
-      {isNested && (
+    <>
+      {side === "bottom" && (
+        <div
+          data-stacksheet-handle=""
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "12px 0 4px",
+            flexShrink: 0,
+            cursor: "grab",
+            touchAction: "none",
+          }}
+        >
+          <div style={HANDLE_BAR_STYLE} />
+        </div>
+      )}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          height: 48,
+          flexShrink: 0,
+          padding: "0 12px",
+          borderBottom: "1px solid var(--border, transparent)",
+        }}
+      >
+        {isNested && (
+          <button
+            aria-label="Back"
+            onClick={onBack}
+            style={BUTTON_STYLE}
+            type="button"
+          >
+            <ArrowLeftIcon />
+          </button>
+        )}
+        <div style={{ flex: 1 }} />
         <button
-          aria-label="Back"
-          onClick={onBack}
+          aria-label="Close"
+          onClick={onClose}
           style={BUTTON_STYLE}
           type="button"
         >
-          <ArrowLeftIcon />
+          <XIcon />
         </button>
-      )}
-      <div style={{ flex: 1 }} />
-      <button
-        aria-label="Close"
-        onClick={onClose}
-        style={BUTTON_STYLE}
-        type="button"
-      >
-        <XIcon />
-      </button>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -283,6 +314,7 @@ function SheetPanel({
     isNested,
     onBack: pop,
     onClose: close,
+    side,
   };
 
   const isModal = config.modal;
@@ -299,6 +331,10 @@ function SheetPanel({
     ? { type: "tween" as const, duration: 0 }
     : selectSpring(isTop, spring, stackSpring);
 
+  // Border radius must be in the animate target (not static CSS) for
+  // Motion to apply scale correction. See: motion.dev/docs/react-layout-animations#scale-correction
+  const animatedRadius = getAnimatedBorderRadius(side, depth, config.stacking);
+
   // Merge drag offset into the animate target
   const animateTarget = {
     ...slideTarget,
@@ -306,7 +342,7 @@ function SheetPanel({
     ...dragOffset,
     scale: transform.scale,
     opacity: transform.opacity,
-    borderRadius: transform.borderRadius,
+    ...animatedRadius,
     transition,
   };
 
@@ -345,6 +381,7 @@ function SheetPanel({
           )}
           {shouldRender && Content && (
             <div
+              data-stacksheet-no-drag=""
               style={{
                 flex: 1,
                 minHeight: 0,
