@@ -60,12 +60,7 @@ const HANDLE_BAR_STYLE: CSSProperties = {
   background: "var(--muted-foreground, rgba(0, 0, 0, 0.25))",
 };
 
-function DefaultHeader({
-  isNested,
-  onBack,
-  onClose,
-  side,
-}: HeaderRenderProps) {
+function DefaultHeader({ isNested, onBack, onClose, side }: HeaderRenderProps) {
   return (
     <>
       {side === "bottom" && (

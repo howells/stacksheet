@@ -98,7 +98,7 @@ export function getSlideTarget(): SlideValues {
 export function getPanelStyles(
   side: Side,
   config: ResolvedConfig,
-  depth: number,
+  _depth: number,
   index: number
 ): CSSProperties {
   const { width, maxWidth, zIndex } = config;

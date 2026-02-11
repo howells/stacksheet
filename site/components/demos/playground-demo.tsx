@@ -11,6 +11,7 @@ import {
 } from "react";
 import {
   type SheetActions,
+  type Side,
   type SpringPreset,
   createStacksheet,
 } from "@howells/stacksheet";
@@ -386,25 +387,67 @@ const springPresets: SpringPreset[] = [
 // ── Config state ───────────────────────────────
 
 interface PlaygroundConfig {
-  side: "left" | "right" | "bottom";
+  // Position (responsive)
+  desktopSide: Side;
+  mobileSide: Side;
+  // Spring
   spring: SpringPreset;
+  // Behavior toggles
   showOverlay: boolean;
   closeOnBackdrop: boolean;
   closeOnEscape: boolean;
+  lockScroll: boolean;
   drag: boolean;
+  dismissible: boolean;
   modal: boolean;
   shouldScaleBackground: boolean;
+  // Layout
+  width: number;
+  maxWidth: string;
+  breakpoint: number;
+  zIndex: number;
+  // Drag tuning
+  closeThreshold: number;
+  velocityThreshold: number;
+  // Limits & stacking
+  maxDepth: number; // 0 = Infinity (unlimited)
+  stackScaleStep: number;
+  stackOffsetStep: number;
+  stackOpacityStep: number;
+  stackRadius: number;
+  stackRenderThreshold: number;
+  // Body scale
+  scaleBackgroundAmount: number;
+  // Accessibility
+  ariaLabel: string;
 }
 
 const defaultConfig: PlaygroundConfig = {
-  side: "right",
+  desktopSide: "right",
+  mobileSide: "bottom",
   spring: "stiff",
   showOverlay: true,
   closeOnBackdrop: true,
   closeOnEscape: true,
+  lockScroll: true,
   drag: true,
+  dismissible: true,
   modal: true,
   shouldScaleBackground: false,
+  width: 420,
+  maxWidth: "90vw",
+  breakpoint: 768,
+  zIndex: 100,
+  closeThreshold: 0.25,
+  velocityThreshold: 0.5,
+  maxDepth: 0,
+  stackScaleStep: 0.04,
+  stackOffsetStep: 36,
+  stackOpacityStep: 0,
+  stackRadius: 12,
+  stackRenderThreshold: 3,
+  scaleBackgroundAmount: 0.97,
+  ariaLabel: "Sheet dialog",
 };
 
 // ── DemoInstance ────────────────────────────────
@@ -418,15 +461,38 @@ function DemoInstance({
 }) {
   const instanceRef = useRef<StacksheetReturn | null>(null);
   if (!instanceRef.current) {
+    const sideConfig =
+      config.desktopSide === config.mobileSide
+        ? config.desktopSide
+        : { desktop: config.desktopSide, mobile: config.mobileSide };
+
     instanceRef.current = createStacksheet<SheetTypeMap>({
-      side: config.side,
+      side: sideConfig,
       spring: config.spring,
       showOverlay: config.showOverlay,
       closeOnBackdrop: config.closeOnBackdrop,
       closeOnEscape: config.closeOnEscape,
+      lockScroll: config.lockScroll,
       drag: config.drag,
+      dismissible: config.dismissible,
       modal: config.modal,
       shouldScaleBackground: config.shouldScaleBackground,
+      width: config.width,
+      maxWidth: config.maxWidth,
+      breakpoint: config.breakpoint,
+      zIndex: config.zIndex,
+      closeThreshold: config.closeThreshold,
+      velocityThreshold: config.velocityThreshold,
+      maxDepth: config.maxDepth === 0 ? undefined : config.maxDepth,
+      scaleBackgroundAmount: config.scaleBackgroundAmount,
+      ariaLabel: config.ariaLabel,
+      stacking: {
+        scaleStep: config.stackScaleStep,
+        offsetStep: config.stackOffsetStep,
+        opacityStep: config.stackOpacityStep,
+        radius: config.stackRadius,
+        renderThreshold: config.stackRenderThreshold,
+      },
     });
   }
 
@@ -465,6 +531,69 @@ function Pill({
   );
 }
 
+// ── Compact input components ───────────────────
+
+function NumInput({
+  label,
+  value,
+  onChange,
+  step = 1,
+  min,
+  placeholder,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  step?: number;
+  min?: number;
+  placeholder?: string;
+}) {
+  return (
+    <label className="flex items-center justify-between text-[13px] py-1">
+      <span className="text-zinc-500">{label}</span>
+      <input
+        className="w-20 h-7 px-2 text-right text-[13px] font-mono bg-zinc-50 border border-zinc-200 rounded-md text-zinc-950 outline-none focus:ring-1 focus:ring-zinc-400"
+        min={min}
+        onChange={(e) => onChange(Number(e.target.value))}
+        placeholder={placeholder}
+        step={step}
+        type="number"
+        value={value === 0 && placeholder ? "" : value}
+      />
+    </label>
+  );
+}
+
+function TextInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="flex items-center justify-between text-[13px] py-1">
+      <span className="text-zinc-500">{label}</span>
+      <input
+        className="w-24 h-7 px-2 text-right text-[13px] font-mono bg-zinc-50 border border-zinc-200 rounded-md text-zinc-950 outline-none focus:ring-1 focus:ring-zinc-400"
+        onChange={(e) => onChange(e.target.value)}
+        type="text"
+        value={value}
+      />
+    </label>
+  );
+}
+
+function SectionHeader({ children }: { children: ReactNode }) {
+  return (
+    <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400">
+      {children}
+    </p>
+  );
+}
+
 // ── Left Column ────────────────────────────────
 
 function LeftColumn({
@@ -484,97 +613,36 @@ function LeftColumn({
     actions.open("Contact", `hero-${Date.now()}`, data as never);
   }
 
-  const sides: PlaygroundConfig["side"][] = ["left", "right", "bottom"];
+  const sides: Side[] = ["left", "right", "bottom"];
 
   const toggles: { key: keyof PlaygroundConfig; label: string }[] = [
+    { key: "modal", label: "modal" },
     { key: "showOverlay", label: "overlay" },
     { key: "closeOnBackdrop", label: "backdrop close" },
     { key: "closeOnEscape", label: "escape close" },
-    { key: "drag", label: "drag to dismiss" },
-    { key: "modal", label: "modal" },
+    { key: "lockScroll", label: "lock scroll" },
+    { key: "drag", label: "drag" },
+    { key: "dismissible", label: "dismissible" },
     { key: "shouldScaleBackground", label: "body scale" },
   ];
 
   return (
-    <div className="flex flex-col md:sticky md:top-12">
+    <div className="flex flex-col">
       <h1 className="text-5xl font-bold tracking-tight leading-none mb-3">
         Stacksheet
       </h1>
-      <p className="text-[15px] text-zinc-500 leading-relaxed mb-8">
+      <p className="text-[15px] text-zinc-500 leading-relaxed mb-6">
         A typed, animated sheet stack for React.
       </p>
 
-      <div className="flex flex-col gap-6 mb-6">
-        <div className="flex flex-col gap-2">
-          <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400">
-            Position
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {sides.map((s) => (
-              <Pill
-                key={s}
-                active={config.side === s}
-                onClick={() =>
-                  onConfigChange({ ...config, side: s })
-                }
-              >
-                {s}
-              </Pill>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400">
-            Spring
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {springPresets.map((p) => (
-              <Pill
-                key={p}
-                active={config.spring === p}
-                onClick={() =>
-                  onConfigChange({ ...config, spring: p })
-                }
-              >
-                {p}
-              </Pill>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400">
-            Options
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {toggles.map(({ key, label }) => (
-              <Pill
-                key={key}
-                active={config[key] as boolean}
-                onClick={() =>
-                  onConfigChange({
-                    ...config,
-                    [key]: !config[key],
-                  })
-                }
-              >
-                {label}
-              </Pill>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <button
-        className="inline-flex items-center justify-center h-11 px-7 text-[15px] font-medium rounded-full bg-zinc-950 text-zinc-50 border-none cursor-pointer transition-all duration-150 hover:opacity-85 active:scale-[0.97] mb-4 self-start"
-        onClick={handleOpen}
-        type="button"
-      >
-        Open a sheet
-      </button>
-
-      <div className="flex items-center gap-3 self-start">
+      <div className="flex flex-wrap items-center gap-3 mb-8">
+        <button
+          className="inline-flex items-center justify-center h-11 px-7 text-[15px] font-medium rounded-full bg-zinc-950 text-zinc-50 border-none cursor-pointer transition-all duration-150 hover:opacity-85 active:scale-[0.97]"
+          onClick={handleOpen}
+          type="button"
+        >
+          Open a sheet
+        </button>
         <a
           className="inline-flex items-center justify-center h-11 px-7 text-[15px] font-medium rounded-full bg-transparent text-zinc-950 border border-zinc-200 cursor-pointer transition-colors duration-150 hover:bg-zinc-100 no-underline"
           href="/docs"
@@ -588,6 +656,203 @@ function LeftColumn({
           GitHub
         </a>
       </div>
+
+      {/* ── Position ────────────────────────── */}
+      <div className="flex flex-col gap-4 mb-5">
+        <div className="flex flex-col gap-2">
+          <SectionHeader>Position — Desktop</SectionHeader>
+          <div className="flex flex-wrap gap-1.5">
+            {sides.map((s) => (
+              <Pill
+                key={s}
+                active={config.desktopSide === s}
+                onClick={() =>
+                  onConfigChange({ ...config, desktopSide: s })
+                }
+              >
+                {s}
+              </Pill>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <SectionHeader>Position — Mobile</SectionHeader>
+          <div className="flex flex-wrap gap-1.5">
+            {sides.map((s) => (
+              <Pill
+                key={s}
+                active={config.mobileSide === s}
+                onClick={() =>
+                  onConfigChange({ ...config, mobileSide: s })
+                }
+              >
+                {s}
+              </Pill>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="h-px bg-zinc-100 my-3" />
+
+      {/* ── Spring ──────────────────────────── */}
+      <div className="flex flex-col gap-2 mb-5">
+        <SectionHeader>Spring</SectionHeader>
+        <div className="flex flex-wrap gap-1.5">
+          {springPresets.map((p) => (
+            <Pill
+              key={p}
+              active={config.spring === p}
+              onClick={() =>
+                onConfigChange({ ...config, spring: p })
+              }
+            >
+              {p}
+            </Pill>
+          ))}
+        </div>
+      </div>
+
+      <div className="h-px bg-zinc-100 my-3" />
+
+      {/* ── Behavior ────────────────────────── */}
+      <div className="flex flex-col gap-2 mb-5">
+        <SectionHeader>Behavior</SectionHeader>
+        <div className="flex flex-wrap gap-1.5">
+          {toggles.map(({ key, label }) => (
+            <Pill
+              key={key}
+              active={config[key] as boolean}
+              onClick={() =>
+                onConfigChange({
+                  ...config,
+                  [key]: !config[key],
+                })
+              }
+            >
+              {label}
+            </Pill>
+          ))}
+        </div>
+      </div>
+
+      <div className="h-px bg-zinc-100 my-3" />
+
+      {/* ── Layout ──────────────────────────── */}
+      <div className="flex flex-col gap-1 mb-5">
+        <SectionHeader>Layout</SectionHeader>
+        <NumInput
+          label="width"
+          min={100}
+          onChange={(v) => onConfigChange({ ...config, width: v })}
+          step={10}
+          value={config.width}
+        />
+        <TextInput
+          label="maxWidth"
+          onChange={(v) => onConfigChange({ ...config, maxWidth: v })}
+          value={config.maxWidth}
+        />
+        <NumInput
+          label="breakpoint"
+          min={0}
+          onChange={(v) => onConfigChange({ ...config, breakpoint: v })}
+          value={config.breakpoint}
+        />
+        <NumInput
+          label="zIndex"
+          min={0}
+          onChange={(v) => onConfigChange({ ...config, zIndex: v })}
+          value={config.zIndex}
+        />
+      </div>
+
+      <div className="h-px bg-zinc-100 my-3" />
+
+      {/* ── Drag tuning ─────────────────────── */}
+      <div className="flex flex-col gap-1 mb-5">
+        <SectionHeader>Drag</SectionHeader>
+        <NumInput
+          label="closeThreshold"
+          min={0}
+          onChange={(v) => onConfigChange({ ...config, closeThreshold: v })}
+          step={0.05}
+          value={config.closeThreshold}
+        />
+        <NumInput
+          label="velocityThreshold"
+          min={0}
+          onChange={(v) => onConfigChange({ ...config, velocityThreshold: v })}
+          step={0.1}
+          value={config.velocityThreshold}
+        />
+      </div>
+
+      <div className="h-px bg-zinc-100 my-3" />
+
+      {/* ── Stacking ────────────────────────── */}
+      <div className="flex flex-col gap-1 mb-5">
+        <SectionHeader>Stacking</SectionHeader>
+        <NumInput
+          label="maxDepth"
+          min={0}
+          onChange={(v) => onConfigChange({ ...config, maxDepth: v })}
+          placeholder="∞"
+          value={config.maxDepth}
+        />
+        <NumInput
+          label="scaleStep"
+          min={0}
+          onChange={(v) => onConfigChange({ ...config, stackScaleStep: v })}
+          step={0.01}
+          value={config.stackScaleStep}
+        />
+        <NumInput
+          label="offsetStep"
+          min={0}
+          onChange={(v) => onConfigChange({ ...config, stackOffsetStep: v })}
+          value={config.stackOffsetStep}
+        />
+        <NumInput
+          label="opacityStep"
+          min={0}
+          onChange={(v) => onConfigChange({ ...config, stackOpacityStep: v })}
+          step={0.1}
+          value={config.stackOpacityStep}
+        />
+        <NumInput
+          label="radius"
+          min={0}
+          onChange={(v) => onConfigChange({ ...config, stackRadius: v })}
+          value={config.stackRadius}
+        />
+        <NumInput
+          label="renderThreshold"
+          min={1}
+          onChange={(v) => onConfigChange({ ...config, stackRenderThreshold: v })}
+          value={config.stackRenderThreshold}
+        />
+      </div>
+
+      <div className="h-px bg-zinc-100 my-3" />
+
+      {/* ── Advanced ────────────────────────── */}
+      <div className="flex flex-col gap-1">
+        <SectionHeader>Advanced</SectionHeader>
+        <NumInput
+          label="scaleBackgroundAmount"
+          min={0}
+          onChange={(v) => onConfigChange({ ...config, scaleBackgroundAmount: v })}
+          step={0.01}
+          value={config.scaleBackgroundAmount}
+        />
+        <TextInput
+          label="ariaLabel"
+          onChange={(v) => onConfigChange({ ...config, ariaLabel: v })}
+          value={config.ariaLabel}
+        />
+      </div>
     </div>
   );
 }
@@ -596,18 +861,74 @@ function LeftColumn({
 
 function RightColumn({ config }: { config: PlaygroundConfig }) {
   const configParts: string[] = [];
-  if (config.side !== "right")
-    configParts.push(`side: "${config.side}"`);
-  if (config.spring !== "stiff")
-    configParts.push(`spring: "${config.spring}"`);
+
+  // Side — only show when different from library default { desktop: "right", mobile: "bottom" }
+  if (config.desktopSide !== "right" || config.mobileSide !== "bottom") {
+    if (config.desktopSide === config.mobileSide) {
+      configParts.push(`side: "${config.desktopSide}"`);
+    } else {
+      configParts.push(
+        `side: { desktop: "${config.desktopSide}", mobile: "${config.mobileSide}" }`
+      );
+    }
+  }
+
+  // Spring
+  if (config.spring !== "stiff") configParts.push(`spring: "${config.spring}"`);
+
+  // Booleans (show when different from default)
   if (!config.showOverlay) configParts.push("showOverlay: false");
-  if (!config.closeOnBackdrop)
-    configParts.push("closeOnBackdrop: false");
+  if (!config.closeOnBackdrop) configParts.push("closeOnBackdrop: false");
   if (!config.closeOnEscape) configParts.push("closeOnEscape: false");
+  if (!config.lockScroll) configParts.push("lockScroll: false");
   if (!config.drag) configParts.push("drag: false");
+  if (!config.dismissible) configParts.push("dismissible: false");
   if (!config.modal) configParts.push("modal: false");
   if (config.shouldScaleBackground)
     configParts.push("shouldScaleBackground: true");
+
+  // Layout
+  if (config.width !== 420) configParts.push(`width: ${config.width}`);
+  if (config.maxWidth !== "90vw")
+    configParts.push(`maxWidth: "${config.maxWidth}"`);
+  if (config.breakpoint !== 768)
+    configParts.push(`breakpoint: ${config.breakpoint}`);
+  if (config.zIndex !== 100) configParts.push(`zIndex: ${config.zIndex}`);
+
+  // Drag
+  if (config.closeThreshold !== 0.25)
+    configParts.push(`closeThreshold: ${config.closeThreshold}`);
+  if (config.velocityThreshold !== 0.5)
+    configParts.push(`velocityThreshold: ${config.velocityThreshold}`);
+
+  // Max depth
+  if (config.maxDepth > 0) configParts.push(`maxDepth: ${config.maxDepth}`);
+
+  // Body scale amount
+  if (config.scaleBackgroundAmount !== 0.97)
+    configParts.push(`scaleBackgroundAmount: ${config.scaleBackgroundAmount}`);
+
+  // Aria label
+  if (config.ariaLabel !== "Sheet dialog")
+    configParts.push(`ariaLabel: "${config.ariaLabel}"`);
+
+  // Stacking sub-config
+  const stackingParts: string[] = [];
+  if (config.stackScaleStep !== 0.04)
+    stackingParts.push(`scaleStep: ${config.stackScaleStep}`);
+  if (config.stackOffsetStep !== 36)
+    stackingParts.push(`offsetStep: ${config.stackOffsetStep}`);
+  if (config.stackOpacityStep !== 0)
+    stackingParts.push(`opacityStep: ${config.stackOpacityStep}`);
+  if (config.stackRadius !== 12)
+    stackingParts.push(`radius: ${config.stackRadius}`);
+  if (config.stackRenderThreshold !== 3)
+    stackingParts.push(`renderThreshold: ${config.stackRenderThreshold}`);
+  if (stackingParts.length > 0) {
+    configParts.push(
+      `stacking: {\n    ${stackingParts.join(",\n    ")}\n  }`
+    );
+  }
 
   const configCode =
     configParts.length > 0
@@ -615,7 +936,7 @@ function RightColumn({ config }: { config: PlaygroundConfig }) {
       : "createStacksheet()";
 
   return (
-    <div className="flex flex-col gap-4 pt-2">
+    <div className="flex flex-col gap-4 pt-2 md:sticky md:top-12">
       <div className="bg-zinc-900 rounded-xl p-5">
         <code className="text-sm font-mono text-zinc-300 whitespace-pre">
           {configCode}
@@ -645,7 +966,7 @@ function PageContent({
     <StacksheetProvider sheets={sheetMap}>
       <div
         data-stacksheet-wrapper=""
-        className="grid grid-cols-1 md:grid-cols-[400px_1fr] gap-8 md:gap-16 max-w-5xl mx-auto p-6 md:p-12 min-h-dvh items-center"
+        className="grid grid-cols-1 md:grid-cols-[400px_1fr] gap-8 md:gap-16 max-w-5xl mx-auto p-6 md:p-12 min-h-dvh items-start"
       >
         <LeftColumn config={config} onConfigChange={onConfigChange} />
         <RightColumn config={config} />
