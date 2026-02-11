@@ -1,6 +1,6 @@
 {
   "name": "@howells/stacksheet",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "private": false,
   "description": "Typed, animated sheet stack system. Zustand store + Motion animations with Apple-style depth stacking.",
   "type": "module",
@@ -14,7 +14,7 @@
   "bugs": {
     "url": "https://github.com/howells/stacksheet/issues"
   },
-  "homepage": "https://github.com/howells/stacksheet#readme",
+  "homepage": "https://stacksheet.danielhowells.com",
   "files": [
     "dist"
   ],

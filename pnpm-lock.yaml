@@ -32,6 +32,9 @@ importers:
       react-remove-scroll:
         specifier: ^2.7.2
         version: 2.7.2(@types/react@19.2.13)(react@19.2.4)
+      tailwindcss:
+        specifier: '>=4.0.0'
+        version: 4.1.18
       zustand:
         specifier: ^5.0.0
         version: 5.0.11(@types/react@19.2.13)(react@19.2.4)
