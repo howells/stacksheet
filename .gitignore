@@ -5,3 +5,9 @@ dist
 .source
 .vercel
 .env*.local
+
+# Standard entries
+.claude/settings.local.json
+.playwright-mcp/
+.turbo/
+*.tsbuildinfo

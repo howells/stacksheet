@@ -39,7 +39,8 @@
     "prepack": "pnpm build",
     "docs": "tsx scripts/generate-docs.ts",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "knip": "knip"
   },
   "keywords": [
     "sheet",
@@ -70,10 +71,15 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "husky": "^9.1.7",
+    "knip": "^5.83.1",
+    "lint-staged": "^16.2.7",
     "next": "^16.1.6",
     "tsup": "^8.5.1",
     "typescript": "^5.7.0",
     "ultracite": "^7.1.5"
   },
-  "packageManager": "pnpm@10.12.4"
+  "packageManager": "pnpm@10.12.4",
+  "lint-staged": {
+    "*.{js,ts,jsx,tsx,json,jsonc,css}": "biome format --write --no-errors-on-unmatched"
+  }
 }
