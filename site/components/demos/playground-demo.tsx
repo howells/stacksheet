@@ -42,6 +42,7 @@ import {
   type SpringPreset,
   createStacksheet,
 } from "@howells/stacksheet";
+import { Wordmark } from "@/components/brand/wordmark";
 
 // ── Type registry ──────────────────────────────
 
@@ -62,8 +63,15 @@ type SheetKey = keyof SheetTypeMap;
 // ── Tour order ─────────────────────────────────
 
 const tourOrder: SheetKey[] = [
-  "Push", "Navigate", "Replace", "Swap", "Pop", "Close",
-  "Composable", "Stacking", "Config",
+  "Push",
+  "Navigate",
+  "Replace",
+  "Swap",
+  "Pop",
+  "Close",
+  "Composable",
+  "Stacking",
+  "Config",
 ];
 
 // ── Data presets ───────────────────────────────
@@ -76,15 +84,30 @@ const presets: Record<SheetKey, SheetTypeMap[SheetKey][]> = {
   Pop: [{ description: "Removes the topmost sheet from the stack." }],
   Close: [{ description: "Clears the entire stack." }],
   Composable: [
-    { variant: "Full layout", parts: ["Handle", "Back", "Title", "Close", "Body", "Footer"] },
+    {
+      variant: "Full layout",
+      parts: ["Handle", "Back", "Title", "Close", "Body", "Footer"],
+    },
     { variant: "Minimal", parts: ["Title", "Close", "Body"] },
-    { variant: "With footer", parts: ["Back", "Title", "Close", "Body", "Footer"] },
+    {
+      variant: "With footer",
+      parts: ["Back", "Title", "Close", "Body", "Footer"],
+    },
   ],
   Stacking: [{ description: "Depth-aware stack behavior." }],
   Config: [
-    { category: "Position", description: "Side placement, breakpoints, and responsive behavior." },
-    { category: "Animation", description: "Spring presets, drag thresholds, and velocity." },
-    { category: "Behavior", description: "Overlay, scroll lock, escape close, and modal mode." },
+    {
+      category: "Position",
+      description: "Side placement, breakpoints, and responsive behavior.",
+    },
+    {
+      category: "Animation",
+      description: "Spring presets, drag thresholds, and velocity.",
+    },
+    {
+      category: "Behavior",
+      description: "Overlay, scroll lock, escape close, and modal mode.",
+    },
   ],
 };
 
@@ -143,7 +166,7 @@ function useStack() {
   return useSyncExternalStore(
     store.subscribe,
     () => store.getState().stack,
-    () => store.getState().stack,
+    () => store.getState().stack
   );
 }
 
@@ -222,7 +245,9 @@ function BlockScrollArea({
         orientation="vertical"
         className={`flex w-2 select-none touch-none ${scrollbarClassName ?? ""}`}
       >
-        <ScrollAreaThumb className={`relative flex-1 rounded-full ${thumbClassName}`} />
+        <ScrollAreaThumb
+          className={`relative flex-1 rounded-full ${thumbClassName}`}
+        />
       </ScrollAreaScrollbar>
     </ScrollAreaRoot>
   );
@@ -251,7 +276,8 @@ function SheetControls({ children }: { children: ReactNode }) {
       </p>
       <div className="flex flex-col gap-0.5">
         {tourOrder.map((type) => {
-          const isCurrent = stack.length > 0 && stack[stack.length - 1].type === type;
+          const isCurrent =
+            stack.length > 0 && stack[stack.length - 1].type === type;
           const isVisited = !isCurrent && visitedRef.current.has(type);
           const isLocked = !isCurrent && !isVisited;
 
@@ -277,7 +303,9 @@ function SheetControls({ children }: { children: ReactNode }) {
               <span
                 className={`w-2 h-2 rounded-full shrink-0 ${isCurrent || isVisited ? dotColors[type] : "bg-zinc-200"}`}
               />
-              <span className={`font-medium ${isLocked ? "text-zinc-300" : "text-zinc-950"}`}>
+              <span
+                className={`font-medium ${isLocked ? "text-zinc-300" : "text-zinc-950"}`}
+              >
                 {type}
               </span>
               {isCurrent && (
@@ -298,15 +326,14 @@ function SheetControls({ children }: { children: ReactNode }) {
 // Shared header bar used by composable sheets
 function HeaderBar({ children }: { children: ReactNode }) {
   return (
-    <Sheet.Header
-      className="flex items-center justify-between h-14 px-5 border-b border-zinc-100"
-    >
+    <Sheet.Header className="flex items-center justify-between h-14 px-5 border-b border-zinc-100">
       {children}
     </Sheet.Header>
   );
 }
 
-const iconBtnCls = "w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500";
+const iconBtnCls =
+  "w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500";
 
 // Shared footer bar
 function FooterBar({ children }: { children: ReactNode }) {
@@ -354,13 +381,13 @@ function Button({
 // ── Syntax highlighting ──────────────────────────
 
 const syntaxColors = {
-  keyword: "#87a083",   // sage green
-  string: "#c9a87c",    // warm sand
-  comment: "#5a5a62",   // dim stone
+  keyword: "#87a083", // sage green
+  string: "#c9a87c", // warm sand
+  comment: "#5a5a62", // dim stone
   component: "#8aacbd", // dusty blue
-  boolean: "#b89cb0",   // muted mauve
-  number: "#b89cb0",    // muted mauve
-  plain: "#9a9aa2",     // neutral base
+  boolean: "#b89cb0", // muted mauve
+  number: "#b89cb0", // muted mauve
+  plain: "#9a9aa2", // neutral base
 } as const;
 
 const SYNTAX_RE =
@@ -374,7 +401,10 @@ function highlightCode(code: string) {
   SYNTAX_RE.lastIndex = 0;
   while ((match = SYNTAX_RE.exec(code)) !== null) {
     if (match.index > lastIndex) {
-      parts.push({ text: code.slice(lastIndex, match.index), color: syntaxColors.plain });
+      parts.push({
+        text: code.slice(lastIndex, match.index),
+        color: syntaxColors.plain,
+      });
     }
     const color = match[1]
       ? syntaxColors.comment
@@ -398,12 +428,23 @@ function highlightCode(code: string) {
   return parts;
 }
 
-function SyntaxHighlight({ code, className = "text-[13px]" }: { code: string; className?: string }) {
+function SyntaxHighlight({
+  code,
+  className = "text-[13px]",
+}: {
+  code: string;
+  className?: string;
+}) {
   const parts = highlightCode(code);
   return (
-    <code className={`${className} whitespace-pre`} style={{ fontFamily: "var(--font-mono)" }}>
+    <code
+      className={`${className} whitespace-pre`}
+      style={{ fontFamily: "var(--font-mono)" }}
+    >
       {parts.map((p, i) => (
-        <span key={i} style={{ color: p.color }}>{p.text}</span>
+        <span key={i} style={{ color: p.color }}>
+          {p.text}
+        </span>
       ))}
     </code>
   );
@@ -413,7 +454,10 @@ function SyntaxHighlight({ code, className = "text-[13px]" }: { code: string; cl
 
 function CodeBlock({ children }: { children: string }) {
   return (
-    <div className="rounded-lg p-3.5 text-xs leading-relaxed whitespace-pre overflow-x-auto" style={{ backgroundColor: "#1c1c1e", fontFamily: "var(--font-mono)" }}>
+    <div
+      className="rounded-lg p-3.5 text-xs leading-relaxed whitespace-pre overflow-x-auto"
+      style={{ backgroundColor: "#1c1c1e", fontFamily: "var(--font-mono)" }}
+    >
       <SyntaxHighlight code={children} className="text-xs" />
     </div>
   );
@@ -435,17 +479,21 @@ function NextFooter() {
 
 // ── Action content ────────────────────────────
 
-const actionContent: Record<string, {
-  snippet: string;
-  explanation: string;
-  related: { name: string; detail: string }[];
-}> = {
+const actionContent: Record<
+  string,
+  {
+    snippet: string;
+    explanation: string;
+    related: { name: string; detail: string }[];
+  }
+> = {
   Push: {
     snippet: `// Push adds a new sheet on top
 actions.push("Settings", {
   category: "Position"
 })`,
-    explanation: "Push adds a new sheet to the top of the stack. The stack grows by one \u2014 use it to show additional detail without losing the current view.",
+    explanation:
+      "Push adds a new sheet to the top of the stack. The stack grows by one \u2014 use it to show additional detail without losing the current view.",
     related: [
       { name: "push", detail: "Add a sheet on top of the stack" },
       { name: "pop", detail: "Remove the top sheet" },
@@ -457,7 +505,8 @@ actions.push("Settings", {
 actions.navigate("Profile", {
   userId: "abc-123"
 })`,
-    explanation: "Navigate replaces the entire stack above the current sheet with a new one. Like push, but clears anything stacked on top first.",
+    explanation:
+      "Navigate replaces the entire stack above the current sheet with a new one. Like push, but clears anything stacked on top first.",
     related: [
       { name: "navigate", detail: "Replace everything above current" },
       { name: "open", detail: "Clear stack, open fresh" },
@@ -469,7 +518,8 @@ actions.navigate("Profile", {
 actions.replace("Confirm", {
   action: "delete"
 })`,
-    explanation: "Replace swaps the current sheet with a new one in-place. The stack depth stays the same \u2014 the old sheet is removed and the new one takes its position.",
+    explanation:
+      "Replace swaps the current sheet with a new one in-place. The stack depth stays the same \u2014 the old sheet is removed and the new one takes its position.",
     related: [
       { name: "replace", detail: "Swap current sheet in-place" },
       { name: "swap", detail: "Change type & data of current" },
@@ -481,7 +531,8 @@ actions.replace("Confirm", {
 actions.swap("Alert", {
   message: "Saved!"
 })`,
-    explanation: "Swap changes the type and data of the current sheet without replacing it. The sheet ID stays the same \u2014 a lighter-weight alternative to replace.",
+    explanation:
+      "Swap changes the type and data of the current sheet without replacing it. The sheet ID stays the same \u2014 a lighter-weight alternative to replace.",
     related: [
       { name: "swap", detail: "Change type & data of current" },
       { name: "replace", detail: "Swap current sheet entirely" },
@@ -491,7 +542,8 @@ actions.swap("Alert", {
   Pop: {
     snippet: `// Pop removes the top sheet
 actions.pop()`,
-    explanation: "Pop removes the topmost sheet from the stack, revealing the one beneath it. If only one sheet remains, pop closes everything.",
+    explanation:
+      "Pop removes the topmost sheet from the stack, revealing the one beneath it. If only one sheet remains, pop closes everything.",
     related: [
       { name: "pop", detail: "Remove the top sheet" },
       { name: "remove", detail: "Remove a specific sheet by ID" },
@@ -501,7 +553,8 @@ actions.pop()`,
   Close: {
     snippet: `// Close clears the entire stack
 actions.close()`,
-    explanation: "Close removes all sheets from the stack at once. The panel animates out completely \u2014 use it when the user is done with the entire flow.",
+    explanation:
+      "Close removes all sheets from the stack at once. The panel animates out completely \u2014 use it when the user is done with the entire flow.",
     related: [
       { name: "close", detail: "Clear the entire stack" },
       { name: "pop", detail: "Remove just the top sheet" },
@@ -514,7 +567,8 @@ actions.close()`,
 
 function ActionSheet(_props: { description: string }) {
   const stack = useStack();
-  const currentType = stack.length > 0 ? (stack[stack.length - 1].type as string) : "Push";
+  const currentType =
+    stack.length > 0 ? (stack[stack.length - 1].type as string) : "Push";
   const content = actionContent[currentType] || actionContent.Push;
   const highlight = currentType.toLowerCase();
 
@@ -523,7 +577,9 @@ function ActionSheet(_props: { description: string }) {
       <HeaderBar>
         <div className="flex items-center gap-2">
           <Sheet.Back className={iconBtnCls} />
-          <Sheet.Title className="text-sm font-semibold">{currentType}</Sheet.Title>
+          <Sheet.Title className="text-sm font-semibold">
+            {currentType}
+          </Sheet.Title>
         </div>
         <Sheet.Close className={iconBtnCls} />
       </HeaderBar>
@@ -540,7 +596,10 @@ function ActionSheet(_props: { description: string }) {
                   key={name}
                   className={`flex items-center justify-between py-2.5 border-b border-zinc-100 last:border-b-0 ${name === highlight ? "bg-blue-50 -mx-2 px-2 rounded-md border-transparent" : ""}`}
                 >
-                  <code className={`text-[13px] font-medium ${name === highlight ? "text-blue-600" : "text-zinc-950"}`} style={{ fontFamily: "var(--font-mono)" }}>
+                  <code
+                    className={`text-[13px] font-medium ${name === highlight ? "text-blue-600" : "text-zinc-950"}`}
+                    style={{ fontFamily: "var(--font-mono)" }}
+                  >
                     {name}
                   </code>
                   <span className="text-xs text-zinc-500">{detail}</span>
@@ -567,16 +626,14 @@ function ComposableSheet({ variant, parts }: SheetTypeMap["Composable"]) {
       {hasPart("Handle") && <Sheet.Handle />}
       <HeaderBar>
         <div className="flex items-center gap-2">
-          {hasPart("Back") && (
-            <Sheet.Back className={iconBtnCls} />
-          )}
+          {hasPart("Back") && <Sheet.Back className={iconBtnCls} />}
           {hasPart("Title") && (
-            <Sheet.Title className="text-sm font-semibold">Composable</Sheet.Title>
+            <Sheet.Title className="text-sm font-semibold">
+              Composable
+            </Sheet.Title>
           )}
         </div>
-        {hasPart("Close") && (
-          <Sheet.Close className={iconBtnCls} />
-        )}
+        {hasPart("Close") && <Sheet.Close className={iconBtnCls} />}
       </HeaderBar>
       <Sheet.Body>
         <div className="px-5 py-4">
@@ -585,24 +642,32 @@ function ComposableSheet({ variant, parts }: SheetTypeMap["Composable"]) {
               {variant}
             </p>
             <p className="text-sm text-zinc-500 leading-relaxed mb-4">
-              Compose sheets from <code className="text-zinc-700" style={{ fontFamily: "var(--font-mono)" }}>Sheet.*</code> parts.
-              Each part reads from the central store to know its context.
+              Compose sheets from{" "}
+              <code
+                className="text-zinc-700"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                Sheet.*
+              </code>{" "}
+              parts. Each part reads from the central store to know its context.
             </p>
 
             <div className="flex flex-wrap gap-1.5 mb-4">
-              {["Handle", "Back", "Title", "Close", "Body", "Footer"].map((p) => (
-                <span
-                  key={p}
-                  className={`inline-flex items-center h-7 px-3 text-xs font-medium rounded-full ${
-                    hasPart(p)
-                      ? "bg-violet-100 text-violet-700"
-                      : "bg-zinc-100 text-zinc-400"
-                  }`}
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >
-                  Sheet.{p}
-                </span>
-              ))}
+              {["Handle", "Back", "Title", "Close", "Body", "Footer"].map(
+                (p) => (
+                  <span
+                    key={p}
+                    className={`inline-flex items-center h-7 px-3 text-xs font-medium rounded-full ${
+                      hasPart(p)
+                        ? "bg-violet-100 text-violet-700"
+                        : "bg-zinc-100 text-zinc-400"
+                    }`}
+                    style={{ fontFamily: "var(--font-mono)" }}
+                  >
+                    Sheet.{p}
+                  </span>
+                )
+              )}
             </div>
 
             <CodeBlock>{`<Sheet.Header>\n  <Sheet.Back />\n  <Sheet.Title>Title</Sheet.Title>\n  <Sheet.Close />\n</Sheet.Header>\n<Sheet.Body>\n  {/* Your content */}\n</Sheet.Body>${hasPart("Footer") ? "\n<Sheet.Footer>\n  {/* Actions */}\n</Sheet.Footer>" : ""}`}</CodeBlock>
@@ -638,20 +703,20 @@ function StackingSheet({ description }: SheetTypeMap["Stacking"]) {
               </span>
               <div>
                 <p className="text-sm font-medium text-zinc-950">
-                  {actualDepth === 1 ? "Root sheet" : `${actualDepth} sheets deep`}
+                  {actualDepth === 1
+                    ? "Root sheet"
+                    : `${actualDepth} sheets deep`}
                 </p>
-                <p className="text-xs text-zinc-500">
-                  {description}
-                </p>
+                <p className="text-xs text-zinc-500">{description}</p>
               </div>
             </div>
 
             <p className="text-sm text-zinc-500 leading-relaxed mb-4">
-              The stack is the store. Every sheet knows its position,
-              and the visualization below is a direct read of store state.
+              The stack is the store. Every sheet knows its position, and the
+              visualization below is a direct read of store state.
             </p>
 
-            <CodeBlock>{`// Stack config\ncreateStacksheet({\n  stacking: {\n    scaleStep: 0.04,\n    offsetStep: 36,\n    radius: 12,\n  }\n})`}</CodeBlock>
+            <CodeBlock>{`// Stack config\ncreateStacksheet({\n  stacking: {\n    scaleStep: 0.04,\n    opacityStep: 0,\n    radius: 12,\n  }\n})`}</CodeBlock>
           </SheetControls>
         </div>
       </Sheet.Body>
@@ -707,14 +772,28 @@ function ConfigSheet({ category, description }: SheetTypeMap["Config"]) {
             </div>
 
             <p className="text-sm text-zinc-500 leading-relaxed mb-4">
-              Config is set once when creating the store. Every sheet inherits it — no per-sheet overrides needed.
+              Config is set once when creating the store. Every sheet inherits
+              it — no per-sheet overrides needed.
             </p>
 
             <div className="flex flex-col mb-4">
               {rows.map(({ key, value }) => (
-                <div key={key} className="flex items-center justify-between py-2 border-b border-zinc-100 last:border-b-0">
-                  <code className="text-[13px] font-medium text-zinc-950" style={{ fontFamily: "var(--font-mono)" }}>{key}</code>
-                  <code className="text-[13px] text-zinc-500" style={{ fontFamily: "var(--font-mono)" }}>{value}</code>
+                <div
+                  key={key}
+                  className="flex items-center justify-between py-2 border-b border-zinc-100 last:border-b-0"
+                >
+                  <code
+                    className="text-[13px] font-medium text-zinc-950"
+                    style={{ fontFamily: "var(--font-mono)" }}
+                  >
+                    {key}
+                  </code>
+                  <code
+                    className="text-[13px] text-zinc-500"
+                    style={{ fontFamily: "var(--font-mono)" }}
+                  >
+                    {value}
+                  </code>
                 </div>
               ))}
             </div>
@@ -772,7 +851,6 @@ interface PlaygroundConfig {
   velocityThreshold: number;
   maxDepth: number;
   stackScaleStep: number;
-  stackOffsetStep: number;
   stackOpacityStep: number;
   stackRadius: number;
   stackRenderThreshold: number;
@@ -800,7 +878,6 @@ const defaultConfig: PlaygroundConfig = {
   velocityThreshold: 0.5,
   maxDepth: 0,
   stackScaleStep: 0.04,
-  stackOffsetStep: 36,
   stackOpacityStep: 0,
   stackRadius: 12,
   stackRenderThreshold: 3,
@@ -849,7 +926,6 @@ function DemoInstance({
       ariaLabel: config.ariaLabel,
       stacking: {
         scaleStep: config.stackScaleStep,
-        offsetStep: config.stackOffsetStep,
         opacityStep: config.stackOpacityStep,
         radius: config.stackRadius,
         renderThreshold: config.stackRenderThreshold,
@@ -861,7 +937,9 @@ function DemoInstance({
   storeRef.current = store;
 
   return (
-    <PlaygroundContext.Provider value={{ store, StacksheetProvider, visitedRef }}>
+    <PlaygroundContext.Provider
+      value={{ store, StacksheetProvider, visitedRef }}
+    >
       <StacksheetProvider sheets={sheetMap} renderHeader={false}>
         {children}
       </StacksheetProvider>
@@ -871,13 +949,7 @@ function DemoInstance({
 
 // ── Pill button ────────────────────────────────
 
-function Pill({
-  children,
-  value,
-}: {
-  children: ReactNode;
-  value: string;
-}) {
+function Pill({ children, value }: { children: ReactNode; value: string }) {
   return (
     <ToggleGroupItem
       value={value}
@@ -1017,16 +1089,23 @@ function Collapsible({
             viewBox="0 0 10 10"
             fill="none"
           >
-            <path d="M3 1.5L7 5L3 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M3 1.5L7 5L3 8.5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
           {label}
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden">
-        <div className="grid transition-[grid-template-rows] duration-200 ease-out" style={{ gridTemplateRows: open ? "1fr" : "0fr" }}>
-          <div className="flex flex-col gap-0.5 pb-2">
-            {children}
-          </div>
+        <div
+          className="grid transition-[grid-template-rows] duration-200 ease-out"
+          style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
+        >
+          <div className="flex flex-col gap-0.5 pb-2">{children}</div>
         </div>
       </CollapsibleContent>
     </CollapsibleRoot>
@@ -1055,7 +1134,9 @@ function LeftColumn({
   onConfigChange: (c: PlaygroundConfig) => void;
   onOpen: () => void;
 }) {
-  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const [openSections, setOpenSections] = useState<Set<string>>(
+    new Set(["behavior"])
+  );
   const [pm, setPm] = useState("pnpm");
 
   function toggleSection(key: string) {
@@ -1082,25 +1163,51 @@ function LeftColumn({
 
   return (
     <div className="grid lg:h-full lg:min-h-0 grid-rows-[auto_auto_auto] lg:grid-rows-[auto_auto_minmax(0,1fr)]">
-      <section className="border-b border-zinc-200 px-8 pt-6 pb-5">
+      <section className="ss-shell-pad border-b border-zinc-200 pt-6 pb-5">
         <SectionHeader>Introduction</SectionHeader>
         <p className="mt-3 text-sm text-zinc-500 leading-relaxed">
-          A single store manages every sheet in your app. Fully typed, stack-based, composable. Powered by{" "}
-          <a className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors" href="https://zustand.docs.pmnd.rs">Zustand</a>,{" "}
-          <a className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors" href="https://motion.dev">Motion</a>,
-          and a bit of <a className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors" href="https://www.radix-ui.com">Radix</a>. All wired up.
+          A single store manages every sheet in your app. Fully typed,
+          stack-based, composable. Powered by{" "}
+          <a
+            className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors"
+            href="https://zustand.docs.pmnd.rs"
+          >
+            Zustand
+          </a>
+          ,{" "}
+          <a
+            className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors"
+            href="https://motion.dev"
+          >
+            Motion
+          </a>
+          , and a bit of{" "}
+          <a
+            className="text-zinc-500 underline underline-offset-2 hover:text-zinc-950 transition-colors"
+            href="https://www.radix-ui.com"
+          >
+            Radix
+          </a>
+          . All wired up.
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <Button className="w-full" variant="primary" onClick={onOpen}>Open a sheet</Button>
-          <Button className="w-full" href="/docs">Documentation</Button>
+          <Button className="w-full" variant="primary" onClick={onOpen}>
+            Open a sheet
+          </Button>
+          <Button className="w-full" href="/docs">
+            Documentation
+          </Button>
         </div>
       </section>
 
-      <section className="border-b border-zinc-200 px-8 py-5">
+      <section className="ss-shell-pad border-b border-zinc-200 py-5">
         <TabsRoot value={pm} onValueChange={setPm}>
           <div className="mb-3 flex items-center justify-between">
             <SectionHeader>Install</SectionHeader>
-            <TabsList className="inline-flex h-7 rounded-md bg-zinc-100/80 p-0.5" aria-label="Package manager">
+            <TabsList
+              className="inline-flex h-7 rounded-md bg-zinc-100/80 p-0.5"
+              aria-label="Package manager"
+            >
               {pmOptions.map((option) => (
                 <TabsTrigger
                   key={option}
@@ -1115,16 +1222,30 @@ function LeftColumn({
           {pmOptions.map((option) => (
             <TabsContent key={option} value={option}>
               <div className="flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-100/70 px-4 py-3">
-                <code className="text-[13px] text-zinc-700" style={{ fontFamily: "var(--font-mono)" }}>
+                <code
+                  className="text-[13px] text-zinc-700"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
                   {installCommands[option]}
                 </code>
                 <button
                   className="ml-3 shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 transition-colors duration-150 cursor-pointer bg-transparent border-none"
-                  onClick={() => navigator.clipboard.writeText(installCommands[option])}
+                  onClick={() =>
+                    navigator.clipboard.writeText(installCommands[option])
+                  }
                   type="button"
                   aria-label="Copy install command"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                     <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
                   </svg>
@@ -1145,7 +1266,9 @@ function LeftColumn({
                 <SegmentedControl
                   value={config.desktopSide}
                   options={sides}
-                  onChange={(s) => onConfigChange({ ...config, desktopSide: s as Side })}
+                  onChange={(s) =>
+                    onConfigChange({ ...config, desktopSide: s as Side })
+                  }
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -1153,7 +1276,9 @@ function LeftColumn({
                 <SegmentedControl
                   value={config.mobileSide}
                   options={sides}
-                  onChange={(s) => onConfigChange({ ...config, mobileSide: s as Side })}
+                  onChange={(s) =>
+                    onConfigChange({ ...config, mobileSide: s as Side })
+                  }
                 />
               </div>
             </div>
@@ -1166,15 +1291,13 @@ function LeftColumn({
                 type="single"
                 value={config.spring}
                 onValueChange={(next) => {
-                  if (next) onConfigChange({ ...config, spring: next as SpringPreset });
+                  if (next)
+                    onConfigChange({ ...config, spring: next as SpringPreset });
                 }}
                 className="flex flex-wrap gap-1.5"
               >
                 {springPresets.map((p) => (
-                  <Pill
-                    key={p}
-                    value={p}
-                  >
+                  <Pill key={p} value={p}>
                     {p}
                   </Pill>
                 ))}
@@ -1183,33 +1306,32 @@ function LeftColumn({
 
             <div className="h-px bg-zinc-200 my-3" />
 
-            <div className="flex flex-col gap-0 mb-6">
-              <SectionHeader>Behavior</SectionHeader>
-              <div className="flex flex-col">
-                {toggles.map(({ key, label }) => (
-                  <div
-                    key={key}
-                    className="flex items-center justify-between py-2.5 text-sm text-zinc-950 border-b border-zinc-100 last:border-b-0"
-                  >
-                    <label htmlFor={`behavior-${key}`} className="cursor-pointer">
-                      {label}
-                    </label>
-                    <Toggle
-                      id={`behavior-${key}`}
-                      on={config[key] as boolean}
-                      onToggle={(checked) =>
-                        onConfigChange({
-                          ...config,
-                          [key]: checked,
-                        })
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="h-px bg-zinc-200 my-3" />
+            <Collapsible
+              label="Behavior"
+              open={openSections.has("behavior")}
+              onToggle={() => toggleSection("behavior")}
+            >
+              {toggles.map(({ key, label }) => (
+                <div
+                  key={key}
+                  className="flex items-center justify-between py-2.5 text-sm text-zinc-950 border-b border-zinc-100 last:border-b-0"
+                >
+                  <label htmlFor={`behavior-${key}`} className="cursor-pointer">
+                    {label}
+                  </label>
+                  <Toggle
+                    id={`behavior-${key}`}
+                    on={config[key] as boolean}
+                    onToggle={(checked) =>
+                      onConfigChange({
+                        ...config,
+                        [key]: checked,
+                      })
+                    }
+                  />
+                </div>
+              ))}
+            </Collapsible>
 
             <div className="flex flex-col gap-1">
               <Collapsible
@@ -1251,14 +1373,18 @@ function LeftColumn({
                 <NumInput
                   label="closeThreshold"
                   min={0}
-                  onChange={(v) => onConfigChange({ ...config, closeThreshold: v })}
+                  onChange={(v) =>
+                    onConfigChange({ ...config, closeThreshold: v })
+                  }
                   step={0.05}
                   value={config.closeThreshold}
                 />
                 <NumInput
                   label="velocityThreshold"
                   min={0}
-                  onChange={(v) => onConfigChange({ ...config, velocityThreshold: v })}
+                  onChange={(v) =>
+                    onConfigChange({ ...config, velocityThreshold: v })
+                  }
                   step={0.1}
                   value={config.velocityThreshold}
                 />
@@ -1279,33 +1405,35 @@ function LeftColumn({
                 <NumInput
                   label="scaleStep"
                   min={0}
-                  onChange={(v) => onConfigChange({ ...config, stackScaleStep: v })}
+                  onChange={(v) =>
+                    onConfigChange({ ...config, stackScaleStep: v })
+                  }
                   step={0.01}
                   value={config.stackScaleStep}
                 />
                 <NumInput
-                  label="offsetStep"
-                  min={0}
-                  onChange={(v) => onConfigChange({ ...config, stackOffsetStep: v })}
-                  value={config.stackOffsetStep}
-                />
-                <NumInput
                   label="opacityStep"
                   min={0}
-                  onChange={(v) => onConfigChange({ ...config, stackOpacityStep: v })}
+                  onChange={(v) =>
+                    onConfigChange({ ...config, stackOpacityStep: v })
+                  }
                   step={0.1}
                   value={config.stackOpacityStep}
                 />
                 <NumInput
                   label="radius"
                   min={0}
-                  onChange={(v) => onConfigChange({ ...config, stackRadius: v })}
+                  onChange={(v) =>
+                    onConfigChange({ ...config, stackRadius: v })
+                  }
                   value={config.stackRadius}
                 />
                 <NumInput
                   label="renderThreshold"
                   min={1}
-                  onChange={(v) => onConfigChange({ ...config, stackRenderThreshold: v })}
+                  onChange={(v) =>
+                    onConfigChange({ ...config, stackRenderThreshold: v })
+                  }
                   value={config.stackRenderThreshold}
                 />
               </Collapsible>
@@ -1318,7 +1446,9 @@ function LeftColumn({
                 <NumInput
                   label="scaleBackgroundAmount"
                   min={0}
-                  onChange={(v) => onConfigChange({ ...config, scaleBackgroundAmount: v })}
+                  onChange={(v) =>
+                    onConfigChange({ ...config, scaleBackgroundAmount: v })
+                  }
                   step={0.01}
                   value={config.scaleBackgroundAmount}
                 />
@@ -1376,7 +1506,14 @@ actions.pop()`,
 actions.close()`,
 };
 
-const actionKeys = ["push", "navigate", "replace", "swap", "pop", "close"] as const;
+const actionKeys = [
+  "push",
+  "navigate",
+  "replace",
+  "swap",
+  "pop",
+  "close",
+] as const;
 
 function useConfigCode(config: PlaygroundConfig): string {
   const configParts: string[] = [];
@@ -1426,8 +1563,6 @@ function useConfigCode(config: PlaygroundConfig): string {
   const stackingParts: string[] = [];
   if (config.stackScaleStep !== 0.04)
     stackingParts.push(`scaleStep: ${config.stackScaleStep}`);
-  if (config.stackOffsetStep !== 36)
-    stackingParts.push(`offsetStep: ${config.stackOffsetStep}`);
   if (config.stackOpacityStep !== 0)
     stackingParts.push(`opacityStep: ${config.stackOpacityStep}`);
   if (config.stackRadius !== 12)
@@ -1435,18 +1570,18 @@ function useConfigCode(config: PlaygroundConfig): string {
   if (config.stackRenderThreshold !== 3)
     stackingParts.push(`renderThreshold: ${config.stackRenderThreshold}`);
   if (stackingParts.length > 0) {
-    configParts.push(
-      `stacking: {\n    ${stackingParts.join(",\n    ")}\n  }`
-    );
+    configParts.push(`stacking: {\n    ${stackingParts.join(",\n    ")}\n  }`);
   }
 
-  const call = configParts.length > 0
-    ? `createStacksheet({\n  ${configParts.join(",\n  ")}\n})`
-    : "createStacksheet()";
+  const call =
+    configParts.length > 0
+      ? `createStacksheet({\n  ${configParts.join(",\n  ")}\n})`
+      : "createStacksheet()";
 
-  const generic = configParts.length > 0
-    ? `createStacksheet<Sheets>({\n  ${configParts.join(",\n  ")}\n})`
-    : "createStacksheet<Sheets>()";
+  const generic =
+    configParts.length > 0
+      ? `createStacksheet<Sheets>({\n  ${configParts.join(",\n  ")}\n})`
+      : "createStacksheet<Sheets>()";
 
   return `import { createStacksheet } from "@howells/stacksheet"
 
@@ -1537,11 +1672,12 @@ function CodePanel({
 }
 
 function RightColumn({ config }: { config: PlaygroundConfig }) {
-  const [activeAction, setActiveAction] = useState<typeof actionKeys[number]>("push");
+  const [activeAction, setActiveAction] =
+    useState<(typeof actionKeys)[number]>("push");
   const configCode = useConfigCode(config);
 
   return (
-    <section className="grid lg:h-full lg:min-h-0 lg:grid-rows-[minmax(0,1fr)] px-8 py-6">
+    <section className="ss-shell-pad grid lg:h-full lg:min-h-0 lg:grid-rows-[minmax(0,1fr)] py-6">
       <div className="grid lg:min-h-0 grid-cols-1 gap-3 lg:grid-cols-2 lg:grid-rows-2">
         <CodePanel label="Create" code={configCode} />
         <CodePanel label="Define" code={defineCode} />
@@ -1580,8 +1716,8 @@ function RightColumn({ config }: { config: PlaygroundConfig }) {
 
 function PageHeader() {
   return (
-    <header className="flex items-center justify-between h-14 px-8 border-b border-zinc-200">
-      <span className="text-sm font-semibold tracking-tight">Stacksheet</span>
+    <header className="ss-shell-pad flex items-center justify-between h-14 border-b border-zinc-200">
+      <Wordmark />
       <nav className="flex items-center gap-6">
         <a
           className="text-sm text-zinc-500 no-underline hover:text-zinc-950 transition-colors duration-150"
@@ -1609,8 +1745,7 @@ function PageHeader() {
 // ── PlaygroundDemo (root) ──────────────────────
 
 export function PlaygroundDemo() {
-  const [config, setConfig] =
-    useState<PlaygroundConfig>(defaultConfig);
+  const [config, setConfig] = useState<PlaygroundConfig>(defaultConfig);
   const [configVersion, setConfigVersion] = useState(0);
   const storeRef = useRef<StacksheetReturn["store"] | null>(null);
 
@@ -1620,15 +1755,24 @@ export function PlaygroundDemo() {
   }
 
   function handleOpen() {
-    storeRef.current?.getState().open("Push", `tour-${Date.now()}`, presets.Push[0] as never);
+    storeRef.current
+      ?.getState()
+      .open("Push", `tour-${Date.now()}`, presets.Push[0] as never);
   }
 
   return (
-    <div data-stacksheet-wrapper="" className="grid min-h-dvh lg:h-dvh lg:overflow-hidden grid-rows-[auto_1fr] lg:grid-rows-[auto_minmax(0,1fr)]">
+    <div
+      data-stacksheet-wrapper=""
+      className="grid min-h-dvh lg:h-dvh lg:overflow-hidden grid-rows-[auto_1fr] lg:grid-rows-[auto_minmax(0,1fr)]"
+    >
       <PageHeader />
       <div className="grid lg:min-h-0 grid-cols-1 lg:grid-cols-[420px_minmax(0,1fr)]">
         <div className="lg:min-h-0 border-b border-zinc-200 lg:border-b-0 lg:border-r">
-          <LeftColumn config={config} onConfigChange={handleConfigChange} onOpen={handleOpen} />
+          <LeftColumn
+            config={config}
+            onConfigChange={handleConfigChange}
+            onOpen={handleOpen}
+          />
         </div>
         <div className="@container lg:min-h-0 lg:overflow-hidden">
           <DemoInstance key={configVersion} config={config} storeRef={storeRef}>

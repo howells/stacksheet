@@ -72,14 +72,13 @@ Controls the Apple-style depth effect when sheets are stacked:
 | Option | Default | Description |
 |---|---|---|
 | `scaleStep` | `0.04` | Scale reduction per depth level |
-| `offsetStep` | `36` | Offset per depth level in px |
 | `opacityStep` | `0` | Opacity reduction per depth level |
 | `radius` | `12` | Border radius on stacked panels in px |
 | `renderThreshold` | `3` | Max depth before content stops rendering |
 
 ```tsx
 createStacksheet({
-  stacking: { scaleStep: 0.06, offsetStep: 48 },
+  stacking: { scaleStep: 0.06, opacityStep: 0.1, radius: 14 },
 });
 ```
 

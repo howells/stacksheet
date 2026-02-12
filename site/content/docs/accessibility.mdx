@@ -57,7 +57,10 @@ Per-sheet override via the `__ariaLabel` prop:
 open(UserProfile, { userId: "abc", __ariaLabel: "User profile for John" });
 
 // Type registry pattern
-open("user-profile", { userId: "abc", __ariaLabel: "User profile for John" });
+open("user-profile", "user-1", {
+  userId: "abc",
+  __ariaLabel: "User profile for John",
+});
 ```
 
 The per-sheet label takes priority over the global config.

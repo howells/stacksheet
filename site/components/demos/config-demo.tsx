@@ -7,7 +7,6 @@ const { StacksheetProvider, useSheet, useStacksheetState } = createStacksheet({
   spring: "snappy",
   stacking: {
     scaleStep: 0.06,
-    offsetStep: 32,
     opacityStep: 0.2,
     radius: 16,
     renderThreshold: 5,
