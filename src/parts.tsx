@@ -20,23 +20,6 @@ export interface SheetHandleProps {
   children?: ReactNode;
 }
 
-const HANDLE_STYLE: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "12px 0 4px",
-  flexShrink: 0,
-  cursor: "grab",
-  touchAction: "none",
-};
-
-const HANDLE_BAR_STYLE: CSSProperties = {
-  width: 36,
-  height: 4,
-  borderRadius: 2,
-  background: "var(--muted-foreground, rgba(0, 0, 0, 0.25))",
-};
-
 function SheetHandle({
   asChild,
   className,
@@ -46,11 +29,16 @@ function SheetHandle({
   const Comp = asChild ? Slot : "div";
   return (
     <Comp
-      className={className}
+      className={`flex shrink-0 cursor-grab touch-none items-center justify-center pt-4 pb-1 ${className ?? ""}`}
       data-stacksheet-handle=""
-      style={{ ...HANDLE_STYLE, ...style }}
+      style={style}
     >
-      {children ?? <div style={HANDLE_BAR_STYLE} />}
+      {children ?? (
+        <div
+          className="h-1 w-9 rounded-sm"
+          style={{ background: "var(--muted-foreground, rgba(0, 0, 0, 0.25))" }}
+        />
+      )}
     </Comp>
   );
 }
@@ -64,10 +52,6 @@ export interface SheetHeaderProps {
   children: ReactNode;
 }
 
-const HEADER_STYLE: CSSProperties = {
-  flexShrink: 0,
-};
-
 function SheetHeader({
   asChild,
   className,
@@ -76,7 +60,7 @@ function SheetHeader({
 }: SheetHeaderProps) {
   const Comp = asChild ? Slot : "header";
   return (
-    <Comp className={className} style={{ ...HEADER_STYLE, ...style }}>
+    <Comp className={`shrink-0 ${className ?? ""}`} style={style}>
       {children}
     </Comp>
   );
@@ -135,34 +119,13 @@ export interface SheetBodyProps {
   children: ReactNode;
 }
 
-const BODY_STYLE: CSSProperties = {
-  flex: 1,
-  minHeight: 0,
-  position: "relative",
-};
-
-const SCROLLBAR_STYLE: CSSProperties = {
-  display: "flex",
-  userSelect: "none",
-  touchAction: "none",
-  padding: 2,
-  width: 8,
-};
-
-const THUMB_STYLE: CSSProperties = {
-  flex: 1,
-  borderRadius: 4,
-  background: "var(--border, rgba(0, 0, 0, 0.15))",
-  position: "relative",
-};
-
 function SheetBody({ asChild, className, style, children }: SheetBodyProps) {
   if (asChild) {
     return (
       <Slot
-        className={className}
+        className={`relative min-h-0 flex-1 ${className ?? ""}`}
         data-stacksheet-no-drag=""
-        style={{ ...BODY_STYLE, ...style }}
+        style={style}
       >
         {children}
       </Slot>
@@ -171,17 +134,21 @@ function SheetBody({ asChild, className, style, children }: SheetBodyProps) {
 
   return (
     <ScrollAreaRoot
-      className={className}
+      className={`relative min-h-0 flex-1 overflow-hidden ${className ?? ""}`}
       data-stacksheet-no-drag=""
-      style={{ ...BODY_STYLE, overflow: "hidden", ...style }}
+      style={style}
     >
-      <ScrollAreaViewport
-        style={{ height: "100%", width: "100%", overscrollBehavior: "contain" }}
-      >
+      <ScrollAreaViewport className="h-full w-full overscroll-contain">
         {children}
       </ScrollAreaViewport>
-      <ScrollAreaScrollbar orientation="vertical" style={SCROLLBAR_STYLE}>
-        <ScrollAreaThumb style={THUMB_STYLE} />
+      <ScrollAreaScrollbar
+        className="flex w-2 touch-none select-none p-0.5"
+        orientation="vertical"
+      >
+        <ScrollAreaThumb
+          className="relative flex-1 rounded"
+          style={{ background: "var(--border, rgba(0, 0, 0, 0.15))" }}
+        />
       </ScrollAreaScrollbar>
     </ScrollAreaRoot>
   );
@@ -196,10 +163,6 @@ export interface SheetFooterProps {
   children: ReactNode;
 }
 
-const FOOTER_STYLE: CSSProperties = {
-  flexShrink: 0,
-};
-
 function SheetFooter({
   asChild,
   className,
@@ -208,7 +171,7 @@ function SheetFooter({
 }: SheetFooterProps) {
   const Comp = asChild ? Slot : "footer";
   return (
-    <Comp className={className} style={{ ...FOOTER_STYLE, ...style }}>
+    <Comp className={`shrink-0 ${className ?? ""}`} style={style}>
       {children}
     </Comp>
   );

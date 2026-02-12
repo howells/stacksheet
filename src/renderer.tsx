@@ -38,104 +38,37 @@ import { type DragState, useDrag } from "./use-drag";
 
 // ── Default header ──────────────────────────────
 
-const BUTTON_STYLE: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: 32,
-  height: 32,
-  borderRadius: "50%",
-  border: "none",
-  background: "transparent",
-  cursor: "pointer",
-  color: "inherit",
-  opacity: 0.5,
-  transition: "opacity 150ms",
-  padding: 0,
-};
-
-const HANDLE_BAR_STYLE: CSSProperties = {
-  width: 36,
-  height: 4,
-  borderRadius: 2,
-  background: "var(--muted-foreground, rgba(0, 0, 0, 0.25))",
-};
-
-const SIDE_HANDLE_PILL_STYLE: CSSProperties = {
-  width: 5,
-  height: 40,
-  borderRadius: 3,
-  background: "var(--muted-foreground, rgba(0, 0, 0, 0.35))",
-  boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.5)",
-};
-
-/** Clips content to the panel's animated border-radius */
-const INNER_CLIP_STYLE: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  overflow: "hidden",
-  borderRadius: "inherit",
-  flex: 1,
-  minHeight: 0,
-};
-
 function DefaultHeader({
   isNested,
   onBack,
   onClose,
-  side,
   className,
 }: HeaderRenderProps & { className?: string }) {
   return (
-    <>
-      {side === "bottom" && (
-        <div
-          data-stacksheet-handle=""
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "12px 0 4px",
-            flexShrink: 0,
-            cursor: "grab",
-            touchAction: "none",
-          }}
-        >
-          <div style={HANDLE_BAR_STYLE} />
-        </div>
-      )}
-      <div
-        className={className}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          height: 48,
-          flexShrink: 0,
-          padding: "0 12px",
-          borderBottom: "1px solid var(--border, transparent)",
-        }}
-      >
-        {isNested && (
-          <button
-            aria-label="Back"
-            onClick={onBack}
-            style={BUTTON_STYLE}
-            type="button"
-          >
-            <ArrowLeftIcon />
-          </button>
-        )}
-        <div style={{ flex: 1 }} />
+    <div
+      className={`flex h-12 shrink-0 items-center px-3 ${className ?? ""}`}
+      style={{ borderBottom: "1px solid var(--border, transparent)" }}
+    >
+      {isNested && (
         <button
-          aria-label="Close"
-          onClick={onClose}
-          style={BUTTON_STYLE}
+          aria-label="Back"
+          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-none bg-transparent p-0 text-inherit opacity-50 transition-opacity duration-150 hover:opacity-100"
+          onClick={onBack}
           type="button"
         >
-          <XIcon />
+          <ArrowLeftIcon />
         </button>
-      </div>
-    </>
+      )}
+      <div className="flex-1" />
+      <button
+        aria-label="Close"
+        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-none bg-transparent p-0 text-inherit opacity-50 transition-opacity duration-150 hover:opacity-100"
+        onClick={onClose}
+        type="button"
+      >
+        <XIcon />
+      </button>
+    </div>
   );
 }
 
@@ -270,18 +203,28 @@ function PanelInnerContent({
       )}
       {shouldRender && Content && (
         <div
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
           data-stacksheet-no-drag=""
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: "auto",
-            overscrollBehavior: "contain",
-          }}
         >
           <Content {...data} />
         </div>
       )}
     </>
+  );
+}
+
+/** Built-in drag handle for bottom panels — always visible on the top sheet */
+function BottomHandle() {
+  return (
+    <div
+      className="flex shrink-0 cursor-grab touch-none items-center justify-center pt-4 pb-1"
+      data-stacksheet-handle=""
+    >
+      <div
+        className="h-1 w-9 rounded-sm"
+        style={{ background: "var(--muted-foreground, rgba(0, 0, 0, 0.25))" }}
+      />
+    </div>
   );
 }
 
@@ -291,25 +234,21 @@ function SideHandle({ side, isHovered }: { side: Side; isHovered: boolean }) {
     side === "right" ? { right: "100%" } : { left: "100%" };
 
   return (
-    <div
+    <m.div
+      animate={{ opacity: isHovered ? 1 : 0 }}
+      className="absolute top-0 bottom-0 flex w-6 cursor-grab touch-none items-center justify-center"
       data-stacksheet-handle=""
-      style={{
-        position: "absolute",
-        top: 0,
-        bottom: 0,
-        ...position,
-        width: 24,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "grab",
-        touchAction: "none",
-        opacity: isHovered ? 1 : 0,
-        transition: isHovered ? "opacity 150ms ease" : "opacity 400ms ease",
-      }}
+      style={position}
+      transition={{ duration: isHovered ? 0.15 : 0.4, ease: "easeOut" }}
     >
-      <div style={SIDE_HANDLE_PILL_STYLE} />
-    </div>
+      <div
+        className="h-10 w-[5px] rounded-sm"
+        style={{
+          background: "var(--muted-foreground, rgba(0, 0, 0, 0.35))",
+          boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.5)",
+        }}
+      />
+    </m.div>
   );
 }
 
@@ -457,8 +396,9 @@ function SheetPanel({
 
   const initialRadius = getInitialRadius(side);
 
-  // Side handle: only for left/right panels, only on the top-most sheet
+  // Drag handles: side pill for left/right, top bar for bottom
   const showSideHandle = isTop && side !== "bottom";
+  const showBottomHandle = isTop && side === "bottom";
 
   const panelContent = (
     <m.div
@@ -487,7 +427,8 @@ function SheetPanel({
     >
       {showSideHandle && <SideHandle isHovered={isHovered} side={side} />}
       {/* Inner clip — clips content to the panel's animated border-radius */}
-      <div style={INNER_CLIP_STYLE}>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
+        {showBottomHandle && <BottomHandle />}
         <PanelInnerContent
           Content={Content}
           data={item.data as Record<string, unknown>}
@@ -676,8 +617,6 @@ export function SheetRenderer<TMap extends object>({
   // Backdrop: use className if provided, otherwise inline fallback
   const hasBackdropClass = classNames.backdrop !== "";
   const backdropStyle: CSSProperties = {
-    position: "fixed",
-    inset: 0,
     zIndex: config.zIndex,
     cursor:
       config.closeOnBackdrop && config.dismissible ? "pointer" : undefined,
@@ -704,7 +643,7 @@ export function SheetRenderer<TMap extends object>({
           {isOpen && (
             <m.div
               animate={{ opacity: 1 }}
-              className={classNames.backdrop || undefined}
+              className={`fixed inset-0 ${classNames.backdrop || ""}`}
               exit={{ opacity: 0 }}
               initial={{ opacity: 0 }}
               key="stacksheet-backdrop"
@@ -721,13 +660,8 @@ export function SheetRenderer<TMap extends object>({
       {/* Panel clip container — always rendered, invisible when empty */}
       <RemoveScroll enabled={shouldLockScroll} forwardProps>
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: config.zIndex + 1,
-            overflow: "hidden",
-            pointerEvents: "none",
-          }}
+          className="pointer-events-none fixed inset-0 overflow-hidden"
+          style={{ zIndex: config.zIndex + 1 }}
         >
           <AnimatePresence onExitComplete={handleExitComplete}>
             {stack.map((item, index) => {
