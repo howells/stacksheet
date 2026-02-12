@@ -2,26 +2,75 @@
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
 
+/* ── Shared design tokens (demo + docs) ─────── */
+
+:root {
+  --ss-font-sans: "InterVariable", "Inter", system-ui, sans-serif;
+  --ss-color-canvas: #fafaf9;
+  --ss-color-surface: #ffffff;
+  --ss-layout-pad-x: 2rem;
+  --ss-docs-sidebar-pad-x: 2rem;
+  --ss-docs-sidebar-header-pad-top: 12.5px;
+  --ss-docs-content-width: 900px;
+  --ss-docs-content-width-wide: 1200px;
+  --ss-docs-pad-top: 2rem;
+  --ss-docs-pad-bottom: 1.5rem;
+  --ss-docs-body-size: 0.875rem;
+  --ss-docs-body-leading: 1.625;
+  --ss-wordmark-size: 0.875rem;
+  --ss-wordmark-leading: 1.25rem;
+  --ss-wordmark-weight: 600;
+  --ss-wordmark-tracking: -0.025em;
+}
+
 /* ── Font ──────────────────────────────── */
 
 body {
-  font-family: "InterVariable", "Inter", system-ui, sans-serif;
-  font-feature-settings: "liga" 1, "calt" 1, "cv11" 1;
+  font-family: var(--ss-font-sans);
+  font-feature-settings:
+    "liga" 1,
+    "calt" 1,
+    "cv11" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* ── Theme overrides ────────────────────── */
 
 @theme {
-  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --color-fd-background: hsl(0, 0%, 100%);
-  --color-fd-card: hsl(0, 0%, 100%);
-  --color-fd-popover: hsl(0, 0%, 100%);
-  --color-fd-muted: hsl(0, 0%, 96%);
-  --color-fd-border: hsl(0, 0%, 90%);
-  --color-fd-foreground: hsl(0, 0%, 8%);
-  --color-fd-muted-foreground: hsl(0, 0%, 42%);
-  --color-fd-secondary: hsl(0, 0%, 96%);
-  --color-fd-accent: hsl(0, 0%, 94%);
+  --font-sans: var(--ss-font-sans);
+  --color-zinc-50: #fafafa;
+  --color-zinc-100: #f4f4f5;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-300: #d4d4d8;
+  --color-zinc-400: #a1a1aa;
+  --color-zinc-500: #71717a;
+  --color-zinc-600: #52525b;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-900: #18181b;
+  --color-zinc-950: #09090b;
+  --font-mono:
+    var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, monospace;
+  --color-fd-background: var(--ss-color-canvas);
+  --color-fd-card: var(--ss-color-surface);
+  --color-fd-popover: var(--ss-color-surface);
+  --color-fd-muted: var(--color-zinc-100);
+  --color-fd-border: color-mix(
+    in oklab,
+    var(--color-zinc-200) 85%,
+    transparent
+  );
+  --color-fd-foreground: var(--color-zinc-950);
+  --color-fd-muted-foreground: var(--color-zinc-500);
+  --color-fd-secondary: var(--color-zinc-100);
+  --color-fd-secondary-foreground: var(--color-zinc-950);
+  --color-fd-accent: color-mix(in oklab, var(--color-zinc-100) 88%, white);
+  --color-fd-accent-foreground: var(--color-zinc-950);
+  --color-fd-primary: var(--color-zinc-950);
+  --color-fd-primary-foreground: var(--color-zinc-50);
+  --color-fd-ring: var(--color-zinc-400);
 }
 
 .dark {
@@ -33,7 +82,172 @@ body {
   --color-fd-foreground: hsl(0, 0%, 93%);
   --color-fd-muted-foreground: hsl(0, 0%, 58%);
   --color-fd-secondary: hsl(0, 0%, 12%);
+  --color-fd-secondary-foreground: hsl(0, 0%, 93%);
   --color-fd-accent: hsl(0, 0%, 14%);
+  --color-fd-accent-foreground: hsl(0, 0%, 93%);
+  --color-fd-primary: hsl(0, 0%, 93%);
+  --color-fd-primary-foreground: hsl(0, 0%, 8%);
+  --color-fd-ring: hsl(0, 0%, 45%);
+}
+
+/* ── Shared layout primitives ───────────── */
+
+.ss-shell-pad {
+  padding-inline: var(--ss-layout-pad-x);
+}
+
+.ss-wordmark {
+  display: block;
+  font-family: var(--ss-font-sans);
+  font-feature-settings:
+    "liga" 1,
+    "calt" 1,
+    "cv11" 1;
+  font-synthesis: none;
+  white-space: nowrap;
+  color: var(--color-fd-foreground);
+  font-size: var(--ss-wordmark-size);
+  line-height: var(--ss-wordmark-leading);
+  font-weight: var(--ss-wordmark-weight);
+  letter-spacing: var(--ss-wordmark-tracking);
+}
+
+/* ── Docs alignment to demo tokens ──────── */
+
+#nd-page {
+  max-width: var(--ss-docs-content-width);
+  margin-inline-start: 0;
+  margin-inline-end: auto;
+  padding-inline: var(--ss-layout-pad-x);
+  padding-top: var(--ss-docs-pad-top);
+  padding-bottom: var(--ss-docs-pad-bottom);
+}
+
+#nd-page[data-full="true"] {
+  max-width: var(--ss-docs-content-width-wide);
+}
+
+#nd-page > h1 {
+  letter-spacing: -0.02em;
+}
+
+#nd-page > p.mb-8 {
+  margin-bottom: 1.5rem;
+  color: var(--color-fd-muted-foreground);
+  font-size: var(--ss-docs-body-size);
+  line-height: calc(var(--ss-docs-body-leading) * 1em);
+}
+
+#nd-page .prose {
+  color: var(--color-fd-muted-foreground);
+  font-size: var(--ss-docs-body-size);
+  line-height: calc(var(--ss-docs-body-leading) * 1em);
+  --tw-prose-body: var(--color-fd-muted-foreground);
+  --tw-prose-headings: var(--color-fd-foreground);
+  --tw-prose-lead: var(--color-fd-muted-foreground);
+  --tw-prose-links: var(--color-fd-muted-foreground);
+  --tw-prose-bold: var(--color-fd-foreground);
+  --tw-prose-counters: var(--color-fd-muted-foreground);
+  --tw-prose-bullets: var(--color-fd-border);
+  --tw-prose-captions: var(--color-fd-muted-foreground);
+  --tw-prose-code: var(--color-fd-foreground);
+  --tw-prose-quotes: var(--color-fd-foreground);
+  --tw-prose-quote-borders: var(--color-fd-border);
+  --tw-prose-hr: var(--color-fd-border);
+  --tw-prose-td-borders: var(--color-fd-border);
+  --tw-prose-th-borders: var(--color-fd-border);
+}
+
+#nd-page
+  .prose
+  :where(a:not([data-card])):not(
+    :where([class~="not-prose"], [class~="not-prose"] *)
+  ) {
+  color: var(--color-fd-muted-foreground);
+  text-decoration-color: var(--color-fd-ring);
+}
+
+#nd-page
+  .prose
+  :where(a:not([data-card]):hover):not(
+    :where([class~="not-prose"], [class~="not-prose"] *)
+  ) {
+  color: var(--color-fd-foreground);
+  opacity: 1;
+}
+
+/* Match docs sidebar gutters with demo shell rhythm */
+#nd-sidebar > div:first-child,
+#nd-sidebar > div:last-child {
+  padding-inline: var(--ss-docs-sidebar-pad-x);
+}
+
+#nd-sidebar > div:first-child {
+  padding-top: var(--ss-docs-sidebar-header-pad-top);
+}
+
+#nd-sidebar > div:nth-child(2) > div:last-child {
+  padding-inline: var(--ss-docs-sidebar-pad-x);
+}
+
+#nd-sidebar > div:nth-child(2) p {
+  color: var(--color-fd-foreground);
+}
+
+#nd-sidebar > div:nth-child(2) a {
+  color: var(--color-fd-muted-foreground);
+  font-size: 0.875rem;
+}
+
+#nd-sidebar > div:nth-child(2) a[data-active="true"] {
+  color: var(--color-fd-foreground);
+  background-color: var(--color-zinc-200);
+}
+
+/* Keep docs wordmark rendering and left anchor identical to demo header */
+#nd-sidebar > div:first-child > div {
+  margin-left: 1px;
+  align-items: center;
+}
+
+#nd-sidebar > div:first-child > div > a:first-child {
+  display: inline-flex;
+  align-items: center;
+  height: var(--ss-wordmark-leading);
+  color: var(--color-fd-foreground);
+  text-decoration: none;
+  font-size: var(--ss-wordmark-size);
+  line-height: var(--ss-wordmark-leading);
+  font-weight: var(--ss-wordmark-weight);
+  letter-spacing: var(--ss-wordmark-tracking);
+}
+
+#nd-sidebar > div:first-child > div > a:first-child .ss-wordmark {
+  font-family: var(--ss-font-sans);
+  font-feature-settings:
+    "liga" 1,
+    "calt" 1,
+    "cv11" 1;
+  font-size: var(--ss-wordmark-size);
+  line-height: var(--ss-wordmark-leading);
+  font-weight: var(--ss-wordmark-weight);
+  letter-spacing: var(--ss-wordmark-tracking);
+  color: var(--color-fd-foreground);
+}
+
+#nd-toc h3,
+#nd-toc a {
+  color: var(--color-fd-muted-foreground);
+}
+
+#nd-toc a[data-active="true"] {
+  color: var(--color-fd-foreground);
+}
+
+@media (width >= 80rem) {
+  #nd-page {
+    padding-top: 2.5rem;
+  }
 }
 
 #nd-sidebar {

@@ -7,7 +7,7 @@ export default function Home() {
   return (
     <main
       className={`min-h-dvh lg:h-dvh lg:overflow-hidden antialiased ${mono.variable}`}
-      style={{ backgroundColor: "#fafaf9" }}
+      style={{ backgroundColor: "var(--ss-color-canvas)" }}
     >
       <PlaygroundDemo />
     </main>
