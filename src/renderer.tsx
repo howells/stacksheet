@@ -20,6 +20,7 @@ import {
   getPanelStyles,
   getSlideFrom,
   getSlideTarget,
+  getStackOffset,
   getStackTransform,
   type SlideValues,
 } from "./stacking";
@@ -304,7 +305,7 @@ function SideHandle({ side, isHovered }: { side: Side; isHovered: boolean }) {
         cursor: "grab",
         touchAction: "none",
         opacity: isHovered ? 1 : 0,
-        transition: "opacity 150ms ease",
+        transition: isHovered ? "opacity 150ms ease" : "opacity 400ms ease",
       }}
     >
       <div style={SIDE_HANDLE_PILL_STYLE} />
@@ -438,9 +439,11 @@ function SheetPanel({
   // Explicit radius target to avoid undefined -> value interpolation.
   const animatedRadius = getAnimatedBorderRadius(side, depth, config.stacking);
 
-  // Merge drag offset into the animate target
+  // Merge stack offset + drag offset into the animate target
+  const stackOffset = getStackOffset(side, transform.offset);
   const animateTarget = {
     ...slideTarget,
+    ...stackOffset,
     ...dragOffset,
     scale: transform.scale,
     opacity: transform.opacity,

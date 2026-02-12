@@ -10,6 +10,7 @@ import type {
 
 const DEFAULT_STACKING: StackingConfig = {
   scaleStep: 0.04,
+  offsetStep: 16,
   opacityStep: 0,
   radius: 12,
   renderThreshold: 3,

@@ -5,6 +5,7 @@ import type { ResolvedConfig, Side, StackingConfig } from "./types";
 
 export interface StackTransform {
   scale: number;
+  offset: number;
   opacity: number;
   borderRadius: number;
 }
@@ -19,7 +20,7 @@ export function getStackTransform(
   stacking: StackingConfig
 ): StackTransform {
   if (depth <= 0) {
-    return { scale: 1, opacity: 1, borderRadius: 0 };
+    return { scale: 1, offset: 0, opacity: 1, borderRadius: 0 };
   }
 
   const beyondThreshold = depth >= stacking.renderThreshold;
@@ -28,6 +29,7 @@ export function getStackTransform(
 
   return {
     scale: Math.max(0.5, 1 - visualDepth * stacking.scaleStep),
+    offset: visualDepth * stacking.offsetStep,
     opacity: beyondThreshold
       ? 0
       : Math.max(0, 1 - visualDepth * stacking.opacityStep),
@@ -88,6 +90,35 @@ export function getSlideTarget(): SlideValues {
   return { x: 0, y: 0 };
 }
 
+/** Translate offset that pushes stacked panels away from the stack edge. */
+export function getStackOffset(
+  side: Side,
+  offset: number
+): { x?: number; y?: number } {
+  if (offset === 0) {
+    return {};
+  }
+  switch (side) {
+    case "right":
+      return { x: -offset };
+    case "left":
+      return { x: offset };
+    case "bottom":
+      return { y: -offset };
+    default:
+      return {};
+  }
+}
+
+// ── Transform origin ────────────────────────────
+
+/** Opposite-side origin so stacked panels recede away from the stack edge. */
+function getTransformOrigin(side: Side): string {
+  if (side === "right") return "left center";
+  if (side === "left") return "right center";
+  return "center top";
+}
+
 // ── Panel positioning ───────────────────────────
 
 /**
@@ -106,7 +137,7 @@ export function getPanelStyles(
     display: "flex",
     flexDirection: "column",
     willChange: "transform",
-    transformOrigin: "center center",
+    transformOrigin: getTransformOrigin(side),
   };
 
   if (side === "bottom") {
