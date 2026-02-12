@@ -195,17 +195,11 @@ function Toggle({
   return (
     <SwitchRoot
       checked={on}
-      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 ${
-        on ? "bg-zinc-600" : "bg-zinc-300"
-      }`}
+      className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full bg-zinc-300 transition-colors duration-150 data-[state=checked]:bg-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60"
       id={id}
       onCheckedChange={onToggle}
     >
-      <SwitchThumb
-        className={`pointer-events-none absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-150 ${
-          on ? "translate-x-3.5" : "translate-x-0"
-        }`}
-      />
+      <SwitchThumb className="pointer-events-none absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-150 will-change-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0" />
     </SwitchRoot>
   );
 }
