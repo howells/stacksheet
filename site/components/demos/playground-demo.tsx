@@ -172,12 +172,11 @@ function useStack() {
 
 // ── useNextSheet hook ──────────────────────────
 
-function useNextSheet(): { nextKey: string | null; goNext: () => void } | null {
-  const stack = useStack();
+function useNextSheet(
+  sheetType: SheetKey
+): { nextKey: string | null; goNext: () => void } | null {
   const actions = useActions();
-  if (stack.length === 0) return null;
-  const currentType = stack[stack.length - 1].type as SheetKey;
-  const idx = tourOrder.indexOf(currentType);
+  const idx = tourOrder.indexOf(sheetType);
   if (idx === -1) return null;
   if (idx === tourOrder.length - 1) {
     return { nextKey: null, goNext: () => actions.close() };
@@ -255,15 +254,17 @@ function BlockScrollArea({
 
 // ── Shared sheet controls ─────────────────────
 
-function SheetControls({ children }: { children: ReactNode }) {
+function SheetControls({
+  sheetType,
+  children,
+}: {
+  sheetType: SheetKey;
+  children: ReactNode;
+}) {
   const actions = useActions();
-  const stack = useStack();
   const { visitedRef } = usePlayground();
 
-  // Mark current type as visited
-  if (stack.length > 0) {
-    visitedRef.current.add(stack[stack.length - 1].type);
-  }
+  visitedRef.current.add(sheetType);
 
   return (
     <div>
@@ -276,8 +277,7 @@ function SheetControls({ children }: { children: ReactNode }) {
       </p>
       <div className="flex flex-col gap-0.5">
         {tourOrder.map((type) => {
-          const isCurrent =
-            stack.length > 0 && stack[stack.length - 1].type === type;
+          const isCurrent = type === sheetType;
           const isVisited = !isCurrent && visitedRef.current.has(type);
           const isLocked = !isCurrent && !isVisited;
 
@@ -465,8 +465,8 @@ function CodeBlock({ children }: { children: string }) {
 
 // ── NextFooter ────────────────────────────────
 
-function NextFooter() {
-  const next = useNextSheet();
+function NextFooter({ sheetType }: { sheetType: SheetKey }) {
+  const next = useNextSheet(sheetType);
   if (!next) return null;
   return (
     <FooterBar>
@@ -566,9 +566,15 @@ actions.close()`,
 // ── Action sheet ──────────────────────────────
 
 function ActionSheet(_props: { description: string }) {
-  const stack = useStack();
-  const currentType =
-    stack.length > 0 ? (stack[stack.length - 1].type as string) : "Push";
+  const { store } = usePlayground();
+  // Capture own type at mount — stable even when other sheets push on top
+  const ownTypeRef = useRef<SheetKey | null>(null);
+  if (ownTypeRef.current === null) {
+    const s = store.getState().stack;
+    ownTypeRef.current =
+      s.length > 0 ? (s[s.length - 1].type as SheetKey) : "Push";
+  }
+  const currentType = ownTypeRef.current;
   const content = actionContent[currentType] || actionContent.Push;
   const highlight = currentType.toLowerCase();
 
@@ -585,7 +591,7 @@ function ActionSheet(_props: { description: string }) {
       </HeaderBar>
       <Sheet.Body>
         <div className="px-5 py-4">
-          <SheetControls>
+          <SheetControls sheetType={currentType}>
             <p className="text-sm text-zinc-500 leading-relaxed mb-4">
               {content.explanation}
             </p>
@@ -611,7 +617,7 @@ function ActionSheet(_props: { description: string }) {
           </SheetControls>
         </div>
       </Sheet.Body>
-      <NextFooter />
+      <NextFooter sheetType={currentType} />
     </>
   );
 }
@@ -637,7 +643,7 @@ function ComposableSheet({ variant, parts }: SheetTypeMap["Composable"]) {
       </HeaderBar>
       <Sheet.Body>
         <div className="px-5 py-4">
-          <SheetControls>
+          <SheetControls sheetType="Composable">
             <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400 mb-1">
               {variant}
             </p>
@@ -674,7 +680,7 @@ function ComposableSheet({ variant, parts }: SheetTypeMap["Composable"]) {
           </SheetControls>
         </div>
       </Sheet.Body>
-      <NextFooter />
+      <NextFooter sheetType="Composable" />
     </>
   );
 }
@@ -696,7 +702,7 @@ function StackingSheet({ description }: SheetTypeMap["Stacking"]) {
       </HeaderBar>
       <Sheet.Body>
         <div className="px-5 py-4">
-          <SheetControls>
+          <SheetControls sheetType="Stacking">
             <div className="flex items-center gap-3 mb-4">
               <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 text-amber-700 text-lg font-bold">
                 {actualDepth}
@@ -720,7 +726,7 @@ function StackingSheet({ description }: SheetTypeMap["Stacking"]) {
           </SheetControls>
         </div>
       </Sheet.Body>
-      <NextFooter />
+      <NextFooter sheetType="Stacking" />
     </>
   );
 }
@@ -761,7 +767,7 @@ function ConfigSheet({ category, description }: SheetTypeMap["Config"]) {
     <>
       <Sheet.Body>
         <div className="p-5">
-          <SheetControls>
+          <SheetControls sheetType="Config">
             <div className="rounded-lg bg-emerald-50 p-4 mb-4">
               <p className="text-[11px] font-medium uppercase tracking-widest text-emerald-600 mb-1">
                 {category}
@@ -802,7 +808,7 @@ function ConfigSheet({ category, description }: SheetTypeMap["Config"]) {
           </SheetControls>
         </div>
       </Sheet.Body>
-      <NextFooter />
+      <NextFooter sheetType="Config" />
     </>
   );
 }

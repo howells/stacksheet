@@ -114,8 +114,12 @@ export function getStackOffset(
 
 /** Opposite-side origin so stacked panels recede away from the stack edge. */
 function getTransformOrigin(side: Side): string {
-  if (side === "right") return "left center";
-  if (side === "left") return "right center";
+  if (side === "right") {
+    return "left center";
+  }
+  if (side === "left") {
+    return "right center";
+  }
   return "center top";
 }
 

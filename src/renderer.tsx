@@ -397,7 +397,7 @@ function SheetPanel({
     pointerEvents: isTop ? "auto" : "none",
     // Freeze layout in stacked panels so content doesn't reflow during
     // scale/translate transitions — the panel transforms as a solid block.
-    ...(!isTop ? { contain: "layout style paint" } : {}),
+    ...(isTop ? {} : { contain: "layout style paint" }),
     // During drag, disable spring transition for immediate feedback
     ...(dragState.isDragging ? { transition: "none" } : {}),
     ...(hasPanelClass
