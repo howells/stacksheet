@@ -24,6 +24,7 @@ import {
 } from "@radix-ui/react-switch";
 import { Content as TabsContent, Root as TabsRoot } from "@radix-ui/react-tabs";
 import { motion as m } from "motion/react";
+import { useTheme } from "next-themes";
 import {
   createContext,
   type MutableRefObject,
@@ -195,11 +196,11 @@ function Toggle({
   return (
     <SwitchRoot
       checked={on}
-      className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full bg-zinc-300 transition-colors duration-150 data-[state=checked]:bg-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60"
+      className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full bg-zinc-300 transition-colors duration-150 data-[state=checked]:bg-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 dark:bg-zinc-600 dark:data-[state=checked]:bg-zinc-400"
       id={id}
       onCheckedChange={onToggle}
     >
-      <SwitchThumb className="pointer-events-none absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-150 will-change-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0" />
+      <SwitchThumb className="pointer-events-none absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-150 will-change-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0 dark:bg-zinc-900" />
     </SwitchRoot>
   );
 }
@@ -209,7 +210,7 @@ function Toggle({
 function BlockScrollArea({
   children,
   className,
-  thumbClassName = "bg-zinc-300/70",
+  thumbClassName = "bg-zinc-300/70 dark:bg-zinc-600/70",
   viewportClassName,
   scrollbarClassName,
 }: {
@@ -256,9 +257,9 @@ function SheetControls({
     <div>
       {children}
 
-      <div className="my-5 h-px bg-zinc-100" />
+      <div className="my-5 h-px bg-zinc-100 dark:bg-zinc-800" />
 
-      <p className="mb-2.5 text-[11px] text-zinc-400 uppercase tracking-widest">
+      <p className="mb-2.5 text-[11px] text-zinc-400 uppercase tracking-widest dark:text-zinc-500">
         Contents
       </p>
       <div className="flex flex-col gap-0.5">
@@ -271,9 +272,9 @@ function SheetControls({
             <button
               className={`flex w-full items-center gap-2 rounded-md border-none px-2.5 py-1.5 text-left text-sm transition-colors duration-150 ${
                 isCurrent
-                  ? "cursor-default bg-zinc-100"
+                  ? "cursor-default bg-zinc-100 dark:bg-zinc-800"
                   : isVisited
-                    ? "cursor-pointer bg-transparent hover:bg-zinc-50"
+                    ? "cursor-pointer bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800"
                     : "cursor-default bg-transparent"
               }`}
               disabled={isCurrent || isLocked}
@@ -287,15 +288,15 @@ function SheetControls({
               type="button"
             >
               <span
-                className={`h-2 w-2 shrink-0 rounded-full ${isCurrent || isVisited ? dotColors[type] : "bg-zinc-200"}`}
+                className={`h-2 w-2 shrink-0 rounded-full ${isCurrent || isVisited ? dotColors[type] : "bg-zinc-200 dark:bg-zinc-700"}`}
               />
               <span
-                className={`${isLocked ? "text-zinc-300" : "text-zinc-950"}`}
+                className={`${isLocked ? "text-zinc-300 dark:text-zinc-600" : "text-zinc-950 dark:text-zinc-100"}`}
               >
                 {type}
               </span>
               {isCurrent && (
-                <span className="ml-auto rounded-full bg-zinc-200 px-2 py-0.5 text-[11px] text-zinc-500">
+                <span className="ml-auto rounded-full bg-zinc-200 px-2 py-0.5 text-[11px] text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
                   current
                 </span>
               )}
@@ -324,8 +325,8 @@ function Button({
 }) {
   const cls = `inline-flex items-center justify-center h-10 px-6 text-sm rounded-full cursor-pointer transition-all duration-150 active:scale-[0.97] ${
     variant === "primary"
-      ? "bg-zinc-950 text-zinc-50 border-none hover:opacity-85"
-      : "bg-transparent text-zinc-950 border border-zinc-200 hover:bg-zinc-100"
+      ? "bg-zinc-950 text-zinc-50 border-none hover:opacity-85 dark:bg-zinc-50 dark:text-zinc-950"
+      : "bg-transparent text-zinc-950 border border-zinc-200 hover:bg-zinc-100 dark:text-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
   } ${className ?? ""}`;
 
   if (href) {
@@ -556,23 +557,25 @@ function ActionSheet(_props: { description: string }) {
       <Sheet.Body>
         <div className="px-6 py-6">
           <SheetControls sheetType={currentType}>
-            <p className="mb-4 text-sm text-zinc-500 leading-relaxed">
+            <p className="mb-4 text-sm text-zinc-500 leading-relaxed dark:text-zinc-400">
               {content.explanation}
             </p>
 
             <div className="mb-4 flex flex-col">
               {content.related.map(({ name, detail }) => (
                 <div
-                  className={`flex items-center justify-between border-zinc-100 border-b py-2.5 last:border-b-0 ${name === highlight ? "-mx-2 rounded-md border-transparent bg-blue-50 px-2" : ""}`}
+                  className={`flex items-center justify-between border-zinc-100 border-b py-2.5 last:border-b-0 dark:border-zinc-800 ${name === highlight ? "-mx-2 rounded-md border-transparent bg-blue-50 px-2 dark:bg-blue-500/10" : ""}`}
                   key={name}
                 >
                   <code
-                    className={`text-sm ${name === highlight ? "text-blue-600" : "text-zinc-950"}`}
+                    className={`text-sm ${name === highlight ? "text-blue-600 dark:text-blue-400" : "text-zinc-950 dark:text-zinc-100"}`}
                     style={{ fontFamily: "var(--font-mono)" }}
                   >
                     {name}
                   </code>
-                  <span className="text-xs text-zinc-500">{detail}</span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {detail}
+                  </span>
                 </div>
               ))}
             </div>
@@ -604,13 +607,13 @@ function ComposableSheet({ variant, parts }: SheetTypeMap["Composable"]) {
       <Sheet.Body>
         <div className="px-6 py-6">
           <SheetControls sheetType="Composable">
-            <p className="mb-1 text-[11px] text-zinc-400 uppercase tracking-widest">
+            <p className="mb-1 text-[11px] text-zinc-400 uppercase tracking-widest dark:text-zinc-500">
               {variant}
             </p>
-            <p className="mb-4 text-sm text-zinc-500 leading-relaxed">
+            <p className="mb-4 text-sm text-zinc-500 leading-relaxed dark:text-zinc-400">
               Compose sheets from{" "}
               <code
-                className="text-zinc-700"
+                className="text-zinc-700 dark:text-zinc-300"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
                 Sheet.*
@@ -624,8 +627,8 @@ function ComposableSheet({ variant, parts }: SheetTypeMap["Composable"]) {
                   <span
                     className={`inline-flex h-7 items-center rounded-full px-3 text-sm ${
                       hasPart(p)
-                        ? "bg-violet-100 text-violet-700"
-                        : "bg-zinc-100 text-zinc-400"
+                        ? "bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400"
+                        : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500"
                     }`}
                     key={p}
                     style={{ fontFamily: "var(--font-mono)" }}
@@ -664,20 +667,22 @@ function StackingSheet({ description }: SheetTypeMap["Stacking"]) {
         <div className="px-6 py-6">
           <SheetControls sheetType="Stacking">
             <div className="mb-4 flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-lg">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-lg dark:bg-amber-500/10 dark:text-amber-400">
                 {actualDepth}
               </span>
               <div>
-                <p className="text-sm text-zinc-950">
+                <p className="text-sm text-zinc-950 dark:text-zinc-100">
                   {actualDepth === 1
                     ? "Root sheet"
                     : `${actualDepth} sheets deep`}
                 </p>
-                <p className="text-xs text-zinc-500">{description}</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {description}
+                </p>
               </div>
             </div>
 
-            <p className="mb-4 text-sm text-zinc-500 leading-relaxed">
+            <p className="mb-4 text-sm text-zinc-500 leading-relaxed dark:text-zinc-400">
               The stack is the store. Every sheet knows its position, and the
               visualization below is a direct read of store state.
             </p>
@@ -740,27 +745,27 @@ function ConfigSheet({ category, description }: SheetTypeMap["Config"]) {
       <Sheet.Body>
         <div className="px-6 py-6">
           <SheetControls sheetType="Config">
-            <p className="mb-1 text-[11px] text-zinc-400 uppercase tracking-widest">
+            <p className="mb-1 text-[11px] text-zinc-400 uppercase tracking-widest dark:text-zinc-500">
               {category}
             </p>
-            <p className="mb-4 text-sm text-zinc-500 leading-relaxed">
+            <p className="mb-4 text-sm text-zinc-500 leading-relaxed dark:text-zinc-400">
               {description}
             </p>
 
             <div className="mb-4 flex flex-col">
               {rows.map(({ key, value }) => (
                 <div
-                  className="flex items-center justify-between border-zinc-100 border-b py-2 last:border-b-0"
+                  className="flex items-center justify-between border-zinc-100 border-b py-2 last:border-b-0 dark:border-zinc-800"
                   key={key}
                 >
                   <code
-                    className="text-sm text-zinc-950"
+                    className="text-sm text-zinc-950 dark:text-zinc-100"
                     style={{ fontFamily: "var(--font-mono)" }}
                   >
                     {key}
                   </code>
                   <code
-                    className="text-sm text-zinc-500"
+                    className="text-sm text-zinc-500 dark:text-zinc-400"
                     style={{ fontFamily: "var(--font-mono)" }}
                   >
                     {value}
@@ -945,10 +950,11 @@ const segmentedSpring = {
 
 const segmentedVariants = {
   light: {
-    container: "inline-flex rounded-full bg-zinc-100/80 p-[3px]",
+    container:
+      "inline-flex rounded-full bg-zinc-100/80 p-[3px] dark:bg-zinc-800/80",
     button:
-      "px-3 py-1 text-xs text-zinc-400 [&[data-active=true]]:text-zinc-900",
-    pill: "rounded-full border border-zinc-200 bg-white",
+      "px-3 py-1 text-xs text-zinc-400 [&[data-active=true]]:text-zinc-900 dark:text-zinc-500 dark:[&[data-active=true]]:text-zinc-100",
+    pill: "rounded-full border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900",
   },
   dark: {
     container: "flex flex-wrap gap-1",
@@ -1020,9 +1026,9 @@ function NumInput({
 }) {
   return (
     <label className="flex items-center justify-between py-1.5 text-sm">
-      <span className="text-zinc-500">{label}</span>
+      <span className="text-zinc-500 dark:text-zinc-400">{label}</span>
       <input
-        className="h-7 w-20 rounded-md border border-zinc-200 bg-zinc-50 px-2 text-right text-sm text-zinc-950 outline-none focus:ring-1 focus:ring-zinc-400"
+        className="h-7 w-20 rounded-md border border-zinc-200 bg-zinc-50 px-2 text-right text-sm text-zinc-950 outline-none focus:ring-1 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
         min={min}
         onChange={(e) => onChange(Number(e.target.value))}
         placeholder={placeholder}
@@ -1046,9 +1052,9 @@ function TextInput({
 }) {
   return (
     <label className="flex items-center justify-between py-1.5 text-sm">
-      <span className="text-zinc-500">{label}</span>
+      <span className="text-zinc-500 dark:text-zinc-400">{label}</span>
       <input
-        className="h-7 w-24 rounded-md border border-zinc-200 bg-zinc-50 px-2 text-right text-sm text-zinc-950 outline-none focus:ring-1 focus:ring-zinc-400"
+        className="h-7 w-24 rounded-md border border-zinc-200 bg-zinc-50 px-2 text-right text-sm text-zinc-950 outline-none focus:ring-1 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
         onChange={(e) => onChange(e.target.value)}
         style={{ fontFamily: "var(--font-mono)" }}
         type="text"
@@ -1060,7 +1066,7 @@ function TextInput({
 
 function SectionHeader({ children }: { children: ReactNode }) {
   return (
-    <p className="text-[11px] text-zinc-400 uppercase tracking-widest">
+    <p className="text-[11px] text-zinc-400 uppercase tracking-widest dark:text-zinc-500">
       {children}
     </p>
   );
@@ -1083,7 +1089,7 @@ function Collapsible({
     <CollapsibleRoot onOpenChange={() => onToggle()} open={open}>
       <CollapsibleTrigger asChild>
         <button
-          className="flex w-full cursor-pointer items-center gap-2 border-none bg-transparent py-2 text-left text-[11px] text-zinc-400 uppercase tracking-widest transition-colors duration-150 hover:text-zinc-600"
+          className="flex w-full cursor-pointer items-center gap-2 border-none bg-transparent py-2 text-left text-[11px] text-zinc-400 uppercase tracking-widest transition-colors duration-150 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
           type="button"
         >
           <svg
@@ -1171,26 +1177,26 @@ function LeftColumn({
 
   return (
     <div className="grid grid-rows-[auto_auto_auto] lg:h-full lg:min-h-0 lg:grid-rows-[auto_auto_minmax(0,1fr)]">
-      <section className="ss-shell-pad border-zinc-200 border-b pt-6 pb-5">
-        <p className="text-sm text-zinc-500 leading-relaxed">
+      <section className="ss-shell-pad border-zinc-200 border-b pt-6 pb-5 dark:border-zinc-800">
+        <p className="text-sm text-zinc-500 leading-relaxed dark:text-zinc-400">
           A single store manages every sheet in your app. Fully typed,
           stack-based, composable. Powered by{" "}
           <a
-            className="text-zinc-500 underline underline-offset-2 transition-colors hover:text-zinc-950"
+            className="text-zinc-500 underline underline-offset-2 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
             href="https://zustand.docs.pmnd.rs"
           >
             Zustand
           </a>
           ,{" "}
           <a
-            className="text-zinc-500 underline underline-offset-2 transition-colors hover:text-zinc-950"
+            className="text-zinc-500 underline underline-offset-2 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
             href="https://motion.dev"
           >
             Motion
           </a>
           , and a bit of{" "}
           <a
-            className="text-zinc-500 underline underline-offset-2 transition-colors hover:text-zinc-950"
+            className="text-zinc-500 underline underline-offset-2 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
             href="https://www.radix-ui.com"
           >
             Radix
@@ -1207,7 +1213,7 @@ function LeftColumn({
         </div>
       </section>
 
-      <section className="ss-shell-pad border-zinc-200 border-b py-5">
+      <section className="ss-shell-pad border-zinc-200 border-b py-5 dark:border-zinc-800">
         <TabsRoot onValueChange={setPm} value={pm}>
           <div className="mb-3 flex items-center justify-between">
             <SectionHeader>Install</SectionHeader>
@@ -1220,16 +1226,16 @@ function LeftColumn({
           </div>
           {pmOptions.map((option) => (
             <TabsContent key={option} value={option}>
-              <div className="flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-100/70 px-4 py-3">
+              <div className="flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-100/70 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-800/70">
                 <code
-                  className="text-sm text-zinc-700"
+                  className="text-sm text-zinc-700 dark:text-zinc-300"
                   style={{ fontFamily: "var(--font-mono)" }}
                 >
                   {installCommands[option]}
                 </code>
                 <button
                   aria-label="Copy install command"
-                  className="ml-3 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent text-zinc-400 transition-colors duration-150 hover:text-zinc-600"
+                  className="ml-3 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent text-zinc-400 transition-colors duration-150 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
                   onClick={() =>
                     navigator.clipboard.writeText(installCommands[option])
                   }
@@ -1261,7 +1267,9 @@ function LeftColumn({
             <div className="mb-4 flex flex-col gap-2.5">
               <SectionHeader>Position</SectionHeader>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-500">Desktop</span>
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Desktop
+                </span>
                 <SegmentedControl
                   id="desktop-side"
                   onChange={(s) =>
@@ -1272,7 +1280,9 @@ function LeftColumn({
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-500">Mobile</span>
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Mobile
+                </span>
                 <SegmentedControl
                   id="mobile-side"
                   onChange={(s) =>
@@ -1284,12 +1294,14 @@ function LeftColumn({
               </div>
             </div>
 
-            <div className="my-3 h-px bg-zinc-200" />
+            <div className="my-3 h-px bg-zinc-200 dark:bg-zinc-800" />
 
             <div className="mb-4 flex flex-col gap-2.5">
               <SectionHeader>Spring</SectionHeader>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-500">Preset</span>
+                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Preset
+                </span>
                 <SegmentedControl
                   id="spring-preset"
                   onChange={(s) =>
@@ -1301,7 +1313,7 @@ function LeftColumn({
               </div>
             </div>
 
-            <div className="my-3 h-px bg-zinc-200" />
+            <div className="my-3 h-px bg-zinc-200 dark:bg-zinc-800" />
 
             <Collapsible
               label="Behavior"
@@ -1310,7 +1322,7 @@ function LeftColumn({
             >
               {toggles.map(({ key, label }) => (
                 <div
-                  className="flex items-center justify-between border-zinc-100 border-b py-2.5 text-sm text-zinc-950 last:border-b-0"
+                  className="flex items-center justify-between border-zinc-100 border-b py-2.5 text-sm text-zinc-950 last:border-b-0 dark:border-zinc-800 dark:text-zinc-100"
                   key={key}
                 >
                   <label className="cursor-pointer" htmlFor={`behavior-${key}`}>
@@ -1673,7 +1685,7 @@ function CodePanel({
 }) {
   return (
     <div className="flex min-h-[200px] min-w-0 flex-col lg:min-h-0">
-      <p className="mb-2 shrink-0 text-[11px] text-zinc-400 uppercase tracking-widest">
+      <p className="mb-2 shrink-0 text-[11px] text-zinc-400 uppercase tracking-widest dark:text-zinc-500">
         {label}
       </p>
       <div
@@ -1735,31 +1747,77 @@ function RightColumn({ config }: { config: PlaygroundConfig }) {
 
 // ── Page Content ───────────────────────────────
 
+// ── Theme toggle ────────────────────────────────
+
+function ThemeToggle() {
+  const { resolvedTheme, setTheme } = useTheme();
+  return (
+    <button
+      aria-label="Toggle theme"
+      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border-none bg-transparent text-zinc-400 transition-colors duration-150 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      type="button"
+    >
+      <svg
+        className="hidden h-4 w-4 dark:block"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
+        <circle cx="12" cy="12" r="5" />
+        <line x1="12" x2="12" y1="1" y2="3" />
+        <line x1="12" x2="12" y1="21" y2="23" />
+        <line x1="4.22" x2="5.64" y1="4.22" y2="5.64" />
+        <line x1="18.36" x2="19.78" y1="18.36" y2="19.78" />
+        <line x1="1" x2="3" y1="12" y2="12" />
+        <line x1="21" x2="23" y1="12" y2="12" />
+        <line x1="4.22" x2="5.64" y1="19.78" y2="18.36" />
+        <line x1="18.36" x2="19.78" y1="5.64" y2="4.22" />
+      </svg>
+      <svg
+        className="block h-4 w-4 dark:hidden"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
+        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+      </svg>
+    </button>
+  );
+}
+
 // ── Header ──────────────────────────────────────
 
 function PageHeader() {
   return (
-    <header className="ss-shell-pad flex h-14 items-center justify-between border-zinc-200 border-b">
+    <header className="ss-shell-pad flex h-14 items-center justify-between border-zinc-200 border-b dark:border-zinc-800">
       <Wordmark />
       <nav className="flex items-center gap-6">
         <a
-          className="text-sm text-zinc-500 no-underline transition-colors duration-150 hover:text-zinc-950"
+          className="text-sm text-zinc-500 no-underline transition-colors duration-150 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
           href="/docs"
         >
           Docs
         </a>
         <a
-          className="text-sm text-zinc-500 no-underline transition-colors duration-150 hover:text-zinc-950"
+          className="text-sm text-zinc-500 no-underline transition-colors duration-150 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
           href="https://github.com/howells/stacksheet"
         >
           GitHub
         </a>
         <a
-          className="text-sm text-zinc-400 no-underline transition-colors duration-150 hover:text-zinc-950"
+          className="text-sm text-zinc-400 no-underline transition-colors duration-150 hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-zinc-100"
           href="https://danielhowells.com"
         >
           by Howells
         </a>
+        <ThemeToggle />
       </nav>
     </header>
   );
@@ -1790,7 +1848,7 @@ export function PlaygroundDemo() {
     >
       <PageHeader />
       <div className="grid grid-cols-1 lg:min-h-0 lg:grid-cols-[420px_minmax(0,1fr)]">
-        <div className="border-zinc-200 border-b lg:min-h-0 lg:border-r lg:border-b-0">
+        <div className="border-zinc-200 border-b lg:min-h-0 lg:border-r lg:border-b-0 dark:border-zinc-800">
           <LeftColumn
             config={config}
             onConfigChange={handleConfigChange}

@@ -91,6 +91,14 @@ body {
   --color-fd-primary: hsl(0, 0%, 93%);
   --color-fd-primary-foreground: hsl(0, 0%, 8%);
   --color-fd-ring: hsl(0, 0%, 45%);
+
+  /* Site tokens */
+  --ss-color-canvas: hsl(0, 0%, 6%);
+  --ss-color-surface: hsl(0, 0%, 9%);
+
+  /* Library panel tokens */
+  --background: hsl(0, 0%, 9%);
+  --border: hsl(0, 0%, 18%);
 }
 
 /* ── Shared layout primitives ───────────── */
@@ -205,6 +213,10 @@ body {
 #nd-sidebar > div:nth-child(2) a[data-active="true"] {
   color: var(--color-fd-foreground);
   background-color: var(--color-zinc-200);
+}
+
+.dark #nd-sidebar > div:nth-child(2) a[data-active="true"] {
+  background-color: hsl(0, 0%, 14%);
 }
 
 /* Keep docs wordmark rendering and left anchor identical to demo header */
@@ -347,4 +359,42 @@ body {
   padding: 0.25em 0.625em;
   border-radius: 999px;
   margin-bottom: 0.75rem;
+}
+
+/* ── Dark mode demo overrides ──────────── */
+
+.dark .demo-preview {
+  background: hsl(0, 0%, 9%);
+  border-color: hsl(0, 0%, 18%);
+}
+
+.dark .demo-btn {
+  background: hsl(0, 0%, 12%);
+  border-color: hsl(0, 0%, 18%);
+  color: hsl(0, 0%, 93%);
+}
+
+.dark .demo-btn:hover {
+  background: hsl(0, 0%, 16%);
+  border-color: hsl(0, 0%, 24%);
+}
+
+.dark .demo-btn-primary {
+  background: hsl(0, 0%, 93%);
+  color: hsl(0, 0%, 6%);
+  border-color: hsl(0, 0%, 93%);
+}
+
+.dark .demo-btn-primary:hover {
+  background: hsl(0, 0%, 93%);
+  border-color: hsl(0, 0%, 93%);
+}
+
+.dark .sheet-content p {
+  color: hsl(0, 0%, 58%);
+}
+
+.dark .sheet-badge {
+  background: hsl(0, 0%, 14%);
+  color: hsl(0, 0%, 58%);
 }

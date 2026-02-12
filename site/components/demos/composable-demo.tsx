@@ -31,7 +31,10 @@ function DetailSheet({ title }: { title: string }) {
         <div style={{ padding: "0 16px" }}>
           <Sheet.Description>
             <span
-              style={{ fontSize: 13, color: "#71717a" }}
+              style={{
+                fontSize: 13,
+                color: "var(--color-fd-muted-foreground)",
+              }}
             >
               {isNested
                 ? "This is a stacked sheet. Notice the back button appeared automatically via Sheet.Back."
@@ -44,7 +47,7 @@ function DetailSheet({ title }: { title: string }) {
                 key={i}
                 style={{
                   fontSize: 13,
-                  color: "#71717a",
+                  color: "var(--color-fd-muted-foreground)",
                   lineHeight: 1.6,
                   marginBottom: 12,
                 }}
@@ -60,7 +63,7 @@ function DetailSheet({ title }: { title: string }) {
         <div
           style={{
             padding: "12px 16px",
-            borderTop: "1px solid #e4e4e7",
+            borderTop: "1px solid var(--color-fd-border)",
           }}
         >
           <FooterAction />
