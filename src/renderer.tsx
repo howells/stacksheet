@@ -46,23 +46,23 @@ function DefaultHeader({
 }: HeaderRenderProps & { className?: string }) {
   return (
     <div
-      className={`flex h-12 shrink-0 items-center px-3 ${className ?? ""}`}
-      style={{ borderBottom: "1px solid var(--border, transparent)" }}
+      className={`flex h-14 shrink-0 items-center justify-between border-b px-6 ${className ?? ""}`}
     >
-      {isNested && (
-        <button
-          aria-label="Back"
-          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-none bg-transparent p-0 text-inherit opacity-50 transition-opacity duration-150 hover:opacity-100"
-          onClick={onBack}
-          type="button"
-        >
-          <ArrowLeftIcon />
-        </button>
-      )}
-      <div className="flex-1" />
+      <div className="flex items-center gap-2">
+        {isNested && (
+          <button
+            aria-label="Back"
+            className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100"
+            onClick={onBack}
+            type="button"
+          >
+            <ArrowLeftIcon />
+          </button>
+        )}
+      </div>
       <button
         aria-label="Close"
-        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-none bg-transparent p-0 text-inherit opacity-50 transition-opacity duration-150 hover:opacity-100"
+        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100"
         onClick={onClose}
         type="button"
       >
@@ -220,10 +220,7 @@ function BottomHandle() {
       className="flex shrink-0 cursor-grab touch-none items-center justify-center pt-4 pb-1"
       data-stacksheet-handle=""
     >
-      <div
-        className="h-1 w-9 rounded-sm"
-        style={{ background: "var(--muted-foreground, rgba(0, 0, 0, 0.25))" }}
-      />
+      <div className="h-1 w-9 rounded-sm bg-current/25" />
     </div>
   );
 }
@@ -241,13 +238,7 @@ function SideHandle({ side, isHovered }: { side: Side; isHovered: boolean }) {
       style={position}
       transition={{ duration: isHovered ? 0.15 : 0.4, ease: "easeOut" }}
     >
-      <div
-        className="h-10 w-[5px] rounded-sm"
-        style={{
-          background: "var(--muted-foreground, rgba(0, 0, 0, 0.35))",
-          boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.5)",
-        }}
-      />
+      <div className="h-10 w-[5px] rounded-sm bg-current/35 shadow-sm" />
     </m.div>
   );
 }
@@ -667,7 +658,7 @@ export function SheetRenderer<TMap extends object>({
             {stack.map((item, index) => {
               const depth = stack.length - 1 - index;
               const isTop = depth === 0;
-              const isNested = stack.length > 1;
+              const isNested = index > 0;
               // Keep one extra hidden panel mounted as a warm buffer.
               // Without this, popping from deep stacks can mount content on the
               // same frame it becomes visible, which can cause a reverse jank.
@@ -724,15 +715,12 @@ function getInitialRadius(side: Side): Record<string, number> {
   return { borderRadius: 0 };
 }
 
-function getShadow(side: Side, isNested: boolean): string {
-  if (side === "bottom") {
-    return isNested
-      ? "0 -2px 16px rgba(0,0,0,0.06)"
-      : "0 -8px 32px rgba(0,0,0,0.15)";
-  }
-  // Left/right
-  const dir = side === "right" ? -1 : 1;
-  return isNested
-    ? `${dir * 2}px 0 16px rgba(0,0,0,0.06)`
-    : `${dir * 8}px 0 32px rgba(0,0,0,0.15)`;
+// Collins-style layered shadows — soft, diffused, multi-stop.
+const SHADOW_SM =
+  "0px 2px 5px 0px rgba(0,0,0,0.11), 0px 9px 9px 0px rgba(0,0,0,0.1), 0px 21px 13px 0px rgba(0,0,0,0.06)";
+const SHADOW_LG =
+  "0px 23px 52px 0px rgba(0,0,0,0.08), 0px 94px 94px 0px rgba(0,0,0,0.07), 0px 211px 127px 0px rgba(0,0,0,0.04)";
+
+function getShadow(_side: Side, isNested: boolean): string {
+  return isNested ? SHADOW_SM : SHADOW_LG;
 }

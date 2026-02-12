@@ -33,12 +33,7 @@ function SheetHandle({
       data-stacksheet-handle=""
       style={style}
     >
-      {children ?? (
-        <div
-          className="h-1 w-9 rounded-sm"
-          style={{ background: "var(--muted-foreground, rgba(0, 0, 0, 0.25))" }}
-        />
-      )}
+      {children ?? <div className="h-1 w-9 rounded-sm bg-current/25" />}
     </Comp>
   );
 }
@@ -60,7 +55,10 @@ function SheetHeader({
 }: SheetHeaderProps) {
   const Comp = asChild ? Slot : "header";
   return (
-    <Comp className={`shrink-0 ${className ?? ""}`} style={style}>
+    <Comp
+      className={`flex h-14 shrink-0 items-center justify-between border-b px-6 ${className ?? ""}`}
+      style={style}
+    >
       {children}
     </Comp>
   );
@@ -79,7 +77,11 @@ function SheetTitle({ asChild, className, style, children }: SheetTitleProps) {
   const { panelId } = useSheetPanel();
   const Comp = asChild ? Slot : "h2";
   return (
-    <Comp className={className} id={`${panelId}-title`} style={style}>
+    <Comp
+      className={`font-semibold text-sm ${className ?? ""}`}
+      id={`${panelId}-title`}
+      style={style}
+    >
       {children}
     </Comp>
   );
@@ -145,10 +147,7 @@ function SheetBody({ asChild, className, style, children }: SheetBodyProps) {
         className="flex w-2 touch-none select-none p-0.5"
         orientation="vertical"
       >
-        <ScrollAreaThumb
-          className="relative flex-1 rounded"
-          style={{ background: "var(--border, rgba(0, 0, 0, 0.15))" }}
-        />
+        <ScrollAreaThumb className="relative flex-1 rounded bg-current/15" />
       </ScrollAreaScrollbar>
     </ScrollAreaRoot>
   );
@@ -171,7 +170,10 @@ function SheetFooter({
 }: SheetFooterProps) {
   const Comp = asChild ? Slot : "footer";
   return (
-    <Comp className={`shrink-0 ${className ?? ""}`} style={style}>
+    <Comp
+      className={`flex shrink-0 items-center gap-2 border-t px-6 py-3 ${className ?? ""}`}
+      style={style}
+    >
       {children}
     </Comp>
   );
@@ -193,7 +195,7 @@ function SheetClose({ asChild, className, style, children }: SheetCloseProps) {
   return (
     <Comp
       aria-label={children ? undefined : "Close"}
-      className={className}
+      className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100 ${className ?? ""}`}
       onClick={close}
       style={style}
       type={asChild ? undefined : "button"}
@@ -224,7 +226,7 @@ function SheetBack({ asChild, className, style, children }: SheetBackProps) {
   return (
     <Comp
       aria-label={children ? undefined : "Back"}
-      className={className}
+      className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100 ${className ?? ""}`}
       onClick={back}
       style={style}
       type={asChild ? undefined : "button"}
