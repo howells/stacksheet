@@ -53,7 +53,7 @@ export interface StackingConfig {
   opacityStep: number;
   /** Border radius applied to stacked panels in px (default: 12) */
   radius: number;
-  /** Max depth before content stops rendering (default: 5) */
+  /** Max depth before content stops rendering (default: 3) */
   renderThreshold: number;
 }
 

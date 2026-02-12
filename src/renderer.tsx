@@ -60,7 +60,13 @@ const HANDLE_BAR_STYLE: CSSProperties = {
   background: "var(--muted-foreground, rgba(0, 0, 0, 0.25))",
 };
 
-function DefaultHeader({ isNested, onBack, onClose, side }: HeaderRenderProps) {
+function DefaultHeader({
+  isNested,
+  onBack,
+  onClose,
+  side,
+  className,
+}: HeaderRenderProps & { className?: string }) {
   return (
     <>
       {side === "bottom" && (
@@ -80,6 +86,7 @@ function DefaultHeader({ isNested, onBack, onClose, side }: HeaderRenderProps) {
         </div>
       )}
       <div
+        className={className}
         style={{
           display: "flex",
           alignItems: "center",
@@ -383,7 +390,10 @@ function SheetPanel({
           {renderHeader ? (
             renderHeader(headerProps)
           ) : (
-            <DefaultHeader {...headerProps} />
+            <DefaultHeader
+              {...headerProps}
+              className={classNames.header || undefined}
+            />
           )}
           {shouldRender && Content && (
             <div
