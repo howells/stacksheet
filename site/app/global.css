@@ -121,6 +121,116 @@ body {
   line-height: var(--ss-wordmark-leading);
   font-weight: var(--ss-wordmark-weight);
   letter-spacing: var(--ss-wordmark-tracking);
+  transition: text-shadow 0.3s ease;
+}
+
+@keyframes wordmark-glow {
+  0%,
+  100% {
+    text-shadow:
+      0 0 10px #ff00ff,
+      0 0 40px #ff00ff,
+      0 0 80px #ff00ff,
+      0 0 140px #ff00ff,
+      0 0 200px #ff00ff,
+      0 0 280px rgba(255, 0, 255, 0.4);
+    color: #fff;
+  }
+  10% {
+    text-shadow:
+      0 0 10px #ff2200,
+      0 0 40px #ff2200,
+      0 0 80px #ff2200,
+      0 0 140px #ff2200,
+      0 0 200px #ff2200,
+      0 0 280px rgba(255, 34, 0, 0.4);
+    color: #fff;
+  }
+  20% {
+    text-shadow:
+      0 0 10px #ff6600,
+      0 0 40px #ff6600,
+      0 0 80px #ff6600,
+      0 0 140px #ff6600,
+      0 0 220px #ff6600,
+      0 0 300px rgba(255, 102, 0, 0.4);
+    color: #fff;
+  }
+  30% {
+    text-shadow:
+      0 0 10px #ffcc00,
+      0 0 40px #ffcc00,
+      0 0 80px #ffcc00,
+      0 0 140px #ffcc00,
+      0 0 200px #ffcc00,
+      0 0 280px rgba(255, 204, 0, 0.4);
+    color: #fff;
+  }
+  40% {
+    text-shadow:
+      0 0 10px #66ff00,
+      0 0 40px #66ff00,
+      0 0 80px #66ff00,
+      0 0 140px #66ff00,
+      0 0 220px #66ff00,
+      0 0 300px rgba(102, 255, 0, 0.4);
+    color: #fff;
+  }
+  50% {
+    text-shadow:
+      0 0 10px #00ff66,
+      0 0 40px #00ff66,
+      0 0 80px #00ff66,
+      0 0 140px #00ff66,
+      0 0 200px #00ff66,
+      0 0 280px rgba(0, 255, 102, 0.4);
+    color: #fff;
+  }
+  60% {
+    text-shadow:
+      0 0 10px #00ffcc,
+      0 0 40px #00ffcc,
+      0 0 80px #00ffcc,
+      0 0 140px #00ffcc,
+      0 0 220px #00ffcc,
+      0 0 300px rgba(0, 255, 204, 0.4);
+    color: #fff;
+  }
+  70% {
+    text-shadow:
+      0 0 10px #00ccff,
+      0 0 40px #00ccff,
+      0 0 80px #00ccff,
+      0 0 140px #00ccff,
+      0 0 200px #00ccff,
+      0 0 280px rgba(0, 204, 255, 0.4);
+    color: #fff;
+  }
+  80% {
+    text-shadow:
+      0 0 10px #3300ff,
+      0 0 40px #3300ff,
+      0 0 80px #3300ff,
+      0 0 140px #3300ff,
+      0 0 220px #3300ff,
+      0 0 300px rgba(51, 0, 255, 0.4);
+    color: #fff;
+  }
+  90% {
+    text-shadow:
+      0 0 10px #9900ff,
+      0 0 40px #9900ff,
+      0 0 80px #9900ff,
+      0 0 140px #9900ff,
+      0 0 200px #9900ff,
+      0 0 280px rgba(153, 0, 255, 0.4);
+    color: #fff;
+  }
+}
+
+.dark .ss-wordmark:hover {
+  animation: wordmark-glow 4s linear infinite;
+  cursor: crosshair;
 }
 
 /* ── Docs alignment to demo tokens ──────── */
