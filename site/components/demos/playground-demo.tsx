@@ -76,10 +76,6 @@ const presets: Record<SheetKey, SheetTypeMap[SheetKey][]> = {
   Pop: [{ description: "Removes the topmost sheet from the stack." }],
   Close: [{ description: "Clears the entire stack." }],
   Composable: [
-    {
-      variant: "Full layout",
-      parts: ["Handle", "Back", "Title", "Close", "Body", "Footer"],
-    },
     { variant: "Minimal", parts: ["Title", "Close", "Body"] },
     {
       variant: "With footer",
@@ -268,7 +264,7 @@ function SheetControls({
 
       <div className="my-5 h-px bg-zinc-100" />
 
-      <p className="mb-2.5 font-medium text-[11px] text-zinc-400 uppercase tracking-widest">
+      <p className="mb-2.5 text-[11px] text-zinc-400 uppercase tracking-widest">
         Contents
       </p>
       <div className="flex flex-col gap-0.5">
@@ -300,12 +296,12 @@ function SheetControls({
                 className={`h-2 w-2 shrink-0 rounded-full ${isCurrent || isVisited ? dotColors[type] : "bg-zinc-200"}`}
               />
               <span
-                className={`font-medium ${isLocked ? "text-zinc-300" : "text-zinc-950"}`}
+                className={`${isLocked ? "text-zinc-300" : "text-zinc-950"}`}
               >
                 {type}
               </span>
               {isCurrent && (
-                <span className="ml-auto rounded-full bg-zinc-200 px-2 py-0.5 font-medium text-[11px] text-zinc-500">
+                <span className="ml-auto rounded-full bg-zinc-200 px-2 py-0.5 text-[11px] text-zinc-500">
                   current
                 </span>
               )}
@@ -318,27 +314,6 @@ function SheetControls({
 }
 
 // ── Sheet components ───────────────────────────
-
-// Shared header bar used by composable sheets
-function HeaderBar({ children }: { children: ReactNode }) {
-  return (
-    <Sheet.Header className="flex h-14 items-center justify-between border-zinc-100 border-b px-8">
-      {children}
-    </Sheet.Header>
-  );
-}
-
-const iconBtnCls =
-  "w-8 h-8 flex items-center justify-center rounded-md hover:bg-zinc-100 cursor-pointer bg-transparent border-none text-zinc-500 transition-colors duration-150";
-
-// Shared footer bar
-function FooterBar({ children }: { children: ReactNode }) {
-  return (
-    <Sheet.Footer className="flex items-center gap-2 border-zinc-100 border-t px-8 py-4">
-      {children}
-    </Sheet.Footer>
-  );
-}
 
 function Button({
   children,
@@ -353,7 +328,7 @@ function Button({
   href?: string;
   className?: string;
 }) {
-  const cls = `inline-flex items-center justify-center h-10 px-6 text-sm font-medium rounded-full cursor-pointer transition-all duration-150 active:scale-[0.97] ${
+  const cls = `inline-flex items-center justify-center h-10 px-6 text-sm rounded-full cursor-pointer transition-all duration-150 active:scale-[0.97] ${
     variant === "primary"
       ? "bg-zinc-950 text-zinc-50 border-none hover:opacity-85"
       : "bg-transparent text-zinc-950 border border-zinc-200 hover:bg-zinc-100"
@@ -467,11 +442,11 @@ function NextFooter({ sheetType }: { sheetType: SheetKey }) {
     return null;
   }
   return (
-    <FooterBar>
+    <Sheet.Footer>
       <Button onClick={next.goNext} variant="primary">
         {next.nextKey ? `Next: ${next.nextKey} \u2192` : "Finish"}
       </Button>
-    </FooterBar>
+    </Sheet.Footer>
   );
 }
 
@@ -577,17 +552,15 @@ function ActionSheet(_props: { description: string }) {
 
   return (
     <>
-      <HeaderBar>
+      <Sheet.Header>
         <div className="flex items-center gap-2">
-          <Sheet.Back className={iconBtnCls} />
-          <Sheet.Title className="font-semibold text-sm">
-            {currentType}
-          </Sheet.Title>
+          <Sheet.Back />
+          <Sheet.Title>{currentType}</Sheet.Title>
         </div>
-        <Sheet.Close className={iconBtnCls} />
-      </HeaderBar>
+        <Sheet.Close />
+      </Sheet.Header>
       <Sheet.Body>
-        <div className="px-8 py-6">
+        <div className="px-6 py-6">
           <SheetControls sheetType={currentType}>
             <p className="mb-4 text-sm text-zinc-500 leading-relaxed">
               {content.explanation}
@@ -600,7 +573,7 @@ function ActionSheet(_props: { description: string }) {
                   key={name}
                 >
                   <code
-                    className={`font-medium text-sm ${name === highlight ? "text-blue-600" : "text-zinc-950"}`}
+                    className={`text-sm ${name === highlight ? "text-blue-600" : "text-zinc-950"}`}
                     style={{ fontFamily: "var(--font-mono)" }}
                   >
                     {name}
@@ -627,21 +600,17 @@ function ComposableSheet({ variant, parts }: SheetTypeMap["Composable"]) {
   return (
     <>
       {hasPart("Handle") && <Sheet.Handle />}
-      <HeaderBar>
+      <Sheet.Header>
         <div className="flex items-center gap-2">
-          {hasPart("Back") && <Sheet.Back className={iconBtnCls} />}
-          {hasPart("Title") && (
-            <Sheet.Title className="font-semibold text-sm">
-              Composable
-            </Sheet.Title>
-          )}
+          {hasPart("Back") && <Sheet.Back />}
+          {hasPart("Title") && <Sheet.Title>Composable</Sheet.Title>}
         </div>
-        {hasPart("Close") && <Sheet.Close className={iconBtnCls} />}
-      </HeaderBar>
+        {hasPart("Close") && <Sheet.Close />}
+      </Sheet.Header>
       <Sheet.Body>
-        <div className="px-8 py-6">
+        <div className="px-6 py-6">
           <SheetControls sheetType="Composable">
-            <p className="mb-1 font-medium text-[11px] text-zinc-400 uppercase tracking-widest">
+            <p className="mb-1 text-[11px] text-zinc-400 uppercase tracking-widest">
               {variant}
             </p>
             <p className="mb-4 text-sm text-zinc-500 leading-relaxed">
@@ -659,7 +628,7 @@ function ComposableSheet({ variant, parts }: SheetTypeMap["Composable"]) {
               {["Handle", "Back", "Title", "Close", "Body", "Footer"].map(
                 (p) => (
                   <span
-                    className={`inline-flex h-7 items-center rounded-full px-3 font-medium text-sm ${
+                    className={`inline-flex h-7 items-center rounded-full px-3 text-sm ${
                       hasPart(p)
                         ? "bg-violet-100 text-violet-700"
                         : "bg-zinc-100 text-zinc-400"
@@ -690,22 +659,22 @@ function StackingSheet({ description }: SheetTypeMap["Stacking"]) {
 
   return (
     <>
-      <HeaderBar>
+      <Sheet.Header>
         <div className="flex items-center gap-2">
-          <Sheet.Back className={iconBtnCls} />
-          <Sheet.Title className="font-semibold text-sm">Stacking</Sheet.Title>
+          <Sheet.Back />
+          <Sheet.Title>Stacking</Sheet.Title>
         </div>
-        <Sheet.Close className={iconBtnCls} />
-      </HeaderBar>
+        <Sheet.Close />
+      </Sheet.Header>
       <Sheet.Body>
-        <div className="px-8 py-6">
+        <div className="px-6 py-6">
           <SheetControls sheetType="Stacking">
             <div className="mb-4 flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 font-bold text-amber-700 text-lg">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-lg">
                 {actualDepth}
               </span>
               <div>
-                <p className="font-medium text-sm text-zinc-950">
+                <p className="text-sm text-zinc-950">
                   {actualDepth === 1
                     ? "Root sheet"
                     : `${actualDepth} sheets deep`}
@@ -767,21 +736,21 @@ function ConfigSheet({ category, description }: SheetTypeMap["Config"]) {
 
   return (
     <>
+      <Sheet.Header>
+        <div className="flex items-center gap-2">
+          <Sheet.Back />
+          <Sheet.Title>Config</Sheet.Title>
+        </div>
+        <Sheet.Close />
+      </Sheet.Header>
       <Sheet.Body>
-        <div className="px-8 py-6">
+        <div className="px-6 py-6">
           <SheetControls sheetType="Config">
-            <div className="mb-4 rounded-lg bg-emerald-50 p-4">
-              <p className="mb-1 font-medium text-[11px] text-emerald-600 uppercase tracking-widest">
-                {category}
-              </p>
-              <p className="text-emerald-700 text-sm leading-relaxed">
-                {description}
-              </p>
-            </div>
-
+            <p className="mb-1 text-[11px] text-zinc-400 uppercase tracking-widest">
+              {category}
+            </p>
             <p className="mb-4 text-sm text-zinc-500 leading-relaxed">
-              Config is set once when creating the store. Every sheet inherits
-              it — no per-sheet overrides needed.
+              {description}
             </p>
 
             <div className="mb-4 flex flex-col">
@@ -791,7 +760,7 @@ function ConfigSheet({ category, description }: SheetTypeMap["Config"]) {
                   key={key}
                 >
                   <code
-                    className="font-medium text-sm text-zinc-950"
+                    className="text-sm text-zinc-950"
                     style={{ fontFamily: "var(--font-mono)" }}
                   >
                     {key}
@@ -960,7 +929,7 @@ function _Pill({
 }) {
   return (
     <button
-      className={`inline-flex h-7 cursor-pointer items-center rounded-full border px-3 font-medium text-xs transition-colors duration-150 ${
+      className={`inline-flex h-7 cursor-pointer items-center rounded-full border px-3 text-xs transition-colors duration-150 ${
         active
           ? "border-zinc-300 bg-zinc-200 text-zinc-900 hover:bg-zinc-300"
           : "border-zinc-200 bg-transparent text-zinc-950 hover:bg-zinc-100"
@@ -974,32 +943,61 @@ function _Pill({
 
 // ── Segmented control ────────────────────────────
 
+const segmentedSpring = {
+  type: "spring",
+  damping: 30,
+  stiffness: 400,
+} as const;
+
+const segmentedVariants = {
+  light: {
+    container: "inline-flex rounded-full bg-zinc-100/80 p-[3px]",
+    button:
+      "px-3 py-1 text-xs text-zinc-400 [&[data-active=true]]:text-zinc-900",
+    pill: "rounded-full border border-zinc-200 bg-white",
+  },
+  dark: {
+    container: "flex flex-wrap gap-1",
+    button:
+      "px-2.5 py-1 text-sm text-zinc-500 hover:text-zinc-300 [&[data-active=true]]:text-zinc-200",
+    pill: "rounded-full bg-white/15",
+  },
+} as const;
+
 function SegmentedControl({
   id,
   value,
   options,
   onChange,
+  variant = "light",
+  mono,
+  className,
 }: {
   id: string;
   value: string;
   options: readonly string[];
   onChange: (v: string) => void;
+  variant?: "light" | "dark";
+  mono?: boolean;
+  className?: string;
 }) {
+  const styles = segmentedVariants[variant];
   return (
-    <div className="relative inline-flex h-8 items-center rounded-full bg-zinc-100/80 p-0.5">
+    <div className={`relative ${styles.container} ${className ?? ""}`}>
       {options.map((opt) => (
         <button
-          className="relative cursor-pointer rounded-full border-none bg-transparent px-2.5 py-0.5 font-medium text-sm text-zinc-400 transition-colors duration-150 hover:text-zinc-600 [&[data-active=true]]:text-zinc-900"
+          className={`relative flex cursor-pointer items-center rounded-full border-none bg-transparent outline-none transition-colors duration-150 focus-visible:ring-[3px] focus-visible:ring-zinc-400/50 ${styles.button}`}
           data-active={value === opt}
           key={opt}
           onClick={() => onChange(opt)}
+          style={mono ? { fontFamily: "var(--font-mono)" } : undefined}
           type="button"
         >
           {value === opt && (
             <m.div
-              className="absolute inset-0 rounded-full border border-zinc-200 bg-white"
+              className={`absolute inset-0 ${styles.pill}`}
               layoutId={`segmented-${id}`}
-              transition={{ type: "spring", damping: 30, stiffness: 400 }}
+              transition={segmentedSpring}
             />
           )}
           <span className="relative">{opt}</span>
@@ -1068,7 +1066,7 @@ function TextInput({
 
 function SectionHeader({ children }: { children: ReactNode }) {
   return (
-    <p className="font-medium text-[11px] text-zinc-400 uppercase tracking-widest">
+    <p className="text-[11px] text-zinc-400 uppercase tracking-widest">
       {children}
     </p>
   );
@@ -1091,7 +1089,7 @@ function Collapsible({
     <CollapsibleRoot onOpenChange={() => onToggle()} open={open}>
       <CollapsibleTrigger asChild>
         <button
-          className="flex w-full cursor-pointer items-center gap-2 border-none bg-transparent py-2 text-left font-medium text-[11px] text-zinc-400 uppercase tracking-widest transition-colors duration-150 hover:text-zinc-600"
+          className="flex w-full cursor-pointer items-center gap-2 border-none bg-transparent py-2 text-left text-[11px] text-zinc-400 uppercase tracking-widest transition-colors duration-150 hover:text-zinc-600"
           type="button"
         >
           <svg
@@ -1219,34 +1217,12 @@ function LeftColumn({
         <TabsRoot onValueChange={setPm} value={pm}>
           <div className="mb-3 flex items-center justify-between">
             <SectionHeader>Install</SectionHeader>
-            <div
-              aria-label="Package manager"
-              className="relative inline-flex h-8 items-center rounded-full bg-zinc-100/80 p-0.5"
-              role="radiogroup"
-            >
-              {pmOptions.map((option) => (
-                <button
-                  className="relative cursor-pointer rounded-full border-none bg-transparent px-2.5 py-0.5 font-medium text-sm text-zinc-400 transition-colors duration-150 hover:text-zinc-600 [&[data-active=true]]:text-zinc-900"
-                  data-active={pm === option}
-                  key={option}
-                  onClick={() => setPm(option)}
-                  type="button"
-                >
-                  {pm === option && (
-                    <m.div
-                      className="absolute inset-0 rounded-full border border-zinc-200 bg-white"
-                      layoutId="segmented-pm"
-                      transition={{
-                        type: "spring",
-                        damping: 30,
-                        stiffness: 400,
-                      }}
-                    />
-                  )}
-                  <span className="relative">{option}</span>
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              id="pm"
+              onChange={setPm}
+              options={pmOptions}
+              value={pm}
+            />
           </div>
           {pmOptions.map((option) => (
             <TabsContent key={option} value={option}>
@@ -1259,7 +1235,7 @@ function LeftColumn({
                 </code>
                 <button
                   aria-label="Copy install command"
-                  className={`ml-3 shrink-0 ${iconBtnCls}`}
+                  className="ml-3 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent text-zinc-400 transition-colors duration-150 hover:text-zinc-600"
                   onClick={() =>
                     navigator.clipboard.writeText(installCommands[option])
                   }
@@ -1703,7 +1679,7 @@ function CodePanel({
 }) {
   return (
     <div className="flex min-h-[200px] min-w-0 flex-col lg:min-h-0">
-      <p className="mb-2 shrink-0 font-medium text-[11px] text-zinc-400 uppercase tracking-widest">
+      <p className="mb-2 shrink-0 text-[11px] text-zinc-400 uppercase tracking-widest">
         {label}
       </p>
       <div
@@ -1746,31 +1722,16 @@ function RightColumn({ config }: { config: PlaygroundConfig }) {
           code={actionSnippets[activeAction]}
           label="Use"
           toolbar={
-            <div className="flex flex-wrap gap-1">
-              {actionKeys.map((key) => (
-                <button
-                  className="relative inline-flex h-6 cursor-pointer items-center rounded-full border-none bg-transparent px-2.5 font-medium text-sm text-zinc-500 transition-colors duration-150 hover:text-zinc-300 [&[data-active=true]]:text-zinc-200"
-                  data-active={activeAction === key}
-                  key={key}
-                  onClick={() => setActiveAction(key)}
-                  style={{ fontFamily: "var(--font-mono)" }}
-                  type="button"
-                >
-                  {activeAction === key && (
-                    <m.div
-                      className="absolute inset-0 rounded-full bg-white/15"
-                      layoutId="action-toolbar"
-                      transition={{
-                        type: "spring",
-                        damping: 30,
-                        stiffness: 400,
-                      }}
-                    />
-                  )}
-                  <span className="relative">{key}</span>
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              id="action-toolbar"
+              mono
+              onChange={(v) =>
+                setActiveAction(v as (typeof actionKeys)[number])
+              }
+              options={actionKeys}
+              value={activeAction}
+              variant="dark"
+            />
           }
         />
       </div>
