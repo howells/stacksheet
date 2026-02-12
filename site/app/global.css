@@ -26,6 +26,9 @@
 /* ── Font ──────────────────────────────── */
 
 body {
+  --font-mono:
+    var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, monospace;
   font-family: var(--ss-font-sans);
   font-feature-settings:
     "liga" 1,

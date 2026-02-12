@@ -978,7 +978,7 @@ function SegmentedControl({
       onValueChange={(next) => {
         if (next) onChange(next);
       }}
-      className="inline-flex h-7 rounded-md bg-zinc-100/80 p-0.5"
+      className="inline-flex h-7 rounded-full bg-zinc-100/80 p-0.5"
       role="radiogroup"
     >
       {options.map((opt) => (
@@ -987,7 +987,7 @@ function SegmentedControl({
           value={opt}
           role="radio"
           aria-checked={value === opt}
-          className="px-2.5 text-xs font-medium rounded transition-all duration-150 cursor-pointer border-none bg-transparent text-zinc-400 hover:text-zinc-600 data-[state=on]:bg-white data-[state=on]:text-zinc-900 data-[state=on]:shadow-[0_0_0_1px_rgba(0,0,0,0.14)]"
+          className="px-2.5 text-xs font-medium rounded-full transition-all duration-150 cursor-pointer border-none bg-transparent text-zinc-400 hover:text-zinc-600 data-[state=on]:bg-white data-[state=on]:text-zinc-900 data-[state=on]:shadow-[0_0_0_1px_rgba(0,0,0,0.14)]"
         >
           {opt}
         </ToggleGroupItem>
@@ -1205,14 +1205,14 @@ function LeftColumn({
           <div className="mb-3 flex items-center justify-between">
             <SectionHeader>Install</SectionHeader>
             <TabsList
-              className="inline-flex h-7 rounded-md bg-zinc-100/80 p-0.5"
+              className="inline-flex h-7 rounded-full bg-zinc-100/80 p-0.5"
               aria-label="Package manager"
             >
               {pmOptions.map((option) => (
                 <TabsTrigger
                   key={option}
                   value={option}
-                  className="px-2.5 text-xs font-medium rounded transition-all duration-150 cursor-pointer border-none bg-transparent text-zinc-400 hover:text-zinc-600 data-[state=active]:bg-white data-[state=active]:text-zinc-900 data-[state=active]:shadow-[0_0_0_1px_rgba(0,0,0,0.14)]"
+                  className="px-2.5 text-xs font-medium rounded-full transition-all duration-150 cursor-pointer border-none bg-transparent text-zinc-400 hover:text-zinc-600 data-[state=active]:bg-white data-[state=active]:text-zinc-900 data-[state=active]:shadow-[0_0_0_1px_rgba(0,0,0,0.14)]"
                 >
                   {option}
                 </TabsTrigger>
@@ -1285,23 +1285,18 @@ function LeftColumn({
 
             <div className="h-px bg-zinc-200 my-3" />
 
-            <div className="flex flex-col gap-2 mb-6">
+            <div className="flex flex-col gap-2.5 mb-4">
               <SectionHeader>Spring</SectionHeader>
-              <ToggleGroupRoot
-                type="single"
-                value={config.spring}
-                onValueChange={(next) => {
-                  if (next)
-                    onConfigChange({ ...config, spring: next as SpringPreset });
-                }}
-                className="flex flex-wrap gap-1.5"
-              >
-                {springPresets.map((p) => (
-                  <Pill key={p} value={p}>
-                    {p}
-                  </Pill>
-                ))}
-              </ToggleGroupRoot>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-zinc-500">Preset</span>
+                <SegmentedControl
+                  value={config.spring}
+                  options={springPresets}
+                  onChange={(s) =>
+                    onConfigChange({ ...config, spring: s as SpringPreset })
+                  }
+                />
+              </div>
             </div>
 
             <div className="h-px bg-zinc-200 my-3" />
