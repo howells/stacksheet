@@ -105,9 +105,8 @@ export function getPanelStyles(
     zIndex: zIndex + 10 + index,
     display: "flex",
     flexDirection: "column",
-    overflow: "hidden",
     willChange: "transform",
-    transformOrigin: side === "bottom" ? "center bottom" : `${side} center`,
+    transformOrigin: "center center",
   };
 
   if (side === "bottom") {

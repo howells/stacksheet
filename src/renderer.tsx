@@ -60,6 +60,24 @@ const HANDLE_BAR_STYLE: CSSProperties = {
   background: "var(--muted-foreground, rgba(0, 0, 0, 0.25))",
 };
 
+const SIDE_HANDLE_PILL_STYLE: CSSProperties = {
+  width: 5,
+  height: 40,
+  borderRadius: 3,
+  background: "var(--muted-foreground, rgba(0, 0, 0, 0.35))",
+  boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.5)",
+};
+
+/** Clips content to the panel's animated border-radius */
+const INNER_CLIP_STYLE: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+  borderRadius: "inherit",
+  flex: 1,
+  minHeight: 0,
+};
+
 function DefaultHeader({
   isNested,
   onBack,
@@ -219,6 +237,81 @@ interface SheetPanelProps {
   exitSpring: Record<string, unknown>;
 }
 
+/** Renders panel inner content — composable mode vs classic (header + scroll) */
+function PanelInnerContent({
+  isComposable,
+  shouldRender,
+  Content,
+  data,
+  renderHeader,
+  headerProps,
+  headerClassName,
+}: {
+  isComposable: boolean;
+  shouldRender: boolean;
+  // biome-ignore lint/suspicious/noExplicitAny: heterogeneous content component
+  Content: ComponentType<any> | undefined;
+  data: Record<string, unknown>;
+  renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
+  headerProps: HeaderRenderProps;
+  headerClassName: string | undefined;
+}) {
+  if (isComposable) {
+    return shouldRender && Content ? <Content {...data} /> : null;
+  }
+
+  return (
+    <>
+      {renderHeader ? (
+        renderHeader(headerProps)
+      ) : (
+        <DefaultHeader {...headerProps} className={headerClassName} />
+      )}
+      {shouldRender && Content && (
+        <div
+          data-stacksheet-no-drag=""
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            overscrollBehavior: "contain",
+          }}
+        >
+          <Content {...data} />
+        </div>
+      )}
+    </>
+  );
+}
+
+/** Floating drag handle for left/right side panels */
+function SideHandle({ side, isHovered }: { side: Side; isHovered: boolean }) {
+  const position: CSSProperties =
+    side === "right" ? { right: "100%" } : { left: "100%" };
+
+  return (
+    <div
+      data-stacksheet-handle=""
+      style={{
+        position: "absolute",
+        top: 0,
+        bottom: 0,
+        ...position,
+        width: 24,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "grab",
+        touchAction: "none",
+        opacity: isHovered ? 1 : 0,
+        transition: "opacity 150ms ease",
+      }}
+    >
+      <div style={SIDE_HANDLE_PILL_STYLE} />
+    </div>
+  );
+}
+
 function SheetPanel({
   item,
   index,
@@ -245,6 +338,7 @@ function SheetPanel({
     offset: 0,
     isDragging: false,
   });
+  const [isHovered, setIsHovered] = useState(false);
 
   const transform = getStackTransform(depth, config.stacking);
   const panelStyles = getPanelStyles(side, config, depth, index);
@@ -357,6 +451,9 @@ function SheetPanel({
 
   const initialRadius = getInitialRadius(side);
 
+  // Side handle: only for left/right panels, only on the top-most sheet
+  const showSideHandle = isTop && side !== "bottom";
+
   const panelContent = (
     <m.div
       animate={animateTarget}
@@ -375,41 +472,26 @@ function SheetPanel({
       }}
       key={item.id}
       onAnimationComplete={handleAnimationComplete}
+      onMouseEnter={showSideHandle ? () => setIsHovered(true) : undefined}
+      onMouseLeave={showSideHandle ? () => setIsHovered(false) : undefined}
       ref={panelRef}
       style={panelStyle}
       tabIndex={isTop ? -1 : undefined}
       {...ariaProps}
     >
-      {isComposable ? (
-        /* Composable mode: content fills panel directly, uses Sheet.* parts */
-        shouldRender &&
-        Content && <Content {...(item.data as Record<string, unknown>)} />
-      ) : (
-        <>
-          {/* Classic mode: auto header + scroll wrapper */}
-          {renderHeader ? (
-            renderHeader(headerProps)
-          ) : (
-            <DefaultHeader
-              {...headerProps}
-              className={classNames.header || undefined}
-            />
-          )}
-          {shouldRender && Content && (
-            <div
-              data-stacksheet-no-drag=""
-              style={{
-                flex: 1,
-                minHeight: 0,
-                overflowY: "auto",
-                overscrollBehavior: "contain",
-              }}
-            >
-              <Content {...(item.data as Record<string, unknown>)} />
-            </div>
-          )}
-        </>
-      )}
+      {showSideHandle && <SideHandle isHovered={isHovered} side={side} />}
+      {/* Inner clip — clips content to the panel's animated border-radius */}
+      <div style={INNER_CLIP_STYLE}>
+        <PanelInnerContent
+          Content={Content}
+          data={item.data as Record<string, unknown>}
+          headerClassName={classNames.header || undefined}
+          headerProps={headerProps}
+          isComposable={isComposable}
+          renderHeader={renderHeader}
+          shouldRender={shouldRender}
+        />
+      </div>
     </m.div>
   );
 
