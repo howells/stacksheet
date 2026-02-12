@@ -45,21 +45,21 @@ function MySheet({ title }: { title: string }) {
     <>
       <Sheet.Handle />
       <Sheet.Header>
-        <div style={{ display: "flex", alignItems: "center", padding: "0 12px", height: 48 }}>
+        <div className="flex items-center px-3 h-12">
           <Sheet.Back />
           <Sheet.Title>{title}</Sheet.Title>
-          <div style={{ flex: 1 }} />
+          <div className="flex-1" />
           <Sheet.Close />
         </div>
       </Sheet.Header>
       <Sheet.Body>
-        <div style={{ padding: 16 }}>
+        <div className="p-4">
           <Sheet.Description>Accessible description text</Sheet.Description>
           <p>Scrollable content goes here.</p>
         </div>
       </Sheet.Body>
       <Sheet.Footer>
-        <div style={{ padding: 12, borderTop: "1px solid var(--border)" }}>
+        <div className="p-3 border-t border-[var(--border)]">
           <button>Action</button>
         </div>
       </Sheet.Footer>
@@ -82,7 +82,7 @@ Every part accepts `asChild` to render as its child element instead of the defau
 </Sheet.Body>
 ```
 
-When `asChild` is true on `Sheet.Body`, the Radix ScrollArea is skipped and your child element is rendered directly with `flex: 1; min-height: 0` applied.
+When `asChild` is true on `Sheet.Body`, the Radix ScrollArea is skipped and your child element is rendered directly with `flex-1 min-h-0 relative` applied.
 
 ## Sheet.Handle
 
@@ -115,7 +115,7 @@ Use `asChild` to opt out of the ScrollArea and bring your own scroll container:
 
 ```tsx
 <Sheet.Body asChild>
-  <div style={{ overflow: "auto", flex: 1 }}>{children}</div>
+  <div className="overflow-auto flex-1">{children}</div>
 </Sheet.Body>
 ```
 
