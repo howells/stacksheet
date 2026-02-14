@@ -1,3 +1,11 @@
+// CloseWatcher — ambient type for browsers that support it (Chromium 120+)
+declare global {
+  // biome-ignore lint: ambient declaration requires var for global augmentation
+  var CloseWatcher:
+    | (new () => { onclose: (() => void) | null; destroy: () => void })
+    | undefined;
+}
+
 import FocusTrap from "focus-trap-react";
 import { AnimatePresence, motion as m } from "motion/react";
 import {
@@ -15,6 +23,7 @@ import { useStore } from "zustand";
 import { ArrowLeftIcon, XIcon } from "./icons";
 import { useResolvedSide } from "./media";
 import { SheetPanelContext } from "./panel-context";
+import { getSnapOffset, resolveSnapPoints } from "./snap-points";
 import {
   getAnimatedBorderRadius,
   getPanelStyles,
@@ -25,6 +34,7 @@ import {
   type SlideValues,
 } from "./stacking";
 import type {
+  CloseReason,
   ContentMap,
   HeaderRenderProps,
   ResolvedConfig,
@@ -163,6 +173,16 @@ interface SheetPanelProps {
   shouldRender: boolean;
   pop: () => void;
   close: () => void;
+  /** Swipe-specific close — sets reason to "swipe" */
+  swipeClose: () => void;
+  /** Swipe-specific pop — sets reason to "swipe" */
+  swipePop: () => void;
+  /** Resolved snap point heights in px (ascending). Empty = no snaps. */
+  snapHeights: number[];
+  /** Currently active snap index */
+  activeSnapIndex: number;
+  /** Called when drag release targets a snap point */
+  onSnap: (index: number) => void;
   renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
   slideFrom: SlideValues;
   slideTarget: SlideValues;
@@ -243,6 +263,7 @@ function SideHandle({ side, isHovered }: { side: Side; isHovered: boolean }) {
   );
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: panel rendering coordinates many concerns
 function SheetPanel({
   item,
   index,
@@ -256,6 +277,11 @@ function SheetPanel({
   shouldRender,
   pop,
   close,
+  swipeClose,
+  swipePop,
+  snapHeights,
+  activeSnapIndex,
+  onSnap,
   renderHeader,
   slideFrom,
   slideTarget,
@@ -270,6 +296,23 @@ function SheetPanel({
     isDragging: false,
   });
   const [isHovered, setIsHovered] = useState(false);
+  const [measuredHeight, setMeasuredHeight] = useState(0);
+
+  // Measure panel height for snap point calculations
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el || snapHeights.length === 0) {
+      return;
+    }
+    setMeasuredHeight(el.offsetHeight);
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) {
+        setMeasuredHeight(entry.contentRect.height);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [snapHeights.length]);
 
   const transform = getStackTransform(depth, config.stacking);
   const panelStyles = getPanelStyles(side, config, depth, index);
@@ -296,9 +339,13 @@ function SheetPanel({
       closeThreshold: config.closeThreshold,
       velocityThreshold: config.velocityThreshold,
       side,
-      onClose: close,
-      onPop: pop,
+      onClose: swipeClose,
+      onPop: swipePop,
       isNested,
+      snapHeights,
+      activeSnapIndex,
+      onSnap,
+      sequential: config.snapToSequentialPoints,
     },
     setDragState
   );
@@ -372,7 +419,13 @@ function SheetPanel({
   // Explicit radius target to avoid undefined -> value interpolation.
   const animatedRadius = getAnimatedBorderRadius(side, depth, config.stacking);
 
-  // Merge stack offset + drag offset into the animate target
+  // Snap point offset — shifts the panel down when not fully open
+  const snapYOffset =
+    side === "bottom" && snapHeights.length > 0 && measuredHeight > 0
+      ? getSnapOffset(activeSnapIndex, snapHeights, measuredHeight)
+      : 0;
+
+  // Merge stack offset + drag offset + snap offset into the animate target
   const stackOffset = getStackOffset(side, transform.offset);
   const animateTarget = {
     ...slideTarget,
@@ -383,6 +436,8 @@ function SheetPanel({
     ...animatedRadius,
     boxShadow: getShadow(side, !isTop),
     transition,
+    // Snap offset applied as additional Y translation
+    ...(snapYOffset > 0 ? { y: (dragOffset.y ?? 0) + snapYOffset } : {}),
   };
 
   const initialRadius = getInitialRadius(side);
@@ -529,11 +584,70 @@ export function SheetRenderer<TMap extends object>({
 }: SheetRendererProps<TMap>) {
   const isOpen = useStore(store, (s) => s.isOpen);
   const stack = useStore(store, (s) => s.stack);
-  const close = useStore(store, (s) => s.close);
-  const pop = useStore(store, (s) => s.pop);
+  const rawClose = useStore(store, (s) => s.close);
+  const rawPop = useStore(store, (s) => s.pop);
 
   const side = useResolvedSide(config);
   const classNames = resolveClassNames(classNamesProp);
+
+  // ── Snap points ──────────────────────────────
+  const snapHeights = useMemo(
+    () =>
+      side === "bottom" && config.snapPoints.length > 0
+        ? resolveSnapPoints(
+            config.snapPoints,
+            typeof window !== "undefined" ? window.innerHeight : 0
+          )
+        : [],
+    [side, config.snapPoints]
+  );
+
+  // Default to the last snap point (fully open) when snap points are defined
+  const [internalSnapIndex, setInternalSnapIndex] = useState(
+    snapHeights.length > 0 ? snapHeights.length - 1 : 0
+  );
+
+  // Controlled vs uncontrolled snap index
+  const activeSnapIndex = config.snapPointIndex ?? internalSnapIndex;
+
+  const handleSnap = useCallback(
+    (index: number) => {
+      setInternalSnapIndex(index);
+      config.onSnapPointChange?.(index);
+    },
+    [config.onSnapPointChange, config]
+  );
+
+  // Reset snap index when stack opens (start at initial snap point or fully open)
+  useEffect(() => {
+    if (isOpen && snapHeights.length > 0) {
+      const initial = config.snapPointIndex ?? snapHeights.length - 1;
+      setInternalSnapIndex(initial);
+    }
+  }, [isOpen, snapHeights.length, config.snapPointIndex]);
+
+  // Track why the sheet was closed — ref survives until exit animation completes
+  const closeReasonRef = useRef<CloseReason>("programmatic");
+
+  const closeWith = useCallback(
+    (reason: CloseReason) => {
+      closeReasonRef.current = reason;
+      rawClose();
+    },
+    [rawClose]
+  );
+
+  const popWith = useCallback(
+    (reason: CloseReason) => {
+      closeReasonRef.current = reason;
+      rawPop();
+    },
+    [rawPop]
+  );
+
+  // Default close/pop (programmatic) for child components
+  const close = useCallback(() => closeWith("programmatic"), [closeWith]);
+  const pop = useCallback(() => popWith("programmatic"), [popWith]);
 
   // Body scale effect
   useBodyScale(config, isOpen);
@@ -566,9 +680,9 @@ export function SheetRenderer<TMap extends object>({
       if (e.key === "Escape") {
         e.preventDefault();
         if (stack.length > 1) {
-          pop();
+          popWith("escape");
         } else {
-          close();
+          closeWith("escape");
         }
       }
     }
@@ -580,9 +694,31 @@ export function SheetRenderer<TMap extends object>({
     config.closeOnEscape,
     config.dismissible,
     stack.length,
-    pop,
-    close,
+    popWith,
+    closeWith,
   ]);
+
+  // CloseWatcher — handles Android back gesture (progressive enhancement).
+  // On browsers without support (Safari, Firefox), this is a no-op.
+  useEffect(() => {
+    if (
+      !(isOpen && config.dismissible) ||
+      typeof globalThis.CloseWatcher === "undefined"
+    ) {
+      return;
+    }
+
+    const watcher = new globalThis.CloseWatcher();
+    watcher.onclose = () => {
+      if (stack.length > 1) {
+        popWith("escape");
+      } else {
+        closeWith("escape");
+      }
+    };
+
+    return () => watcher.destroy();
+  }, [isOpen, config.dismissible, stack.length, popWith, closeWith]);
 
   const slideFrom = getSlideFrom(side);
   const slideTarget = getSlideTarget();
@@ -619,9 +755,13 @@ export function SheetRenderer<TMap extends object>({
   // Handle exit complete — fire onCloseComplete when stack is fully empty
   const handleExitComplete = useCallback(() => {
     if (stack.length === 0) {
-      config.onCloseComplete?.();
+      config.onCloseComplete?.(closeReasonRef.current);
     }
   }, [stack.length, config]);
+
+  // Swipe-specific dismiss callbacks
+  const swipeClose = useCallback(() => closeWith("swipe"), [closeWith]);
+  const swipePop = useCallback(() => popWith("swipe"), [popWith]);
 
   // Non-modal: don't lock scroll
   const shouldLockScroll = isOpen && isModal && config.lockScroll;
@@ -639,7 +779,9 @@ export function SheetRenderer<TMap extends object>({
               initial={{ opacity: 0 }}
               key="stacksheet-backdrop"
               onClick={
-                config.closeOnBackdrop && config.dismissible ? close : undefined
+                config.closeOnBackdrop && config.dismissible
+                  ? () => closeWith("backdrop")
+                  : undefined
               }
               style={backdropStyle}
               transition={spring}
@@ -672,6 +814,7 @@ export function SheetRenderer<TMap extends object>({
 
               return (
                 <SheetPanel
+                  activeSnapIndex={activeSnapIndex}
                   Content={Content}
                   classNames={classNames}
                   close={close}
@@ -683,14 +826,18 @@ export function SheetRenderer<TMap extends object>({
                   isTop={isTop}
                   item={item}
                   key={item.id}
+                  onSnap={handleSnap}
                   pop={pop}
                   renderHeader={renderHeader}
                   shouldRender={shouldRender}
                   side={side}
                   slideFrom={slideFrom}
                   slideTarget={slideTarget}
+                  snapHeights={snapHeights}
                   spring={spring}
                   stackSpring={stackSpring}
+                  swipeClose={swipeClose}
+                  swipePop={swipePop}
                 />
               );
             })}

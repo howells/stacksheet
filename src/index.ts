@@ -18,6 +18,8 @@ export type { SpringPreset } from "./springs";
 export { springs } from "./springs";
 export { getPanelStyles, getSlideFrom, getStackTransform } from "./stacking";
 export type {
+  // Close reason
+  CloseReason,
   ContentMap,
   HeaderRenderProps,
   ResolvedConfig,
@@ -29,6 +31,7 @@ export type {
   SheetItem,
   Side,
   SideConfig,
+  SnapPoint,
   SpringConfig,
   // Config
   StackingConfig,

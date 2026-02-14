@@ -1,5 +1,20 @@
 import type { ComponentType, ReactNode } from "react";
 
+// ── Close reason ────────────────────────────────
+
+/** Why the sheet stack was closed or popped */
+export type CloseReason = "escape" | "backdrop" | "swipe" | "programmatic";
+
+// ── Snap points ─────────────────────────────────
+
+/**
+ * A snap point for bottom sheets.
+ * - `number` 0-1: fraction of viewport height (e.g. 0.5 = 50vh)
+ * - `number` > 1: pixel value (e.g. 300 = 300px)
+ * - `string`: CSS length (e.g. "148px", "30rem")
+ */
+export type SnapPoint = number | string;
+
 // ── Theming ─────────────────────────────────────
 
 export interface StacksheetClassNames {
@@ -100,7 +115,18 @@ export interface StacksheetConfig {
   /** Called when the top panel's entrance animation completes */
   onOpenComplete?: () => void;
   /** Called when the last panel's exit animation completes (stack fully closed) */
-  onCloseComplete?: () => void;
+  onCloseComplete?: (reason: CloseReason) => void;
+
+  // ── Snap points (bottom sheets only) ────────
+
+  /** Snap positions for bottom sheets. Numbers 0-1 = viewport fraction, >1 = px, strings = CSS lengths. */
+  snapPoints?: SnapPoint[];
+  /** Currently active snap point index (controlled). */
+  snapPointIndex?: number;
+  /** Called when the active snap point changes. */
+  onSnapPointChange?: (index: number) => void;
+  /** When true, velocity can't skip intermediate snap points. Default: false */
+  snapToSequentialPoints?: boolean;
 
   // ── Drag-to-dismiss ─────────────────────────
 
@@ -142,7 +168,11 @@ export interface ResolvedConfig {
   zIndex: number;
   ariaLabel: string;
   onOpenComplete?: () => void;
-  onCloseComplete?: () => void;
+  onCloseComplete?: (reason: CloseReason) => void;
+  snapPoints: SnapPoint[];
+  snapPointIndex?: number;
+  onSnapPointChange?: (index: number) => void;
+  snapToSequentialPoints: boolean;
   drag: boolean;
   closeThreshold: number;
   velocityThreshold: number;

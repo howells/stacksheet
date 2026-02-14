@@ -23,6 +23,7 @@ const DEFAULT_SIDE: ResponsiveSide = {
 
 // ── Resolver ────────────────────────────────────
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: config resolution is flat field mapping
 export function resolveConfig(config: StacksheetConfig = {}): ResolvedConfig {
   const side: ResponsiveSide =
     typeof config.side === "string"
@@ -50,6 +51,10 @@ export function resolveConfig(config: StacksheetConfig = {}): ResolvedConfig {
     ariaLabel: config.ariaLabel ?? "Sheet dialog",
     onOpenComplete: config.onOpenComplete,
     onCloseComplete: config.onCloseComplete,
+    snapPoints: config.snapPoints ?? [],
+    snapPointIndex: config.snapPointIndex,
+    onSnapPointChange: config.onSnapPointChange,
+    snapToSequentialPoints: config.snapToSequentialPoints ?? false,
     drag: config.drag ?? true,
     closeThreshold: config.closeThreshold ?? 0.25,
     velocityThreshold: config.velocityThreshold ?? 0.5,

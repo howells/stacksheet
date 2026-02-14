@@ -1,4 +1,5 @@
 import { type RefObject, useCallback, useEffect, useRef } from "react";
+import { findSnapTarget } from "./snap-points";
 import type { Side } from "./types";
 
 export interface DragConfig {
@@ -16,6 +17,14 @@ export interface DragConfig {
   onPop: () => void;
   /** Whether the stack has >1 sheet (swipe pops instead of closing) */
   isNested: boolean;
+  /** Resolved snap point heights in px (sorted ascending). Empty = no snap points. */
+  snapHeights: number[];
+  /** Current active snap point index */
+  activeSnapIndex: number;
+  /** Called when snap target changes on release */
+  onSnap: (index: number) => void;
+  /** When true, can't skip intermediate snap points */
+  sequential: boolean;
 }
 
 export interface DragState {
@@ -52,6 +61,49 @@ function isInteractiveElement(el: Element): boolean {
 }
 
 /**
+ * Walk up from `el` to find the nearest scrollable ancestor.
+ * Returns null if nothing is scrollable in the dismiss axis.
+ */
+function findScrollableAncestor(el: Element, axis: "x" | "y"): Element | null {
+  let current: Element | null = el;
+  while (current) {
+    if (current instanceof HTMLElement) {
+      const style = getComputedStyle(current);
+      const overflow = axis === "y" ? style.overflowY : style.overflowX;
+      if (overflow === "auto" || overflow === "scroll") {
+        const scrollable =
+          axis === "y"
+            ? current.scrollHeight > current.clientHeight
+            : current.scrollWidth > current.clientWidth;
+        if (scrollable) {
+          return current;
+        }
+      }
+    }
+    current = current.parentElement;
+  }
+  return null;
+}
+
+/**
+ * Check if a scrollable element is at its edge in the dismiss direction.
+ * For bottom sheets (sign=1, axis=y), "at edge" means scrolled to top.
+ * For left panels (sign=-1, axis=x), "at edge" means scrolled to right end.
+ */
+function isAtScrollEdge(el: Element, axis: "x" | "y", sign: 1 | -1): boolean {
+  if (axis === "y") {
+    // Dismiss down (sign=1): at edge when scrollTop ≈ 0
+    // Dismiss up (sign=-1): at edge when scrolled to bottom
+    return sign === 1
+      ? el.scrollTop <= 0
+      : el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+  }
+  return sign === 1
+    ? el.scrollLeft <= 0
+    : el.scrollLeft + el.clientWidth >= el.scrollWidth - 1;
+}
+
+/**
  * Get the dismiss direction axis and sign for a given side.
  * - right panel → dismiss by dragging right (+x)
  * - left panel → dismiss by dragging left (-x)
@@ -78,6 +130,9 @@ const DEAD_ZONE = 10;
 
 /** Max angle (degrees) from dismiss axis to qualify as drag intent */
 const MAX_ANGLE_DEG = 35;
+
+/** Rubber-band resistance factor for dragging past resting position */
+const RUBBER_BAND_FACTOR = 0.6;
 
 /**
  * Decide whether a gesture past the dead zone qualifies as a dismiss drag.
@@ -139,6 +194,7 @@ export function useDrag(
   const startRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const committedRef = useRef<"drag" | "none" | null>(null);
   const offsetRef = useRef(0);
+  const scrollTargetRef = useRef<Element | null>(null);
 
   const { axis, sign } = getDismissAxis(config.side);
 
@@ -165,14 +221,10 @@ export function useDrag(
         return;
       }
 
-      // For non-handle areas, check if the content is scrolled
-      // (don't start drag if user might be scrolling)
-      if (!isHandle) {
-        const scrollable = target.closest("[data-radix-scroll-area-viewport]");
-        if (scrollable && scrollable.scrollTop > 0 && axis === "y") {
-          return;
-        }
-      }
+      // Track nearest scrollable ancestor — checked at commit time
+      scrollTargetRef.current = isHandle
+        ? null
+        : findScrollableAncestor(target, axis);
 
       startRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
       committedRef.current = null;
@@ -199,13 +251,23 @@ export function useDrag(
         return;
       }
 
-      // Commit decision: check if movement direction matches dismiss axis
+      // Commit decision: check direction + scroll state
       if (committedRef.current === null) {
-        committedRef.current = classifyGesture(dx, dy, axis, sign);
-        if (committedRef.current === "none") {
+        const gesture = classifyGesture(dx, dy, axis, sign);
+        if (gesture === "none") {
+          committedRef.current = "none";
           startRef.current = null;
           return;
         }
+        // If inside a scrollable container that isn't at its edge
+        // in the dismiss direction, let the browser scroll instead.
+        const scrollEl = scrollTargetRef.current;
+        if (scrollEl && !isAtScrollEdge(scrollEl, axis, sign)) {
+          committedRef.current = "none";
+          startRef.current = null;
+          return;
+        }
+        committedRef.current = "drag";
       }
 
       if (committedRef.current !== "drag") {
@@ -214,8 +276,14 @@ export function useDrag(
 
       // Calculate offset in dismiss direction
       const rawOffset = axis === "x" ? dx : dy;
-      // Only allow positive offset in dismiss direction (can't drag past resting position)
-      const clampedOffset = Math.max(0, rawOffset * sign);
+      const directional = rawOffset * sign;
+
+      // Dismiss direction: linear movement. Opposite direction: √ damping
+      // for elastic rubber-band resistance (same math as iOS over-scroll).
+      const clampedOffset =
+        directional >= 0
+          ? directional
+          : -Math.sqrt(Math.abs(directional)) * RUBBER_BAND_FACTOR;
 
       offsetRef.current = clampedOffset;
       onDragUpdate({ offset: clampedOffset, isDragging: true });
@@ -226,59 +294,71 @@ export function useDrag(
     [axis, sign, onDragUpdate]
   );
 
+  const dismiss = useCallback(() => {
+    if (config.isNested) {
+      config.onPop();
+    } else {
+      config.onClose();
+    }
+    onDragUpdate({ offset: 0, isDragging: false });
+  }, [config, onDragUpdate]);
+
   const handlePointerUp = useCallback(
     (_e: PointerEvent) => {
       if (!startRef.current || committedRef.current !== "drag") {
         startRef.current = null;
         committedRef.current = null;
+        scrollTargetRef.current = null;
         return;
       }
 
-      const offset = offsetRef.current;
+      const offset = Math.max(0, offsetRef.current);
       const elapsed = Date.now() - startRef.current.time;
       const velocity = elapsed > 0 ? offset / elapsed : 0;
 
       startRef.current = null;
       committedRef.current = null;
       offsetRef.current = 0;
+      scrollTargetRef.current = null;
 
-      // Determine panel dimension for threshold calculation
       const panelSize = getPanelDimension(panelRef.current, axis);
 
+      // Snap points mode
+      if (config.snapHeights.length > 0) {
+        const targetIndex = findSnapTarget(
+          offset,
+          panelSize,
+          config.snapHeights,
+          velocity,
+          config.activeSnapIndex,
+          config.sequential
+        );
+        if (targetIndex === -1) {
+          dismiss();
+        } else {
+          config.onSnap(targetIndex);
+          onDragUpdate({ offset: 0, isDragging: false });
+        }
+        return;
+      }
+
+      // Standard mode: threshold-based close
       const pastThreshold = offset / panelSize > config.closeThreshold;
       const fastEnough = velocity > config.velocityThreshold;
-
       if (pastThreshold || fastEnough) {
-        // Dismiss
-        if (config.isNested) {
-          config.onPop();
-        } else {
-          config.onClose();
-        }
-        // Reset drag state after dismiss
-        onDragUpdate({ offset: 0, isDragging: false });
+        dismiss();
       } else {
-        // Snap back
         onDragUpdate({ offset: 0, isDragging: false });
       }
     },
-    [
-      panelRef,
-      axis,
-      config.closeThreshold,
-      config.velocityThreshold,
-      config.isNested,
-      config.onClose,
-      config.onPop,
-      onDragUpdate,
-      config,
-    ]
+    [panelRef, axis, config, onDragUpdate, dismiss]
   );
 
   const handlePointerCancel = useCallback(() => {
     startRef.current = null;
     committedRef.current = null;
     offsetRef.current = 0;
+    scrollTargetRef.current = null;
     onDragUpdate({ offset: 0, isDragging: false });
   }, [onDragUpdate]);
 
