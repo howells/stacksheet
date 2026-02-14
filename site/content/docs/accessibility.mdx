@@ -37,6 +37,12 @@ Escape behavior can be disabled with `closeOnEscape: false`:
 createStacksheet({ closeOnEscape: false });
 ```
 
+## Android back gesture
+
+On Chromium 120+ browsers, Stacksheet registers a [CloseWatcher](https://developer.mozilla.org/en-US/docs/Web/API/CloseWatcher) to handle the Android system back gesture. This lets users swipe back to pop or close sheets, matching native Android behavior.
+
+This is progressive enhancement — on browsers without CloseWatcher support (Safari, Firefox), Escape key handling still works normally.
+
 ## ARIA attributes
 
 The top panel gets `role="dialog"` and `aria-modal="true"`. Sheets below the top have these attributes removed.

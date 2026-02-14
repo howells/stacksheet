@@ -85,9 +85,15 @@ function MySheet() {
 }
 ```
 
+## Rubber-band resistance
+
+When dragging in the opposite direction (pulling a sheet further open), the gesture uses square-root damping for elastic resistance — the same physics as iOS over-scroll. This gives tactile feedback that the sheet can't be pulled further without feeling rigid.
+
 ## Scroll interaction
 
-For bottom panels, drag is suppressed when the scroll container has been scrolled down (`scrollTop > 0`). This prevents conflicts between scrolling content back to the top and dismissing the sheet. Once scrolled to the top, drag works normally.
+The drag system detects scrollable containers inside the panel. When a scrollable area hasn't reached its edge in the dismiss direction, the browser's native scroll takes priority. Once scrolled to the edge, the drag gesture activates.
+
+For bottom panels, this means drag is suppressed when `scrollTop > 0`. Once scrolled back to the top, drag works normally.
 
 ## Stacked sheets
 

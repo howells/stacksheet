@@ -238,6 +238,16 @@ function SheetBack({ asChild, className, style, children }: SheetBackProps) {
 
 // ── Sheet namespace ─────────────────────────────
 
+/**
+ * Composable sheet parts for building custom panel layouts.
+ *
+ * Use with `renderHeader={false}` on the provider to opt into
+ * composable mode — no auto header or scroll wrapper, full control
+ * over the panel's structure.
+ *
+ * `Sheet.Title` and `Sheet.Description` are linked to the panel's
+ * `aria-labelledby` and `aria-describedby` via matching IDs.
+ */
 export const Sheet = {
   Handle: SheetHandle,
   Header: SheetHeader,

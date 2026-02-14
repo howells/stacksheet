@@ -121,6 +121,14 @@ interface ResolvedItem {
 
 /**
  * Create an isolated Zustand store for a sheet stack instance.
+ *
+ * Returns a store bundle containing the Zustand store plus two maps
+ * that track ad-hoc (component-direct) registrations:
+ * - `componentRegistry` — maps `ComponentType` → generated type key (dedup)
+ * - `componentMap` — maps generated type key → `ComponentType` (renderer lookup)
+ *
+ * The ad-hoc counter is scoped per instance to prevent identity leaks across
+ * multiple `createStacksheet()` calls or test runs.
  */
 export function createSheetStore<TMap extends object>(
   config: ResolvedConfig

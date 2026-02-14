@@ -619,6 +619,13 @@ interface SheetRendererProps<TMap extends object> {
   renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
 }
 
+/**
+ * Root renderer component — manages the backdrop, scroll lock, snap points,
+ * close reasons, focus restoration, keyboard/CloseWatcher dismissal, and
+ * delegates per-panel rendering to `SheetPanel`.
+ *
+ * Mounted inside a Portal by `StacksheetProvider`.
+ */
 export function SheetRenderer<TMap extends object>({
   store,
   config,

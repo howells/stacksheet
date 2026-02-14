@@ -26,6 +26,7 @@ const DEFAULT_SIDE: ResponsiveSide = {
 
 // ── Helpers ─────────────────────────────────────
 
+/** Normalize a string side to a responsive object, merging with defaults. */
 function resolveSide(side: SideConfig | undefined): ResponsiveSide {
   if (typeof side === "string") {
     return { desktop: side, mobile: side };
@@ -33,6 +34,7 @@ function resolveSide(side: SideConfig | undefined): ResponsiveSide {
   return { ...DEFAULT_SIDE, ...side };
 }
 
+/** Resolve a preset name to a SpringConfig, or merge partial config with defaults. */
 function resolveSpring(
   spring: SpringPreset | Partial<SpringConfig> | undefined
 ): SpringConfig {
@@ -44,6 +46,7 @@ function resolveSpring(
 
 // ── Resolver ────────────────────────────────────
 
+/** Merge user-provided config with defaults. Resolves union types (side, spring) to concrete values. */
 export function resolveConfig(config: StacksheetConfig = {}): ResolvedConfig {
   return {
     maxDepth: config.maxDepth ?? Number.POSITIVE_INFINITY,

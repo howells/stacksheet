@@ -14,8 +14,8 @@ const { StacksheetProvider, useSheet } = createStacksheet({
   onOpenComplete: () => {
     console.log("Top panel entrance animation finished");
   },
-  onCloseComplete: () => {
-    console.log("Stack fully closed, all exit animations done");
+  onCloseComplete: (reason) => {
+    console.log("Stack fully closed via:", reason);
   },
 });
 ```
@@ -41,16 +41,41 @@ Fires once when the **top panel's entrance animation** completes. It fires per p
 
 ## onCloseComplete
 
-Fires when the **last panel's exit animation** completes — meaning the stack is fully closed and all exit animations have finished.
+Fires when the **last panel's exit animation** completes — meaning the stack is fully closed and all exit animations have finished. Receives a `CloseReason` indicating how the sheet was dismissed.
+
+```tsx
+onCloseComplete: (reason: CloseReason) => void
+```
+
+### Close reasons
+
+| Reason | Trigger |
+|---|---|
+| `"escape"` | User pressed Escape or Android back gesture (CloseWatcher) |
+| `"backdrop"` | User clicked the backdrop overlay |
+| `"swipe"` | User dragged the sheet past the close threshold |
+| `"programmatic"` | `close()` or `pop()` called from code |
 
 ### Use cases
 
 - **Clean up state** after the sheet stack is dismissed
 - **Trigger navigation** after a confirmation sheet closes
-- **Analytics** — track sheet session duration
+- **Analytics** — track sheet session duration and how it was dismissed
+- **Conditional logic** — handle differently based on close reason
+
+```tsx
+onCloseComplete: (reason) => {
+  if (reason === "programmatic") {
+    // User submitted the form, navigate to success
+    router.push("/success");
+  }
+  // Otherwise they dismissed — do nothing
+},
+```
 
 ### Behavior details
 
 - Only fires when `stack.length === 0` (all sheets have exited)
 - Powered by `<AnimatePresence onExitComplete>` on the panel container
 - Does not fire when popping a single sheet from a multi-sheet stack
+- The reason reflects how the **last** sheet was dismissed

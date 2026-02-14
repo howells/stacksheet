@@ -1,0 +1,99 @@
+---
+title: Snap Points
+description: Multi-stop bottom sheets that snap to predefined heights.
+---
+
+## Overview
+
+Bottom sheets can snap to predefined heights instead of only fully open or fully closed. This is useful for map overlays, media players, and any UI where the sheet should rest at intermediate positions.
+
+Snap points only apply when `side` is `"bottom"`.
+
+```tsx
+const { StacksheetProvider, useSheet } = createStacksheet({
+  side: "bottom",
+  snapPoints: [0.25, 0.5, 1],
+});
+```
+
+## Snap point values
+
+The `SnapPoint` type accepts three formats:
+
+| Format | Example | Meaning |
+|---|---|---|
+| Number 0–1 | `0.5` | Fraction of viewport height (50vh) |
+| Number > 1 | `300` | Pixel value (300px) |
+| String | `"30rem"` | CSS length — supports `px`, `rem`, `em`, `vh`, `%` |
+
+```tsx
+// Mixed formats
+createStacksheet({
+  side: "bottom",
+  snapPoints: [0.25, "400px", 1],
+});
+```
+
+Points are resolved to pixels and sorted ascending at render time. Duplicates within 1px are removed.
+
+## Configuration
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `snapPoints` | `SnapPoint[]` | `[]` | Snap positions (empty = no snapping) |
+| `snapPointIndex` | `number` | — | Controlled active snap index |
+| `onSnapPointChange` | `(index: number) => void` | — | Called when the active snap point changes |
+| `snapToSequentialPoints` | `boolean` | `false` | Prevent skipping intermediate snap points |
+
+## Uncontrolled (default)
+
+By default, the sheet opens at the last snap point (fully open) and manages its own snap state internally. The user can drag between snap points freely.
+
+```tsx
+createStacksheet({
+  side: "bottom",
+  snapPoints: [0.3, 0.6, 1],
+  onSnapPointChange: (index) => {
+    console.log("Snapped to index:", index);
+  },
+});
+```
+
+## Controlled
+
+Pass `snapPointIndex` to control which snap point is active. Pair with `onSnapPointChange` to update your state.
+
+```tsx
+const [snapIndex, setSnapIndex] = useState(2);
+
+createStacksheet({
+  side: "bottom",
+  snapPoints: [0.25, 0.5, 1],
+  snapPointIndex: snapIndex,
+  onSnapPointChange: setSnapIndex,
+});
+```
+
+## Sequential snapping
+
+By default, a fast swipe can skip intermediate snap points. Set `snapToSequentialPoints: true` to force the sheet to move one snap point at a time.
+
+```tsx
+createStacksheet({
+  side: "bottom",
+  snapPoints: [0.25, 0.5, 0.75, 1],
+  snapToSequentialPoints: true,
+});
+```
+
+## Dismissal
+
+When the user drags past the smallest snap point, the sheet dismisses entirely. The velocity and direction of the gesture determine whether it snaps or dismisses — a fast downward swipe past the bottom snap point will close the sheet.
+
+To prevent dismissal entirely, set `dismissible: false`. The sheet will snap to the smallest point instead of closing.
+
+## Interaction with drag
+
+Snap points use the same gesture pipeline as regular drag-to-dismiss. The drag thresholds (`closeThreshold`, `velocityThreshold`) are ignored when snap points are active — the snap point algorithm handles release targeting instead.
+
+Drag handles (`data-stacksheet-handle`) and no-drag zones (`data-stacksheet-no-drag`) work the same way.

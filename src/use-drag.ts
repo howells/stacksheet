@@ -182,9 +182,18 @@ function getPanelDimension(
 /**
  * Hook that manages drag-to-dismiss for a sheet panel.
  *
- * Returns a ref callback for the drag offset, which the caller
- * uses to apply inline transforms during drag. The hook handles
- * pointer events, gesture discrimination, and velocity-based close.
+ * Gesture pipeline:
+ * 1. Dead zone (10px) — ignores micro-movements
+ * 2. Angle check (35°) — must be roughly aligned with dismiss axis
+ * 3. Scroll conflict — yields to scrollable containers not at edge
+ * 4. Commit — drag is active, applies offset via `onDragUpdate`
+ * 5. Release — velocity + threshold determine close/snap/bounce-back
+ *
+ * Opposite-direction drag uses √(offset) damping for elastic
+ * rubber-band resistance (same physics as iOS over-scroll).
+ *
+ * When `snapHeights` is provided, release targeting uses
+ * `findSnapTarget()` instead of the simple threshold check.
  */
 export function useDrag(
   panelRef: RefObject<HTMLDivElement | null>,

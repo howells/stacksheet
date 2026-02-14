@@ -35,7 +35,7 @@ const { StacksheetProvider, useSheet } = createStacksheet({
 | `zIndex` | `number` | `100` | Base z-index |
 | `ariaLabel` | `string` | `"Sheet dialog"` | Default aria-label for dialog panels |
 | `onOpenComplete` | `() => void` | — | Called when top panel entrance animation completes |
-| `onCloseComplete` | `() => void` | — | Called when last panel exit animation completes |
+| `onCloseComplete` | `(reason: CloseReason) => void` | — | Called when last panel exit animation completes. See [Callbacks](/docs/callbacks). |
 | `drag` | `boolean` | `true` | Enable drag-to-dismiss |
 | `closeThreshold` | `number` | `0.25` | Fraction of panel to trigger close (0–1) |
 | `velocityThreshold` | `number` | `0.5` | Velocity in px/ms to trigger close |
@@ -72,6 +72,7 @@ Controls the Apple-style depth effect when sheets are stacked:
 | Option | Default | Description |
 |---|---|---|
 | `scaleStep` | `0.04` | Scale reduction per depth level |
+| `offsetStep` | `16` | Pixel offset per depth level (shifts panels away from the stack edge) |
 | `opacityStep` | `0` | Opacity reduction per depth level |
 | `radius` | `12` | Border radius on stacked panels in px |
 | `renderThreshold` | `3` | Max depth before content stops rendering |
@@ -121,6 +122,17 @@ Set `modal: false` to skip the backdrop overlay, focus trap, and scroll lock. Se
 
 ```tsx
 createStacksheet({ modal: false });
+```
+
+## Snap points
+
+Bottom sheets can snap to predefined heights instead of only fully open or fully closed. See [Snap Points](/docs/snap-points) for the full API and examples.
+
+```tsx
+createStacksheet({
+  side: "bottom",
+  snapPoints: [0.25, 0.5, 1],
+});
 ```
 
 ## Body scale
