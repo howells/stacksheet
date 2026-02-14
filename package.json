@@ -38,6 +38,8 @@
     "lint": "biome check src --write --unsafe",
     "prepack": "pnpm build",
     "docs": "tsx scripts/generate-docs.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "prepare": "husky",
     "knip": "knip"
@@ -76,7 +78,8 @@
     "next": "^16.1.6",
     "tsup": "^8.5.1",
     "typescript": "^5.7.0",
-    "ultracite": "^7.1.5"
+    "ultracite": "^7.1.5",
+    "vitest": "^4.0.18"
   },
   "packageManager": "pnpm@10.12.4",
   "lint-staged": {
