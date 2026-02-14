@@ -1,6 +1,5 @@
 // CloseWatcher — ambient type for browsers that support it (Chromium 120+)
 declare global {
-  // biome-ignore lint: ambient declaration requires var for global augmentation
   var CloseWatcher:
     | (new () => { onclose: (() => void) | null; destroy: () => void })
     | undefined;
@@ -157,6 +156,88 @@ function getDragTransform(
   }
 }
 
+// ── Panel helpers (extracted to reduce SheetPanel complexity) ──
+
+/** Measure panel height via ResizeObserver for snap point calculations */
+function usePanelHeight(
+  panelRef: React.RefObject<HTMLDivElement | null>,
+  hasSnapPoints: boolean
+): number {
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!(el && hasSnapPoints)) {
+      return;
+    }
+    setHeight(el.offsetHeight);
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) {
+        setHeight(entry.contentRect.height);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [panelRef, hasSnapPoints]);
+
+  return height;
+}
+
+/** Build the panel's inline style object */
+function buildPanelStyle(
+  panelStyles: CSSProperties,
+  isTop: boolean,
+  hasPanelClass: boolean,
+  isDragging: boolean
+): CSSProperties {
+  return {
+    ...panelStyles,
+    pointerEvents: isTop ? "auto" : "none",
+    ...(isTop ? {} : { contain: "layout style paint" }),
+    ...(isDragging ? { transition: "none" } : {}),
+    ...(hasPanelClass
+      ? {}
+      : {
+          background: "var(--background, #fff)",
+          borderColor: "var(--border, transparent)",
+        }),
+  };
+}
+
+/** Build per-property transition config */
+function buildPanelTransition(
+  isDragging: boolean,
+  isTop: boolean,
+  spring: Record<string, unknown>,
+  stackSpring: Record<string, unknown>
+) {
+  const visualTween = {
+    type: "tween" as const,
+    duration: 0.25,
+    ease: "easeOut" as const,
+  };
+
+  if (isDragging) {
+    return { type: "tween" as const, duration: 0 };
+  }
+
+  const base = selectSpring(isTop, spring, stackSpring);
+  return { ...base, borderRadius: visualTween, boxShadow: visualTween };
+}
+
+/** Compute the Y offset for the current snap point */
+function computeSnapYOffset(
+  side: Side,
+  snapHeights: number[],
+  activeSnapIndex: number,
+  measuredHeight: number
+): number {
+  if (side !== "bottom" || snapHeights.length === 0 || measuredHeight <= 0) {
+    return 0;
+  }
+  return getSnapOffset(activeSnapIndex, snapHeights, measuredHeight);
+}
+
 // ── SheetPanel ──────────────────────────────────
 
 interface SheetPanelProps {
@@ -263,7 +344,6 @@ function SideHandle({ side, isHovered }: { side: Side; isHovered: boolean }) {
   );
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: panel rendering coordinates many concerns
 function SheetPanel({
   item,
   index,
@@ -296,23 +376,8 @@ function SheetPanel({
     isDragging: false,
   });
   const [isHovered, setIsHovered] = useState(false);
-  const [measuredHeight, setMeasuredHeight] = useState(0);
 
-  // Measure panel height for snap point calculations
-  useEffect(() => {
-    const el = panelRef.current;
-    if (!el || snapHeights.length === 0) {
-      return;
-    }
-    setMeasuredHeight(el.offsetHeight);
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry) {
-        setMeasuredHeight(entry.contentRect.height);
-      }
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [snapHeights.length]);
+  const measuredHeight = usePanelHeight(panelRef, snapHeights.length > 0);
 
   const transform = getStackTransform(depth, config.stacking);
   const panelStyles = getPanelStyles(side, config, depth, index);
@@ -363,27 +428,15 @@ function SheetPanel({
     [close, pop, isNested, isTop, panelId, side]
   );
 
-  // Composable mode: renderHeader === false → no auto header, no scroll wrapper
   const isComposable = renderHeader === false;
-
-  // Panel: use className if provided, strip inline background
   const hasPanelClass = classNames.panel !== "";
   const dragOffset = getDragTransform(side, dragState.offset);
-  const panelStyle: CSSProperties = {
-    ...panelStyles,
-    pointerEvents: isTop ? "auto" : "none",
-    // Freeze layout in stacked panels so content doesn't reflow during
-    // scale/translate transitions — the panel transforms as a solid block.
-    ...(isTop ? {} : { contain: "layout style paint" }),
-    // During drag, disable spring transition for immediate feedback
-    ...(dragState.isDragging ? { transition: "none" } : {}),
-    ...(hasPanelClass
-      ? {}
-      : {
-          background: "var(--background, #fff)",
-          borderColor: "var(--border, transparent)",
-        }),
-  };
+  const panelStyle = buildPanelStyle(
+    panelStyles,
+    isTop,
+    hasPanelClass,
+    dragState.isDragging
+  );
 
   const headerProps: HeaderRenderProps = {
     isNested,
@@ -392,38 +445,28 @@ function SheetPanel({
     side,
   };
 
-  const isModal = config.modal;
   const ariaProps = buildAriaProps(
     isTop,
-    isModal,
+    config.modal,
     isComposable,
     ariaLabel,
     panelId
   );
 
-  // Pick transition: immediate during drag, spring otherwise.
-  // Use per-property transitions so borderRadius/boxShadow tween smoothly
-  // instead of springing (which causes visible overshoot/wobble).
-  const baseSpring = dragState.isDragging
-    ? { type: "tween" as const, duration: 0 }
-    : selectSpring(isTop, spring, stackSpring);
-  const visualTween = {
-    type: "tween" as const,
-    duration: 0.25,
-    ease: "easeOut" as const,
-  };
-  const transition = dragState.isDragging
-    ? baseSpring
-    : { ...baseSpring, borderRadius: visualTween, boxShadow: visualTween };
+  const transition = buildPanelTransition(
+    dragState.isDragging,
+    isTop,
+    spring,
+    stackSpring
+  );
 
-  // Explicit radius target to avoid undefined -> value interpolation.
   const animatedRadius = getAnimatedBorderRadius(side, depth, config.stacking);
-
-  // Snap point offset — shifts the panel down when not fully open
-  const snapYOffset =
-    side === "bottom" && snapHeights.length > 0 && measuredHeight > 0
-      ? getSnapOffset(activeSnapIndex, snapHeights, measuredHeight)
-      : 0;
+  const snapYOffset = computeSnapYOffset(
+    side,
+    snapHeights,
+    activeSnapIndex,
+    measuredHeight
+  );
 
   // Merge stack offset + drag offset + snap offset into the animate target
   const stackOffset = getStackOffset(side, transform.offset);
@@ -436,15 +479,18 @@ function SheetPanel({
     ...animatedRadius,
     boxShadow: getShadow(side, !isTop),
     transition,
-    // Snap offset applied as additional Y translation
     ...(snapYOffset > 0 ? { y: (dragOffset.y ?? 0) + snapYOffset } : {}),
   };
 
   const initialRadius = getInitialRadius(side);
-
-  // Drag handles: side pill for left/right, top bar for bottom
   const showSideHandle = isTop && side !== "bottom";
   const showBottomHandle = isTop && side === "bottom";
+
+  const exitTween = {
+    type: "tween" as const,
+    duration: 0.25,
+    ease: "easeOut" as const,
+  };
 
   const panelContent = (
     <m.div
@@ -454,7 +500,7 @@ function SheetPanel({
         ...slideFrom,
         opacity: 0.6,
         boxShadow: getShadow(side, false),
-        transition: { ...exitSpring, boxShadow: visualTween },
+        transition: { ...exitSpring, boxShadow: exitTween },
       }}
       initial={{
         ...slideFrom,
@@ -472,7 +518,6 @@ function SheetPanel({
       {...ariaProps}
     >
       {showSideHandle && <SideHandle isHovered={isHovered} side={side} />}
-      {/* Inner clip — clips content to the panel's animated border-radius */}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
         {showBottomHandle && <BottomHandle />}
         <PanelInnerContent
@@ -489,7 +534,7 @@ function SheetPanel({
   );
 
   // Non-modal: skip focus trap
-  if (!isModal) {
+  if (!config.modal) {
     return (
       <SheetPanelContext.Provider value={panelContext}>
         {panelContent}
