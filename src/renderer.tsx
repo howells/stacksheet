@@ -917,15 +917,14 @@ export function SheetRenderer<TMap extends object>({
   // Force WebKit repaint after backdrop exit animation completes.
   // iOS Safari's compositor can retain the visual layer of a fixed-position
   // element after it's removed from the DOM, leaving a ghost tint.
-  const backdropContainerRef = useRef<HTMLDivElement>(null);
+  // A layout recalc via offsetHeight forces the compositor to invalidate
+  // stale layers without affecting element positioning.
   const handleBackdropExitComplete = useCallback(() => {
-    const el = backdropContainerRef.current;
-    if (el) {
-      el.style.transform = "translateZ(0)";
-      requestAnimationFrame(() => {
-        el.style.transform = "";
-      });
-    }
+    requestAnimationFrame(() => {
+      // Read offsetHeight to force a layout recalc — the value itself is unused.
+      // biome-ignore lint/complexity/noVoid: intentional layout recalc for WebKit
+      void document.body.offsetHeight;
+    });
   }, []);
 
   // Swipe-specific dismiss callbacks
@@ -938,28 +937,26 @@ export function SheetRenderer<TMap extends object>({
   return (
     <>
       {/* Backdrop — independent AnimatePresence so it fades on its own.
-          Wrapper div forces a WebKit repaint on exit to clear stale compositor layers (iOS Safari). */}
+          onExitComplete forces a WebKit repaint to clear stale compositor layers (iOS Safari). */}
       {showOverlay && (
-        <div ref={backdropContainerRef}>
-          <AnimatePresence onExitComplete={handleBackdropExitComplete}>
-            {isOpen && (
-              <m.div
-                animate={{ opacity: 1 }}
-                className={`fixed inset-0 ${classNames.backdrop || ""}`}
-                exit={{ opacity: 0 }}
-                initial={{ opacity: 0 }}
-                key="stacksheet-backdrop"
-                onClick={
-                  config.closeOnBackdrop && config.dismissible
-                    ? () => closeWith("backdrop")
-                    : undefined
-                }
-                style={backdropStyle}
-                transition={spring}
-              />
-            )}
-          </AnimatePresence>
-        </div>
+        <AnimatePresence onExitComplete={handleBackdropExitComplete}>
+          {isOpen && (
+            <m.div
+              animate={{ opacity: 1 }}
+              className={`fixed inset-0 ${classNames.backdrop || ""}`}
+              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }}
+              key="stacksheet-backdrop"
+              onClick={
+                config.closeOnBackdrop && config.dismissible
+                  ? () => closeWith("backdrop")
+                  : undefined
+              }
+              style={backdropStyle}
+              transition={spring}
+            />
+          )}
+        </AnimatePresence>
       )}
 
       {/* Panel clip container — always rendered, invisible when empty */}
