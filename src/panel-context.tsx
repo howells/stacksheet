@@ -14,6 +14,10 @@ export interface SheetPanelContextValue {
   panelId: string;
   /** Current resolved side (left/right/bottom) */
   side: Side;
+  /** Whether a Sheet.Description is mounted inside this panel */
+  hasDescription: boolean;
+  /** Called by Sheet.Description on mount to register its presence */
+  registerDescription: () => () => void;
 }
 
 export const SheetPanelContext = createContext<SheetPanelContextValue | null>(

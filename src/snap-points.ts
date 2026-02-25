@@ -24,11 +24,15 @@ function resolveSnapPointPx(point: SnapPoint, viewportHeight: number): number {
       case "px":
         return value;
       case "rem":
-      case "em":
-        return (
-          value *
-          Number.parseFloat(getComputedStyle(document.documentElement).fontSize)
-        );
+      case "em": {
+        const fontSize =
+          typeof document !== "undefined"
+            ? Number.parseFloat(
+                getComputedStyle(document.documentElement).fontSize
+              )
+            : 16;
+        return value * fontSize;
+      }
       case "vh":
       case "%":
         return (value / 100) * viewportHeight;

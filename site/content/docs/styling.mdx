@@ -3,19 +3,19 @@ title: Styling
 description: CSS classes, custom properties, and custom headers.
 ---
 
-## Tailwind CSS
+## Default stylesheet
 
-Stacksheet uses Tailwind CSS classes for default styling. Make sure `tailwindcss >= 4.0.0` is installed as a peer dependency, and configure your Tailwind content paths to include the library:
+Stacksheet ships precompiled styles. Import them once in your app entry:
 
-```css
-/* app.css */
-@import "tailwindcss";
-@source "../node_modules/@howells/stacksheet/dist";
+```tsx
+import "@howells/stacksheet/styles.css";
 ```
+
+If your app uses Tailwind, no extra `@source` configuration is required for Stacksheet.
 
 ## Class names
 
-Stacksheet renders with sensible Tailwind defaults (white background, subtle shadow, backdrop overlay). Override with CSS classes:
+Stacksheet renders with sensible defaults (white background, subtle shadow, backdrop overlay). Override with CSS classes:
 
 ```tsx
 <StacksheetProvider
@@ -44,7 +44,6 @@ The library uses CSS custom properties as fallbacks:
 | `--background` | `#fff` | Panel background |
 | `--border` | `transparent` | Panel border, header border |
 | `--overlay` | `rgba(0,0,0,0.2)` | Backdrop |
-| `--muted-foreground` | `rgba(0,0,0,0.25)` | `Sheet.Handle` bar color |
 
 ```css
 .my-panel {

@@ -131,7 +131,6 @@ function getTransformOrigin(side: Side): string {
 export function getPanelStyles(
   side: Side,
   config: ResolvedConfig,
-  _depth: number,
   index: number
 ): CSSProperties {
   const { width, maxWidth, zIndex } = config;
@@ -150,7 +149,9 @@ export function getPanelStyles(
       left: 0,
       right: 0,
       bottom: 0,
-      maxHeight: "85vh",
+      // dvh tracks the dynamic viewport on iOS Safari (accounts for browser chrome).
+      // The vh fallback covers browsers that don't support dvh yet.
+      maxHeight: "85dvh",
       // borderRadius is animated via Motion's animate prop for scale correction
     };
   }

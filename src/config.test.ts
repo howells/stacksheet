@@ -41,14 +41,16 @@ describe("resolveConfig", () => {
 
   it("resolves spring preset string", () => {
     const config = resolveConfig({ spring: "subtle" });
-    expect(config.spring.damping).toBeDefined();
-    expect(config.spring.stiffness).toBeDefined();
+    expect(config.spring.damping).toBe(30);
+    expect(config.spring.stiffness).toBe(300);
+    expect(config.spring.mass).toBe(1);
   });
 
   it("resolves partial spring config", () => {
     const config = resolveConfig({ spring: { damping: 50 } });
     expect(config.spring.damping).toBe(50);
-    expect(config.spring.stiffness).toBeDefined();
+    expect(config.spring.stiffness).toBe(400);
+    expect(config.spring.mass).toBe(1);
   });
 
   it("resolves stacking defaults", () => {

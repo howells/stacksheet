@@ -159,6 +159,17 @@ export function createSheetStore<TMap extends object>(
     );
   }
 
+  /** Remove registry entries for type keys no longer in the stack */
+  function pruneRegistry(remainingStack: readonly SheetItem[]) {
+    const usedTypes = new Set(remainingStack.map((item) => item.type));
+    for (const [component, typeKey] of componentRegistry) {
+      if (!usedTypes.has(typeKey)) {
+        componentRegistry.delete(component);
+        componentMap.delete(typeKey);
+      }
+    }
+  }
+
   const store = createStore<StoreState<TMap>>()((set, get) => {
     // ── Internal resolved methods (no double-resolution) ──
 
@@ -294,6 +305,7 @@ export function createSheetStore<TMap extends object>(
           if (next.length === state.stack.length) {
             return state;
           }
+          pruneRegistry(next);
           if (next.length === 0) {
             return { stack: [], isOpen: false };
           }
@@ -304,13 +316,17 @@ export function createSheetStore<TMap extends object>(
       pop() {
         set((state) => {
           if (state.stack.length <= 1) {
+            pruneRegistry([]);
             return { stack: [], isOpen: false };
           }
-          return { stack: state.stack.slice(0, -1), isOpen: true };
+          const next = state.stack.slice(0, -1);
+          pruneRegistry(next);
+          return { stack: next, isOpen: true };
         });
       },
 
       close() {
+        pruneRegistry([]);
         set({ stack: [], isOpen: false });
       },
     };

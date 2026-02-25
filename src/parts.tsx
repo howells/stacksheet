@@ -5,7 +5,12 @@ import {
   Viewport as ScrollAreaViewport,
 } from "@radix-ui/react-scroll-area";
 import { Slot } from "@radix-ui/react-slot";
-import type { CSSProperties, ReactNode } from "react";
+import {
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+  useEffect,
+} from "react";
 import { ArrowLeftIcon, XIcon } from "./icons";
 import { useSheetPanel } from "./panel-context";
 
@@ -26,14 +31,28 @@ function SheetHandle({
   style,
   children,
 }: SheetHandleProps) {
+  const { close, back, isNested } = useSheetPanel();
+  const dismiss = isNested ? back : close;
   const Comp = asChild ? Slot : "div";
   return (
     <Comp
+      aria-label="Dismiss"
       className={`flex shrink-0 cursor-grab touch-none items-center justify-center pt-4 pb-1 ${className ?? ""}`}
       data-stacksheet-handle=""
+      onClick={dismiss}
+      onKeyDown={(e: ReactKeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          dismiss();
+        }
+      }}
+      role="button"
       style={style}
+      tabIndex={0}
     >
-      {children ?? <div className="h-1 w-9 rounded-sm bg-current/25" />}
+      {children ?? (
+        <div aria-hidden="true" className="h-1 w-9 rounded-sm bg-current/25" />
+      )}
     </Comp>
   );
 }
@@ -102,7 +121,9 @@ function SheetDescription({
   style,
   children,
 }: SheetDescriptionProps) {
-  const { panelId } = useSheetPanel();
+  const { panelId, registerDescription } = useSheetPanel();
+
+  useEffect(() => registerDescription(), [registerDescription]);
   const Comp = asChild ? Slot : "p";
   return (
     <Comp className={className} id={`${panelId}-desc`} style={style}>

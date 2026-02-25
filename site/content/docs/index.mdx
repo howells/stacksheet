@@ -26,6 +26,7 @@ export const { StacksheetProvider, useSheet } = createStacksheet();
 Wrap the part of your app that needs sheets. The provider renders the backdrop and panels — your app content goes inside as `children`.
 
 ```tsx title="app.tsx"
+import "@howells/stacksheet/styles.css";
 import { StacksheetProvider } from "./sheets";
 
 function App() {
@@ -78,6 +79,7 @@ Here's everything in a single file:
 
 ```tsx
 import { createStacksheet } from "@howells/stacksheet";
+import "@howells/stacksheet/styles.css";
 
 const { StacksheetProvider, useSheet } = createStacksheet();
 

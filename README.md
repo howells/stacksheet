@@ -12,6 +12,7 @@ Peer dependencies: `react >= 18`, `react-dom >= 18`.
 
 ```tsx
 import { createStacksheet } from "@howells/stacksheet";
+import "@howells/stacksheet/styles.css";
 
 const { StacksheetProvider, useSheet } = createStacksheet();
 

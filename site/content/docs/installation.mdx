@@ -1,12 +1,20 @@
 ---
 title: Installation
-description: Install Stacksheet and its peer dependencies.
+description: Install Stacksheet, import its styles, and confirm peer dependencies.
 ---
 
 ## Install
 
 ```package-install
 @howells/stacksheet
+```
+
+## Styles
+
+Import Stacksheet's bundled stylesheet once in your app entry (for example, `app.tsx`, `layout.tsx`, or `main.tsx`):
+
+```tsx
+import "@howells/stacksheet/styles.css";
 ```
 
 ## Peer dependencies
