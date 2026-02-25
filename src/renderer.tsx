@@ -6,13 +6,7 @@ declare global {
 }
 
 import FocusTrap from "focus-trap-react";
-import {
-  AnimatePresence,
-  motion as m,
-  useMotionValue,
-  useReducedMotion,
-  useTransform,
-} from "motion/react";
+import { AnimatePresence, motion as m, useReducedMotion } from "motion/react";
 import {
   type ComponentType,
   type CSSProperties,
@@ -50,7 +44,7 @@ import type {
   StacksheetClassNames,
   StacksheetSnapshot,
 } from "./types";
-import { useDrag } from "./use-drag";
+import { type DragState, useDrag } from "./use-drag";
 
 // ── Default header ──────────────────────────────
 
@@ -137,6 +131,25 @@ function buildAriaProps(
   return props;
 }
 
+function getDragTransform(
+  side: Side,
+  offset: number
+): { x?: number; y?: number } {
+  if (offset === 0) {
+    return {};
+  }
+  switch (side) {
+    case "right":
+      return { x: offset };
+    case "left":
+      return { x: -offset };
+    case "bottom":
+      return { y: offset };
+    default:
+      return {};
+  }
+}
+
 /** Shared tween config for non-spring animated properties (border radius, box shadow) */
 const VISUAL_TWEEN = {
   type: "tween" as const,
@@ -220,6 +233,54 @@ function computeSnapYOffset(
   return getSnapOffset(activeSnapIndex, snapHeights, measuredHeight);
 }
 
+function getBottomSlideDistance(measuredHeight: number): number {
+  if (measuredHeight > 0) {
+    return measuredHeight;
+  }
+  if (typeof window !== "undefined") {
+    return window.innerHeight;
+  }
+  return 1000;
+}
+
+function resolveSlideFrom(
+  side: Side,
+  slideFrom: SlideValues,
+  measuredHeight: number
+): SlideValues {
+  if (side !== "bottom") {
+    return slideFrom;
+  }
+  return { y: getBottomSlideDistance(measuredHeight) };
+}
+
+function buildAnimateTarget(
+  slideTarget: SlideValues,
+  stackOffset: { x?: number; y?: number },
+  dragOffset: { x?: number; y?: number },
+  transform: ReturnType<typeof getStackTransform>,
+  animatedRadius: Record<string, number>,
+  transition: Record<string, unknown>,
+  snapYOffset: number,
+  isTop: boolean
+) {
+  const base = {
+    ...slideTarget,
+    ...stackOffset,
+    ...dragOffset,
+    scale: transform.scale,
+    opacity: transform.opacity,
+    ...animatedRadius,
+    boxShadow: getShadow(!isTop),
+    transition,
+  };
+
+  if (snapYOffset > 0) {
+    return { ...base, y: (dragOffset.y ?? 0) + snapYOffset };
+  }
+  return base;
+}
+
 // ── Modal focus trap wrapper ────────────────────
 
 /** Wraps children in a focus trap when modal mode is enabled. */
@@ -293,7 +354,6 @@ interface SheetPanelProps {
   slideTarget: SlideValues;
   spring: Record<string, unknown>;
   stackSpring: Record<string, unknown>;
-  exitSpring: Record<string, unknown>;
   /** Whether the user prefers reduced motion */
   prefersReducedMotion: boolean;
 }
@@ -417,23 +477,15 @@ const SheetPanel = memo(function SheetPanel({
   slideTarget,
   spring,
   stackSpring,
-  exitSpring,
   prefersReducedMotion,
 }: SheetPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const hasEnteredRef = useRef(false);
-  const dragOffset = useMotionValue(0);
-  const [isDragging, setIsDragging] = useState(false);
+  const [dragState, setDragState] = useState<DragState>({
+    offset: 0,
+    isDragging: false,
+  });
   const [isHovered, setIsHovered] = useState(false);
-
-  const dragCallbacks = useMemo(
-    () => ({
-      dragOffset,
-      onDragStart: () => setIsDragging(true),
-      onDragEnd: () => setIsDragging(false),
-    }),
-    [dragOffset]
-  );
 
   const measuredHeight = usePanelHeight(panelRef, snapHeights.length > 0);
 
@@ -471,7 +523,7 @@ const SheetPanel = memo(function SheetPanel({
       onSnap,
       sequential: config.snapToSequentialPoints,
     },
-    dragCallbacks
+    setDragState
   );
 
   // Per-sheet aria-label: check data.__ariaLabel, fall back to config
@@ -512,11 +564,12 @@ const SheetPanel = memo(function SheetPanel({
 
   const isComposable = renderHeader === false;
   const hasPanelClass = classNames.panel !== "";
+  const dragOffset = getDragTransform(side, dragState.offset);
   const panelStyle = buildPanelStyle(
     panelStyles,
     isTop,
     hasPanelClass,
-    isDragging
+    dragState.isDragging
   );
 
   const headerProps: HeaderRenderProps = {
@@ -536,7 +589,7 @@ const SheetPanel = memo(function SheetPanel({
   );
 
   const transition = buildPanelTransition(
-    isDragging,
+    dragState.isDragging,
     isTop,
     spring,
     stackSpring
@@ -549,27 +602,20 @@ const SheetPanel = memo(function SheetPanel({
     activeSnapIndex,
     measuredHeight
   );
+  const resolvedSlideFrom = resolveSlideFrom(side, slideFrom, measuredHeight);
 
-  // Merge stack offset + snap offset into the animate target.
-  // Drag offset is applied via style (MotionValue) to bypass React renders.
+  // Merge stack offset + drag offset + snap offset into the animate target.
   const stackOffset = getStackOffset(side, transform.offset);
-  const animateTarget = {
-    ...slideTarget,
-    ...stackOffset,
-    scale: transform.scale,
-    opacity: transform.opacity,
-    ...animatedRadius,
-    boxShadow: getShadow(!isTop),
+  const animateTarget = buildAnimateTarget(
+    slideTarget,
+    stackOffset,
+    dragOffset,
+    transform,
+    animatedRadius,
     transition,
-    ...(snapYOffset > 0 ? { y: snapYOffset } : {}),
-  };
-
-  // Apply drag offset via MotionValue for render-free updates.
-  // Maps the offset to the correct CSS transform axis for the panel side.
-  const dragSign = side === "left" ? -1 : 1;
-  const dragTranslate = useTransform(dragOffset, (v) => v * dragSign);
-  const dragStyle =
-    side === "bottom" ? { y: dragTranslate } : { x: dragTranslate };
+    snapYOffset,
+    isTop
+  );
 
   const initialRadius = getInitialRadius(side);
   const showSideHandle = isTop && side !== "bottom";
@@ -580,13 +626,18 @@ const SheetPanel = memo(function SheetPanel({
       animate={animateTarget}
       className={classNames.panel || undefined}
       exit={{
-        ...slideFrom,
+        ...resolvedSlideFrom,
         opacity: 0.6,
         boxShadow: getShadow(false),
-        transition: { ...exitSpring, boxShadow: VISUAL_TWEEN },
+        transition: {
+          type: "tween",
+          duration: prefersReducedMotion ? 0 : 0.24,
+          ease: "easeOut",
+          boxShadow: VISUAL_TWEEN,
+        },
       }}
       initial={{
-        ...slideFrom,
+        ...resolvedSlideFrom,
         opacity: 0.8,
         ...initialRadius,
         boxShadow: getShadow(false),
@@ -598,7 +649,7 @@ const SheetPanel = memo(function SheetPanel({
       onMouseEnter={showSideHandle ? () => setIsHovered(true) : undefined}
       onMouseLeave={showSideHandle ? () => setIsHovered(false) : undefined}
       ref={panelRef}
-      style={{ ...panelStyle, ...dragStyle }}
+      style={panelStyle}
       tabIndex={isTop ? -1 : undefined}
       {...(isTop ? {} : { "aria-hidden": "true" as const, inert: true })}
       {...ariaProps}
@@ -886,9 +937,8 @@ export function SheetRenderer<TMap extends object>({
     ]
   );
 
-  // Same spring for stacking transforms and exit
+  // Same spring for stacking transforms
   const stackSpring = spring;
-  const exitSpring = spring;
 
   // Non-modal: skip overlay, skip scroll lock
   const isModal = config.modal;
@@ -989,7 +1039,6 @@ export function SheetRenderer<TMap extends object>({
                   close={close}
                   config={config}
                   depth={depth}
-                  exitSpring={exitSpring}
                   index={index}
                   isNested={isNested}
                   isTop={isTop}

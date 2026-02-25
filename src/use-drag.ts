@@ -1,4 +1,3 @@
-import type { MotionValue } from "motion/react";
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import { findSnapTarget } from "./snap-points";
 import type { Side } from "./types";
@@ -28,13 +27,11 @@ export interface DragConfig {
   sequential: boolean;
 }
 
-export interface DragCallbacks {
-  /** MotionValue to update with the drag offset (bypasses React rendering) */
-  dragOffset: MotionValue<number>;
-  /** Called when a drag gesture starts */
-  onDragStart: () => void;
-  /** Called when a drag gesture ends */
-  onDragEnd: () => void;
+export interface DragState {
+  /** Current drag offset in the dismiss direction (px) */
+  offset: number;
+  /** Whether a drag is currently active */
+  isDragging: boolean;
 }
 
 /** Elements that should never initiate a drag */
@@ -219,12 +216,11 @@ function getPanelDimension(
 export function useDrag(
   panelRef: RefObject<HTMLDivElement | null>,
   config: DragConfig,
-  callbacks: DragCallbacks
+  onDragUpdate: (state: DragState) => void
 ) {
   const startRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const committedRef = useRef<"drag" | "none" | null>(null);
   const offsetRef = useRef(0);
-  const isDraggingRef = useRef(false);
   const scrollTargetRef = useRef<Element | null>(null);
 
   const { axis, sign } = getDismissAxis(config.side);
@@ -313,16 +309,12 @@ export function useDrag(
           : -Math.sqrt(Math.abs(directional)) * RUBBER_BAND_FACTOR;
 
       offsetRef.current = clampedOffset;
-      callbacks.dragOffset.set(clampedOffset);
-      if (!isDraggingRef.current) {
-        isDraggingRef.current = true;
-        callbacks.onDragStart();
-      }
+      onDragUpdate({ offset: clampedOffset, isDragging: true });
 
       // Prevent text selection during active drag
       e.preventDefault();
     },
-    [axis, sign, callbacks]
+    [axis, sign, onDragUpdate]
   );
 
   const dismiss = useCallback(() => {
@@ -331,10 +323,7 @@ export function useDrag(
     } else {
       config.onClose();
     }
-    callbacks.dragOffset.set(0);
-    isDraggingRef.current = false;
-    callbacks.onDragEnd();
-  }, [config, callbacks]);
+  }, [config]);
 
   const handlePointerUp = useCallback(
     (_e: PointerEvent) => {
@@ -370,9 +359,7 @@ export function useDrag(
           dismiss();
         } else {
           config.onSnap(targetIndex);
-          callbacks.dragOffset.set(0);
-          isDraggingRef.current = false;
-          callbacks.onDragEnd();
+          onDragUpdate({ offset: 0, isDragging: false });
         }
         return;
       }
@@ -383,12 +370,10 @@ export function useDrag(
       if (pastThreshold || fastEnough) {
         dismiss();
       } else {
-        callbacks.dragOffset.set(0);
-        isDraggingRef.current = false;
-        callbacks.onDragEnd();
+        onDragUpdate({ offset: 0, isDragging: false });
       }
     },
-    [panelRef, axis, config, callbacks, dismiss]
+    [panelRef, axis, config, onDragUpdate, dismiss]
   );
 
   const handlePointerCancel = useCallback(() => {
@@ -396,12 +381,8 @@ export function useDrag(
     committedRef.current = null;
     offsetRef.current = 0;
     scrollTargetRef.current = null;
-    callbacks.dragOffset.set(0);
-    if (isDraggingRef.current) {
-      isDraggingRef.current = false;
-      callbacks.onDragEnd();
-    }
-  }, [callbacks]);
+    onDragUpdate({ offset: 0, isDragging: false });
+  }, [onDragUpdate]);
 
   // Attach pointer events to the panel element
   useEffect(() => {
