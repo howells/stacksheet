@@ -17,11 +17,11 @@ type StoreState<TMap extends object> = StacksheetSnapshot<TMap> &
 
 /** Return type of createSheetStore — store plus ad-hoc component maps */
 export interface SheetStoreBundle<TMap extends object> {
-  store: StoreApi<StoreState<TMap>>;
-  /** Component → generated type key (dedup) */
-  componentRegistry: Map<AnyComponent, string>;
   /** Generated type key → Component (for renderer lookup) */
   componentMap: Map<string, AnyComponent>;
+  /** Component → generated type key (dedup) */
+  componentRegistry: Map<AnyComponent, string>;
+  store: StoreApi<StoreState<TMap>>;
 }
 
 // ── Ad-hoc helpers ──────────────────────────────
@@ -114,9 +114,9 @@ function resolveArgs(
 
 /** Pre-resolved args — skips resolveArgs entirely */
 interface ResolvedItem {
-  type: string;
-  id: string;
   data: Record<string, unknown>;
+  id: string;
+  type: string;
 }
 
 /**

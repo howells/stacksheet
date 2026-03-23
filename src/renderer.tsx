@@ -326,36 +326,36 @@ function ModalFocusTrap({
 // ── SheetPanel ──────────────────────────────────
 
 interface SheetPanelProps {
-  item: SheetItem;
-  index: number;
-  depth: number;
-  isTop: boolean;
-  isNested: boolean;
-  side: Side;
-  config: ResolvedConfig;
-  classNames: ResolvedClassNames;
+  /** Currently active snap index */
+  activeSnapIndex: number;
   // biome-ignore lint/suspicious/noExplicitAny: heterogeneous content component
   Content: ComponentType<any> | undefined;
-  shouldRender: boolean;
-  pop: () => void;
+  classNames: ResolvedClassNames;
   close: () => void;
+  config: ResolvedConfig;
+  depth: number;
+  index: number;
+  isNested: boolean;
+  isTop: boolean;
+  item: SheetItem;
+  /** Called when drag release targets a snap point */
+  onSnap: (index: number) => void;
+  pop: () => void;
+  /** Whether the user prefers reduced motion */
+  prefersReducedMotion: boolean;
+  renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
+  shouldRender: boolean;
+  side: Side;
+  slideFrom: SlideValues;
+  slideTarget: SlideValues;
+  /** Resolved snap point heights in px (ascending). Empty = no snaps. */
+  snapHeights: number[];
+  spring: Record<string, unknown>;
+  stackSpring: Record<string, unknown>;
   /** Swipe-specific close — sets reason to "swipe" */
   swipeClose: () => void;
   /** Swipe-specific pop — sets reason to "swipe" */
   swipePop: () => void;
-  /** Resolved snap point heights in px (ascending). Empty = no snaps. */
-  snapHeights: number[];
-  /** Currently active snap index */
-  activeSnapIndex: number;
-  /** Called when drag release targets a snap point */
-  onSnap: (index: number) => void;
-  renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
-  slideFrom: SlideValues;
-  slideTarget: SlideValues;
-  spring: Record<string, unknown>;
-  stackSpring: Record<string, unknown>;
-  /** Whether the user prefers reduced motion */
-  prefersReducedMotion: boolean;
 }
 
 /** Renders panel inner content — composable mode vs classic (header + scroll) */
@@ -405,7 +405,7 @@ function BottomHandle({ onDismiss }: { onDismiss?: () => void }) {
   return (
     <button
       aria-label="Dismiss"
-      className="flex w-full shrink-0 cursor-grab touch-none items-center justify-center border-none bg-transparent pt-4 pb-1"
+      className="absolute inset-x-0 top-0 z-10 flex w-full cursor-grab touch-none items-center justify-center border-none bg-transparent pt-2 pb-1"
       data-stacksheet-handle=""
       onClick={onDismiss}
       type="button"
@@ -661,7 +661,7 @@ const SheetPanel = memo(function SheetPanel({
           side={side}
         />
       )}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
         {showBottomHandle && (
           <BottomHandle onDismiss={isNested ? pop : close} />
         )}
@@ -740,14 +740,14 @@ function useBodyScale(
 // ── Renderer ────────────────────────────────────
 
 interface SheetRendererProps<TMap extends object> {
-  store: StoreApi<StacksheetSnapshot<TMap> & SheetActions<TMap>>;
-  config: ResolvedConfig;
-  sheets: ContentMap<TMap>;
+  classNames?: StacksheetClassNames;
   /** Ad-hoc component map (type key → component) */
   // biome-ignore lint/suspicious/noExplicitAny: heterogeneous component storage
   componentMap: Map<string, ComponentType<any>>;
-  classNames?: StacksheetClassNames;
+  config: ResolvedConfig;
   renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
+  sheets: ContentMap<TMap>;
+  store: StoreApi<StacksheetSnapshot<TMap> & SheetActions<TMap>>;
 }
 
 /**
@@ -783,7 +783,7 @@ export function SheetRenderer<TMap extends object>({
       side === "bottom" && config.snapPoints.length > 0
         ? resolveSnapPoints(
             config.snapPoints,
-            typeof window !== "undefined" ? window.innerHeight : 0
+            typeof window === "undefined" ? 0 : window.innerHeight
           )
         : [],
     [side, config.snapPoints]

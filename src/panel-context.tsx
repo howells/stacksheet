@@ -2,22 +2,22 @@ import { createContext, useContext } from "react";
 import type { Side } from "./types";
 
 export interface SheetPanelContextValue {
-  /** Close the entire sheet stack */
-  close: () => void;
   /** Pop the top sheet (go back one level) */
   back: () => void;
+  /** Close the entire sheet stack */
+  close: () => void;
+  /** Whether a Sheet.Description is mounted inside this panel */
+  hasDescription: boolean;
   /** Whether the stack has more than one sheet */
   isNested: boolean;
   /** Whether this is the top (active) sheet */
   isTop: boolean;
   /** Unique ID prefix for this panel (for aria-labelledby linking) */
   panelId: string;
-  /** Current resolved side (left/right/bottom) */
-  side: Side;
-  /** Whether a Sheet.Description is mounted inside this panel */
-  hasDescription: boolean;
   /** Called by Sheet.Description on mount to register its presence */
   registerDescription: () => () => void;
+  /** Current resolved side (left/right/bottom) */
+  side: Side;
 }
 
 export const SheetPanelContext = createContext<SheetPanelContextValue | null>(

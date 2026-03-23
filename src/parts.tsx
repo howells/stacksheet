@@ -19,10 +19,10 @@ import { useSheetPanel } from "./panel-context";
 export interface SheetHandleProps {
   /** Render as child element, merging props */
   asChild?: boolean;
-  className?: string;
-  style?: CSSProperties;
   /** Custom handle content. Defaults to a centered grab bar. */
   children?: ReactNode;
+  className?: string;
+  style?: CSSProperties;
 }
 
 function SheetHandle({
@@ -61,9 +61,9 @@ function SheetHandle({
 
 export interface SheetHeaderProps {
   asChild?: boolean;
+  children: ReactNode;
   className?: string;
   style?: CSSProperties;
-  children: ReactNode;
 }
 
 function SheetHeader({
@@ -87,9 +87,9 @@ function SheetHeader({
 
 export interface SheetTitleProps {
   asChild?: boolean;
+  children: ReactNode;
   className?: string;
   style?: CSSProperties;
-  children: ReactNode;
 }
 
 function SheetTitle({ asChild, className, style, children }: SheetTitleProps) {
@@ -110,9 +110,9 @@ function SheetTitle({ asChild, className, style, children }: SheetTitleProps) {
 
 export interface SheetDescriptionProps {
   asChild?: boolean;
+  children: ReactNode;
   className?: string;
   style?: CSSProperties;
-  children: ReactNode;
 }
 
 function SheetDescription({
@@ -137,9 +137,9 @@ function SheetDescription({
 export interface SheetBodyProps {
   /** When true, renders child element directly instead of ScrollArea */
   asChild?: boolean;
+  children: ReactNode;
   className?: string;
   style?: CSSProperties;
-  children: ReactNode;
 }
 
 function SheetBody({ asChild, className, style, children }: SheetBodyProps) {
@@ -157,11 +157,11 @@ function SheetBody({ asChild, className, style, children }: SheetBodyProps) {
 
   return (
     <ScrollAreaRoot
-      className={`relative min-h-0 flex-1 overflow-hidden ${className ?? ""}`}
+      className={`relative flex min-h-0 flex-1 flex-col overflow-hidden ${className ?? ""}`}
       data-stacksheet-no-drag=""
       style={style}
     >
-      <ScrollAreaViewport className="h-full w-full overscroll-contain">
+      <ScrollAreaViewport className="min-h-0 w-full flex-1 overscroll-contain">
         {children}
       </ScrollAreaViewport>
       <ScrollAreaScrollbar
@@ -178,9 +178,9 @@ function SheetBody({ asChild, className, style, children }: SheetBodyProps) {
 
 export interface SheetFooterProps {
   asChild?: boolean;
+  children: ReactNode;
   className?: string;
   style?: CSSProperties;
-  children: ReactNode;
 }
 
 function SheetFooter({
@@ -204,20 +204,20 @@ function SheetFooter({
 
 export interface SheetCloseProps {
   asChild?: boolean;
-  className?: string;
-  style?: CSSProperties;
   /** Custom content. Defaults to an X icon. */
   children?: ReactNode;
+  className?: string;
+  style?: CSSProperties;
 }
 
 function SheetClose({ asChild, className, style, children }: SheetCloseProps) {
-  const { close } = useSheetPanel();
+  const { close, back, isNested } = useSheetPanel();
   const Comp = asChild ? Slot : "button";
   return (
     <Comp
       aria-label={children ? undefined : "Close"}
       className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100 ${className ?? ""}`}
-      onClick={close}
+      onClick={isNested ? back : close}
       style={style}
       type={asChild ? undefined : "button"}
     >
@@ -230,10 +230,10 @@ function SheetClose({ asChild, className, style, children }: SheetCloseProps) {
 
 export interface SheetBackProps {
   asChild?: boolean;
-  className?: string;
-  style?: CSSProperties;
   /** Custom content. Defaults to an arrow-left icon. */
   children?: ReactNode;
+  className?: string;
+  style?: CSSProperties;
 }
 
 function SheetBack({ asChild, className, style, children }: SheetBackProps) {

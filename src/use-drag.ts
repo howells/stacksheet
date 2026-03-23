@@ -3,35 +3,35 @@ import { findSnapTarget } from "./snap-points";
 import type { Side } from "./types";
 
 export interface DragConfig {
-  /** Enable drag-to-dismiss. Default: true */
-  enabled: boolean;
+  /** Current active snap point index */
+  activeSnapIndex: number;
   /** Fraction of panel dimension to trigger close (0-1). Default: 0.25 */
   closeThreshold: number;
-  /** Velocity threshold (px/ms) to trigger close. Default: 0.5 */
-  velocityThreshold: number;
-  /** Side the panel is on — determines drag direction */
-  side: Side;
+  /** Enable drag-to-dismiss. Default: true */
+  enabled: boolean;
+  /** Whether the stack has >1 sheet (swipe pops instead of closing) */
+  isNested: boolean;
   /** Callback when drag ends and close should fire */
   onClose: () => void;
   /** Callback when drag ends and pop should fire */
   onPop: () => void;
-  /** Whether the stack has >1 sheet (swipe pops instead of closing) */
-  isNested: boolean;
-  /** Resolved snap point heights in px (sorted ascending). Empty = no snap points. */
-  snapHeights: number[];
-  /** Current active snap point index */
-  activeSnapIndex: number;
   /** Called when snap target changes on release */
   onSnap: (index: number) => void;
   /** When true, can't skip intermediate snap points */
   sequential: boolean;
+  /** Side the panel is on — determines drag direction */
+  side: Side;
+  /** Resolved snap point heights in px (sorted ascending). Empty = no snap points. */
+  snapHeights: number[];
+  /** Velocity threshold (px/ms) to trigger close. Default: 0.5 */
+  velocityThreshold: number;
 }
 
 export interface DragState {
-  /** Current drag offset in the dismiss direction (px) */
-  offset: number;
   /** Whether a drag is currently active */
   isDragging: boolean;
+  /** Current drag offset in the dismiss direction (px) */
+  offset: number;
 }
 
 /** Elements that should never initiate a drag */

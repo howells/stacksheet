@@ -4,10 +4,10 @@ import type { ResolvedConfig, Side, StackingConfig } from "./types";
 // ── Depth transforms ────────────────────────────
 
 export interface StackTransform {
-  scale: number;
+  borderRadius: number;
   offset: number;
   opacity: number;
-  borderRadius: number;
+  scale: number;
 }
 
 /**
@@ -150,7 +150,7 @@ export function getPanelStyles(
       right: 0,
       bottom: 0,
       // dvh tracks the dynamic viewport on iOS Safari (accounts for browser chrome).
-      // The vh fallback covers browsers that don't support dvh yet.
+      height: "85dvh",
       maxHeight: "85dvh",
       // borderRadius is animated via Motion's animate prop for scale correction
     };
