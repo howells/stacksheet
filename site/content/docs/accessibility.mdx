@@ -56,24 +56,23 @@ Configure the dialog's accessible name:
 createStacksheet({ ariaLabel: "Settings panel" });
 ```
 
-Per-sheet override via the `__ariaLabel` prop:
+Per-sheet override via action options:
 
 ```tsx
 // Component-direct pattern
-open(UserProfile, { userId: "abc", __ariaLabel: "User profile for John" });
+open(UserProfile, { userId: "abc" }, { ariaLabel: "User profile for John" });
 
 // Type registry pattern
 open("user-profile", "user-1", {
   userId: "abc",
-  __ariaLabel: "User profile for John",
-});
+}, { ariaLabel: "User profile for John" });
 ```
 
 The per-sheet label takes priority over the global config.
 
 ## Composable mode
 
-In [composable mode](/docs/composable-parts) (`renderHeader={false}`), the panel uses `aria-labelledby` and `aria-describedby` instead of `aria-label`. These are automatically linked to `Sheet.Title` and `Sheet.Description` via matching IDs.
+In [composable mode](/docs/composable-parts) (`layout="composable"`), the panel uses `aria-labelledby` and `aria-describedby` instead of `aria-label`. These are automatically linked to `Sheet.Title` and `Sheet.Description` via matching IDs.
 
 If you omit `Sheet.Title`, the panel won't have an accessible name. Always include one, even if visually hidden.
 

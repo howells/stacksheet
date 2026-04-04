@@ -910,7 +910,7 @@ function DemoInstance({
     <PlaygroundContext.Provider
       value={{ store, StacksheetProvider, visitedRef }}
     >
-      <StacksheetProvider renderHeader={false} sheets={sheetMap}>
+      <StacksheetProvider layout="composable" sheets={sheetMap}>
         {children}
       </StacksheetProvider>
     </PlaygroundContext.Provider>
@@ -1480,36 +1480,36 @@ function LeftColumn({
 // ── Action snippets for USE ACTIONS panel ────
 
 const actionSnippets: Record<string, string> = {
-  push: `const { actions } = useSheet()
+  push: `const actions = useSheet()
 
 // "settings" matches the key in your sheets map.
 // { heading } is spread as props onto SettingsSheet.
 actions.push("settings", {
   heading: "position"
 })`,
-  navigate: `const { actions } = useSheet()
+  navigate: `const actions = useSheet()
 
 // Clears the stack above, opens ProfileSheet.
 actions.navigate("profile", {
   userId: "abc-123"
 })`,
-  replace: `const { actions } = useSheet()
+  replace: `const actions = useSheet()
 
 // Swaps the current sheet in-place.
 actions.replace("confirm", {
   action: "delete"
 })`,
-  swap: `const { actions } = useSheet()
+  swap: `const actions = useSheet()
 
 // Same sheet slot, different type and props.
 actions.swap("alert", {
   message: "Saved!"
 })`,
-  pop: `const { actions } = useSheet()
+  pop: `const actions = useSheet()
 
 // Removes the top sheet from the stack.
 actions.pop()`,
-  close: `const { actions } = useSheet()
+  close: `const actions = useSheet()
 
 // Closes the entire stack.
 actions.close()`,

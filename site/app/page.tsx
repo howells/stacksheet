@@ -1,5 +1,5 @@
 import { JetBrains_Mono } from "next/font/google";
-import { PlaygroundDemo } from "@/components/demos/playground-demo";
+import { PlaygroundDemo } from "@/components/demos/lazy";
 
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 

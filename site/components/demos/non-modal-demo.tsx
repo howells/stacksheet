@@ -34,7 +34,10 @@ function SidebarSheet() {
         <div style={{ padding: "0 16px" }}>
           <Sheet.Description>
             <span
-              style={{ fontSize: 13, color: "var(--fd-muted-foreground, #666)" }}
+              style={{
+                fontSize: 13,
+                color: "var(--fd-muted-foreground, #666)",
+              }}
             >
               This is a non-modal sheet. The page behind it remains fully
               interactive — try clicking the counter or typing in the input.
@@ -133,7 +136,7 @@ function InteractiveContent() {
 
 export function NonModalDemo() {
   return (
-    <StacksheetProvider renderHeader={false}>
+    <StacksheetProvider layout="composable">
       <div className="demo-preview" style={{ flexDirection: "column", gap: 8 }}>
         <InteractiveContent />
       </div>

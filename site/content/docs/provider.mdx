@@ -20,7 +20,8 @@ description: Provider component that renders the sheet stack UI.
 | `children` | `ReactNode` | Yes | Your application content |
 | `sheets` | `ContentMap<TMap>` | No | Component map for [type registry](/docs/type-registry) pattern |
 | `classNames` | `StacksheetClassNames` | No | CSS class overrides for backdrop, panel, and header |
-| `renderHeader` | `false \| (props: HeaderRenderProps) => ReactNode` | No | Custom header renderer, or `false` for [composable mode](/docs/composable-parts) |
+| `layout` | `"classic" \| "composable"` | No | Panel layout mode. Use `"composable"` for [composable mode](/docs/composable-parts) |
+| `renderHeader` | `(props: HeaderRenderProps) => ReactNode` | No | Custom header renderer for classic mode |
 
 ## Styling props
 
@@ -49,10 +50,10 @@ See [Styling](/docs/styling) for full details.
 
 ## Composable mode
 
-Set `renderHeader={false}` to disable the auto header and scroll wrapper. Your sheet components then use `Sheet.*` parts to build custom layouts:
+Set `layout="composable"` to disable the auto header and scroll wrapper. Your sheet components then use `Sheet.*` parts to build custom layouts:
 
 ```tsx
-<StacksheetProvider renderHeader={false}>
+<StacksheetProvider layout="composable">
   <App />
 </StacksheetProvider>
 ```
@@ -102,7 +103,7 @@ When rendered, the provider produces:
 </StacksheetProvider>
 ```
 
-In composable mode (`renderHeader={false}`), the panel contains your component directly — no auto header or scroll wrapper:
+In composable mode (`layout="composable"`), the panel contains your component directly — no auto header or scroll wrapper:
 
 ```
 <motion.div>                         <- panel

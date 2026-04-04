@@ -3,21 +3,21 @@ title: Composable Parts
 description: Build custom sheet layouts with Sheet.* components.
 ---
 
-import { ComposableDemo } from "@/components/demos/composable-demo";
+import { ComposableDemo } from "@/components/demos/lazy";
 
 Stacksheet has two rendering modes:
 
 - **Classic mode** (default) — auto header with close/back buttons, scroll wrapper around your content
-- **Composable mode** — set `renderHeader={false}` and build the layout yourself using `Sheet.*` parts
+- **Composable mode** — set `layout="composable"` and build the layout yourself using `Sheet.*` parts
 
 <ComposableDemo />
 
 ## Enabling composable mode
 
-Pass `renderHeader={false}` to the provider. This disables the auto header and scroll wrapper, giving your content full control of the panel layout:
+Pass `layout="composable"` to the provider. This disables the auto header and scroll wrapper, giving your content full control of the panel layout:
 
 ```tsx
-<StacksheetProvider renderHeader={false}>
+<StacksheetProvider layout="composable">
   <App />
 </StacksheetProvider>
 ```

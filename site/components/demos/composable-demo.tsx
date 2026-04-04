@@ -109,7 +109,7 @@ function Triggers() {
 
 export function ComposableDemo() {
   return (
-    <StacksheetProvider renderHeader={false}>
+    <StacksheetProvider layout="composable">
       <div className="demo-preview">
         <Triggers />
       </div>

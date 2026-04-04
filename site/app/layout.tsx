@@ -1,7 +1,7 @@
-import { RootProvider } from "fumadocs-ui/provider/next";
 import { GeistMono } from "geist/font/mono";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { SiteThemeProvider } from "@/components/providers/site-theme-provider";
 import "./global.css";
 
 const siteUrl = "https://stacksheet.danielhowells.com";
@@ -53,7 +53,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <link href="https://rsms.me/inter/inter.css" rel="stylesheet" />
       </head>
       <body className={`${GeistMono.variable} flex flex-col min-h-screen`}>
-        <RootProvider>{children}</RootProvider>
+        <SiteThemeProvider>{children}</SiteThemeProvider>
       </body>
     </html>
   );

@@ -42,6 +42,7 @@ import type {
   SheetItem,
   Side,
   StacksheetClassNames,
+  StacksheetLayout,
   StacksheetSnapshot,
 } from "./types";
 import { type DragState, useDrag } from "./use-drag";
@@ -180,6 +181,36 @@ function usePanelHeight(
     observer.observe(el);
     return () => observer.disconnect();
   }, [panelRef, hasSnapPoints]);
+
+  return height;
+}
+
+function useViewportHeight(active: boolean): number {
+  const getHeight = useCallback(
+    () =>
+      typeof window === "undefined"
+        ? 0
+        : (window.visualViewport?.height ?? window.innerHeight),
+    []
+  );
+  const [height, setHeight] = useState(() => getHeight());
+
+  useEffect(() => {
+    if (!active || typeof window === "undefined") {
+      return;
+    }
+
+    const update = () => setHeight(getHeight());
+    update();
+
+    window.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("resize", update);
+
+    return () => {
+      window.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("resize", update);
+    };
+  }, [active, getHeight]);
 
   return height;
 }
@@ -343,6 +374,7 @@ interface SheetPanelProps {
   pop: () => void;
   /** Whether the user prefers reduced motion */
   prefersReducedMotion: boolean;
+  layout?: StacksheetLayout;
   renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
   shouldRender: boolean;
   side: Side;
@@ -359,7 +391,7 @@ interface SheetPanelProps {
 }
 
 /** Renders panel inner content — composable mode vs classic (header + scroll) */
-function PanelInnerContent({
+const PanelInnerContent = memo(function PanelInnerContent({
   isComposable,
   shouldRender,
   Content,
@@ -398,6 +430,18 @@ function PanelInnerContent({
       )}
     </>
   );
+});
+
+PanelInnerContent.displayName = "PanelInnerContent";
+
+function resolvePanelLayout(
+  layout: StacksheetLayout | undefined,
+  renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode)
+): StacksheetLayout {
+  if (layout) {
+    return layout;
+  }
+  return renderHeader === false ? "composable" : "classic";
 }
 
 /** Built-in drag handle for bottom panels — always visible on the top sheet */
@@ -472,6 +516,7 @@ const SheetPanel = memo(function SheetPanel({
   snapHeights,
   activeSnapIndex,
   onSnap,
+  layout,
   renderHeader,
   slideFrom,
   slideTarget,
@@ -526,11 +571,13 @@ const SheetPanel = memo(function SheetPanel({
     setDragState
   );
 
-  // Per-sheet aria-label: check data.__ariaLabel, fall back to config
+  // Prefer explicit per-sheet metadata; keep data.__ariaLabel as a legacy fallback.
   const ariaLabel =
+    item.ariaLabel ??
     (typeof item.data?.__ariaLabel === "string"
       ? item.data.__ariaLabel
-      : undefined) ?? config.ariaLabel;
+      : undefined) ??
+    config.ariaLabel;
 
   // Panel context for composable parts (Sheet.Close, Sheet.Title, etc.)
   const panelId = `stacksheet-${item.id}`;
@@ -562,7 +609,8 @@ const SheetPanel = memo(function SheetPanel({
     ]
   );
 
-  const isComposable = renderHeader === false;
+  const panelLayout = resolvePanelLayout(layout, renderHeader);
+  const isComposable = panelLayout === "composable";
   const hasPanelClass = classNames.panel !== "";
   const dragOffset = getDragTransform(side, dragState.offset);
   const panelStyle = buildPanelStyle(
@@ -572,12 +620,15 @@ const SheetPanel = memo(function SheetPanel({
     dragState.isDragging
   );
 
-  const headerProps: HeaderRenderProps = {
-    isNested,
-    onBack: pop,
-    onClose: close,
-    side,
-  };
+  const headerProps = useMemo<HeaderRenderProps>(
+    () => ({
+      isNested,
+      onBack: pop,
+      onClose: close,
+      side,
+    }),
+    [close, isNested, pop, side]
+  );
 
   const ariaProps = buildAriaProps(
     isTop,
@@ -745,6 +796,7 @@ interface SheetRendererProps<TMap extends object> {
   // biome-ignore lint/suspicious/noExplicitAny: heterogeneous component storage
   componentMap: Map<string, ComponentType<any>>;
   config: ResolvedConfig;
+  layout?: StacksheetLayout;
   renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
   sheets: ContentMap<TMap>;
   store: StoreApi<StacksheetSnapshot<TMap> & SheetActions<TMap>>;
@@ -763,6 +815,7 @@ export function SheetRenderer<TMap extends object>({
   sheets,
   componentMap,
   classNames: classNamesProp,
+  layout,
   renderHeader,
 }: SheetRendererProps<TMap>) {
   const isOpen = useStore(store, (s) => s.isOpen);
@@ -776,17 +829,17 @@ export function SheetRenderer<TMap extends object>({
     () => resolveClassNames(classNamesProp),
     [classNamesProp]
   );
+  const viewportHeight = useViewportHeight(
+    isOpen && side === "bottom" && config.snapPoints.length > 0
+  );
 
   // ── Snap points ──────────────────────────────
   const snapHeights = useMemo(
     () =>
       side === "bottom" && config.snapPoints.length > 0
-        ? resolveSnapPoints(
-            config.snapPoints,
-            typeof window === "undefined" ? 0 : window.innerHeight
-          )
+        ? resolveSnapPoints(config.snapPoints, viewportHeight)
         : [],
-    [side, config.snapPoints]
+    [side, config.snapPoints, viewportHeight]
   );
 
   // Default to the last snap point (fully open) when snap points are defined
@@ -1044,6 +1097,7 @@ export function SheetRenderer<TMap extends object>({
                   isTop={isTop}
                   item={item}
                   key={item.id}
+                  layout={layout}
                   onSnap={handleSnap}
                   pop={pop}
                   prefersReducedMotion={prefersReducedMotion}

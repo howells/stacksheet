@@ -6,6 +6,7 @@ import type {
   ResolvedConfig,
   SheetActions,
   SheetItem,
+  SheetPresentationOptions,
   StacksheetSnapshot,
 } from "./types";
 
@@ -14,6 +15,22 @@ type AnyComponent = ComponentType<any>;
 
 type StoreState<TMap extends object> = StacksheetSnapshot<TMap> &
   SheetActions<TMap>;
+
+function resolvePresentationOptions(
+  value: unknown
+): SheetPresentationOptions | undefined {
+  if (!(value && typeof value === "object")) {
+    return undefined;
+  }
+  const candidate = value as SheetPresentationOptions;
+  if (
+    candidate.ariaLabel !== undefined &&
+    typeof candidate.ariaLabel !== "string"
+  ) {
+    return undefined;
+  }
+  return candidate;
+}
 
 /** Return type of createSheetStore — store plus ad-hoc component maps */
 export interface SheetStoreBundle<TMap extends object> {
@@ -78,8 +95,9 @@ function resolveArgs(
   warnedNames: Set<string>,
   first: unknown,
   second: unknown,
-  third: unknown
-): { type: string; id: string; data: Record<string, unknown> } {
+  third: unknown,
+  fourth?: unknown
+): ResolvedItem {
   if (typeof first === "function") {
     const component = first as AnyComponent;
 
@@ -93,12 +111,14 @@ function resolveArgs(
 
     if (typeof second === "string") {
       return {
+        ariaLabel: resolvePresentationOptions(fourth)?.ariaLabel,
         type: typeKey,
         id: second,
         data: (third ?? {}) as Record<string, unknown>,
       };
     }
     return {
+      ariaLabel: resolvePresentationOptions(third)?.ariaLabel,
       type: typeKey,
       id: crypto.randomUUID(),
       data: (second ?? {}) as Record<string, unknown>,
@@ -106,6 +126,7 @@ function resolveArgs(
   }
 
   return {
+    ariaLabel: resolvePresentationOptions(fourth)?.ariaLabel,
     type: first as string,
     id: second as string,
     data: (third ?? {}) as Record<string, unknown>,
@@ -114,6 +135,7 @@ function resolveArgs(
 
 /** Pre-resolved args — skips resolveArgs entirely */
 interface ResolvedItem {
+  ariaLabel?: string;
   data: Record<string, unknown>;
   id: string;
   type: string;
@@ -147,7 +169,12 @@ export function createSheetStore<TMap extends object>(
   // Set of component names already warned about (avoid log spam)
   const warnedNames = new Set<string>();
 
-  function resolve(first: unknown, second: unknown, third: unknown) {
+  function resolve(
+    first: unknown,
+    second: unknown,
+    third: unknown,
+    fourth?: unknown
+  ) {
     return resolveArgs(
       componentRegistry,
       componentMap,
@@ -155,7 +182,8 @@ export function createSheetStore<TMap extends object>(
       warnedNames,
       first,
       second,
-      third
+      third,
+      fourth
     );
   }
 
@@ -173,16 +201,16 @@ export function createSheetStore<TMap extends object>(
   const store = createStore<StoreState<TMap>>()((set, get) => {
     // ── Internal resolved methods (no double-resolution) ──
 
-    function _openResolved({ type, id, data }: ResolvedItem) {
+    function _openResolved({ type, id, data, ariaLabel }: ResolvedItem) {
       set({
-        stack: [{ id, type, data } as Item],
+        stack: [{ id, type, data, ariaLabel } as Item],
         isOpen: true,
       });
     }
 
-    function _pushResolved({ type, id, data }: ResolvedItem) {
+    function _pushResolved({ type, id, data, ariaLabel }: ResolvedItem) {
       set((state) => {
-        const item = { id, type, data } as Item;
+        const item = { id, type, data, ariaLabel } as Item;
         if (
           Number.isFinite(config.maxDepth) &&
           state.stack.length >= config.maxDepth
@@ -199,9 +227,9 @@ export function createSheetStore<TMap extends object>(
       });
     }
 
-    function _replaceResolved({ type, id, data }: ResolvedItem) {
+    function _replaceResolved({ type, id, data, ariaLabel }: ResolvedItem) {
       set((state) => {
-        const item = { id, type, data } as Item;
+        const item = { id, type, data, ariaLabel } as Item;
         if (state.stack.length === 0) {
           return { stack: [item], isOpen: true };
         }
@@ -216,21 +244,37 @@ export function createSheetStore<TMap extends object>(
       stack: [],
       isOpen: false,
 
-      open(first: unknown, second?: unknown, third?: unknown) {
-        _openResolved(resolve(first, second, third));
+      open(
+        first: unknown,
+        second?: unknown,
+        third?: unknown,
+        fourth?: unknown
+      ) {
+        _openResolved(resolve(first, second, third, fourth));
       },
 
-      push(first: unknown, second?: unknown, third?: unknown) {
-        _pushResolved(resolve(first, second, third));
+      push(
+        first: unknown,
+        second?: unknown,
+        third?: unknown,
+        fourth?: unknown
+      ) {
+        _pushResolved(resolve(first, second, third, fourth));
       },
 
-      replace(first: unknown, second?: unknown, third?: unknown) {
-        _replaceResolved(resolve(first, second, third));
+      replace(
+        first: unknown,
+        second?: unknown,
+        third?: unknown,
+        fourth?: unknown
+      ) {
+        _replaceResolved(resolve(first, second, third, fourth));
       },
 
-      swap(first: unknown, second?: unknown) {
+      swap(first: unknown, second?: unknown, third?: unknown) {
         let type: string;
         let data: Record<string, unknown>;
+        const ariaLabel = resolvePresentationOptions(third)?.ariaLabel;
 
         if (typeof first === "function") {
           const component = first as AnyComponent;
@@ -254,13 +298,23 @@ export function createSheetStore<TMap extends object>(
             return state;
           }
           const newStack = [...state.stack];
-          newStack[newStack.length - 1] = { id: top.id, type, data } as Item;
+          newStack[newStack.length - 1] = {
+            id: top.id,
+            type,
+            data,
+            ariaLabel: ariaLabel ?? top.ariaLabel,
+          } as Item;
           return { stack: newStack };
         });
       },
 
-      navigate(first: unknown, second?: unknown, third?: unknown) {
-        const resolved = resolve(first, second, third);
+      navigate(
+        first: unknown,
+        second?: unknown,
+        third?: unknown,
+        fourth?: unknown
+      ) {
+        const resolved = resolve(first, second, third, fourth);
         const { stack } = get();
         const top = stack.at(-1);
 

@@ -3,7 +3,7 @@ title: Body Scale Effect
 description: iOS-style background scale when sheets open.
 ---
 
-import { BodyScaleDemo } from "@/components/demos/body-scale-demo";
+import { BodyScaleDemo } from "@/components/demos/lazy";
 
 Enable `shouldScaleBackground` to scale down your page content when a sheet opens, creating an iOS-style depth effect.
 
@@ -89,6 +89,6 @@ const { StacksheetProvider, useSheet } = createStacksheet({
   shouldScaleBackground: true,
 });
 
-// Use renderHeader={false} with Sheet.Handle for the iOS pull-down look
-<StacksheetProvider renderHeader={false}>
+// Use layout="composable" with Sheet.Handle for the iOS pull-down look
+<StacksheetProvider layout="composable">
 ```

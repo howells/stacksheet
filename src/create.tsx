@@ -79,6 +79,7 @@ export function createStacksheet<TMap extends object>(
     sheets = EMPTY_SHEETS,
     children,
     classNames,
+    layout,
     renderHeader,
   }: StacksheetProviderProps<TMap>) {
     const value = useMemo(() => ({ store, config: resolved }), []);
@@ -90,6 +91,7 @@ export function createStacksheet<TMap extends object>(
             classNames={classNames}
             componentMap={componentMap}
             config={resolved}
+            layout={layout}
             renderHeader={renderHeader}
             sheets={sheets}
             store={store}

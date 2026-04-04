@@ -63,7 +63,7 @@ function Trigger() {
 
 export function BodyScaleDemo() {
   return (
-    <StacksheetProvider renderHeader={false}>
+    <StacksheetProvider layout="composable">
       <div
         data-stacksheet-wrapper=""
         style={{

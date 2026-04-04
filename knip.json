@@ -14,7 +14,8 @@
         "lib/**/*.{ts,tsx}"
       ],
       "project": ["**/*.{ts,tsx}"],
-      "ignore": ["**/*.test.{ts,tsx}"]
+      "ignore": ["**/*.test.{ts,tsx}"],
+      "ignoreDependencies": ["tailwindcss"]
     }
   },
   "ignore": ["**/*.d.ts", "**/*.config.{ts,mjs,js}", "**/*.css"],

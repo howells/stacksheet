@@ -49,6 +49,17 @@ describe("createSheetStore", () => {
       expect(state.stack).toHaveLength(1);
       expect(state.stack[0]?.data).toEqual({ title: "Test" });
     });
+
+    it("stores per-sheet presentation options separately from data", () => {
+      const { store } = makeStore();
+      store
+        .getState()
+        .open("settings", "id1", { theme: "dark" }, { ariaLabel: "Settings" });
+
+      const item = store.getState().stack[0];
+      expect(item?.ariaLabel).toBe("Settings");
+      expect(item?.data).toEqual({ theme: "dark" });
+    });
   });
 
   // ── push ────────────────────────────────────
@@ -148,6 +159,19 @@ describe("createSheetStore", () => {
       const { store } = makeStore();
       store.getState().swap("b", {});
       expect(store.getState().stack).toHaveLength(0);
+    });
+
+    it("updates per-sheet presentation options when provided", () => {
+      const { store } = makeStore();
+      store
+        .getState()
+        .open("a", "1", { value: 1 }, { ariaLabel: "Original label" });
+
+      store.getState().swap("b", { value: 2 }, { ariaLabel: "Updated label" });
+
+      const item = store.getState().stack[0];
+      expect(item?.ariaLabel).toBe("Updated label");
+      expect(item?.data).toEqual({ value: 2 });
     });
   });
 

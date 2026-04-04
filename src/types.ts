@@ -37,9 +37,16 @@ export interface HeaderRenderProps {
   side: import("./types").Side;
 }
 
+export interface SheetPresentationOptions {
+  /** Override the dialog aria-label for this specific sheet instance. */
+  ariaLabel?: string;
+}
+
 // ── Sheet item ──────────────────────────────────
 
 export interface SheetItem<TType extends string = string> {
+  /** Optional per-sheet presentation metadata */
+  ariaLabel?: string;
   /** Data payload passed when opening the sheet */
   data: Record<string, unknown>;
   /** Unique identifier for this sheet instance */
@@ -51,6 +58,7 @@ export interface SheetItem<TType extends string = string> {
 // ── Side configuration ──────────────────────────
 
 export type Side = "left" | "right" | "bottom";
+export type StacksheetLayout = "classic" | "composable";
 
 export interface ResponsiveSide {
   desktop: Side;
@@ -211,35 +219,41 @@ export interface SheetActions<TMap extends object> {
   navigate<K extends Extract<keyof TMap, string>>(
     type: K,
     id: string,
-    data: TMap[K]
+    data: TMap[K],
+    options?: SheetPresentationOptions
   ): void;
   /** Smart navigate with an ad-hoc component */
   navigate<TData extends Record<string, unknown>>(
     component: ComponentType<TData>,
-    data: TData
+    data: TData,
+    options?: SheetPresentationOptions
   ): void;
   /** Smart navigate with an ad-hoc component (explicit id) */
   navigate<TData extends Record<string, unknown>>(
     component: ComponentType<TData>,
     id: string,
-    data: TData
+    data: TData,
+    options?: SheetPresentationOptions
   ): void;
   /** Replace stack with a single item */
   open<K extends Extract<keyof TMap, string>>(
     type: K,
     id: string,
-    data: TMap[K]
+    data: TMap[K],
+    options?: SheetPresentationOptions
   ): void;
   /** Replace stack with an ad-hoc component */
   open<TData extends Record<string, unknown>>(
     component: ComponentType<TData>,
-    data: TData
+    data: TData,
+    options?: SheetPresentationOptions
   ): void;
   /** Replace stack with an ad-hoc component (explicit id) */
   open<TData extends Record<string, unknown>>(
     component: ComponentType<TData>,
     id: string,
-    data: TData
+    data: TData,
+    options?: SheetPresentationOptions
   ): void;
   /** Pop top item; close if last */
   pop(): void;
@@ -248,18 +262,21 @@ export interface SheetActions<TMap extends object> {
   push<K extends Extract<keyof TMap, string>>(
     type: K,
     id: string,
-    data: TMap[K]
+    data: TMap[K],
+    options?: SheetPresentationOptions
   ): void;
   /** Push an ad-hoc component onto the stack */
   push<TData extends Record<string, unknown>>(
     component: ComponentType<TData>,
-    data: TData
+    data: TData,
+    options?: SheetPresentationOptions
   ): void;
   /** Push an ad-hoc component onto the stack (explicit id) */
   push<TData extends Record<string, unknown>>(
     component: ComponentType<TData>,
     id: string,
-    data: TData
+    data: TData,
+    options?: SheetPresentationOptions
   ): void;
 
   /** Remove a specific sheet by id; close if last */
@@ -269,18 +286,21 @@ export interface SheetActions<TMap extends object> {
   replace<K extends Extract<keyof TMap, string>>(
     type: K,
     id: string,
-    data: TMap[K]
+    data: TMap[K],
+    options?: SheetPresentationOptions
   ): void;
   /** Swap the top item with an ad-hoc component */
   replace<TData extends Record<string, unknown>>(
     component: ComponentType<TData>,
-    data: TData
+    data: TData,
+    options?: SheetPresentationOptions
   ): void;
   /** Swap the top item with an ad-hoc component (explicit id) */
   replace<TData extends Record<string, unknown>>(
     component: ComponentType<TData>,
     id: string,
-    data: TData
+    data: TData,
+    options?: SheetPresentationOptions
   ): void;
 
   /** Update data on a sheet by id (no animation) */
@@ -297,11 +317,16 @@ export interface SheetActions<TMap extends object> {
   ): void;
 
   /** Swap the top item's content in place (no animation) */
-  swap<K extends Extract<keyof TMap, string>>(type: K, data: TMap[K]): void;
+  swap<K extends Extract<keyof TMap, string>>(
+    type: K,
+    data: TMap[K],
+    options?: SheetPresentationOptions
+  ): void;
   /** Swap the top item's content with an ad-hoc component (no animation) */
   swap<TData extends Record<string, unknown>>(
     component: ComponentType<TData>,
-    data: TData
+    data: TData,
+    options?: SheetPresentationOptions
   ): void;
 }
 
@@ -312,11 +337,13 @@ export interface StacksheetProviderProps<TMap extends object> {
   children: ReactNode;
   /** CSS class overrides for backdrop, panel, and header */
   classNames?: StacksheetClassNames;
+  /** Panel layout mode. `composable` disables the auto header and scroll wrapper. */
+  layout?: StacksheetLayout;
   /**
-   * Controls the panel header rendering mode.
+   * Controls the classic-mode header rendering.
    * - `undefined` — renders the default close/back header (classic mode)
    * - `function` — custom header renderer (classic mode with custom header)
-   * - `false` — no auto header, no auto scroll wrapper (composable mode — use Sheet.* parts)
+   * - `false` — legacy alias for composable mode. Prefer `layout="composable"`.
    */
   renderHeader?: false | ((props: HeaderRenderProps) => ReactNode);
   /** Map of sheet type keys to content components (optional — only needed for type registry pattern) */

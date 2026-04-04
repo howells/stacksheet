@@ -211,13 +211,13 @@ export interface SheetCloseProps {
 }
 
 function SheetClose({ asChild, className, style, children }: SheetCloseProps) {
-  const { close, back, isNested } = useSheetPanel();
+  const { close } = useSheetPanel();
   const Comp = asChild ? Slot : "button";
   return (
     <Comp
       aria-label={children ? undefined : "Close"}
       className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100 ${className ?? ""}`}
-      onClick={isNested ? back : close}
+      onClick={close}
       style={style}
       type={asChild ? undefined : "button"}
     >
@@ -262,7 +262,7 @@ function SheetBack({ asChild, className, style, children }: SheetBackProps) {
 /**
  * Composable sheet parts for building custom panel layouts.
  *
- * Use with `renderHeader={false}` on the provider to opt into
+ * Use with `layout="composable"` on the provider to opt into
  * composable mode — no auto header or scroll wrapper, full control
  * over the panel's structure.
  *
