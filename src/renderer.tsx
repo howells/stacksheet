@@ -369,12 +369,12 @@ interface SheetPanelProps {
   isNested: boolean;
   isTop: boolean;
   item: SheetItem;
+  layout?: StacksheetLayout;
   /** Called when drag release targets a snap point */
   onSnap: (index: number) => void;
   pop: () => void;
   /** Whether the user prefers reduced motion */
   prefersReducedMotion: boolean;
-  layout?: StacksheetLayout;
   renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
   shouldRender: boolean;
   side: Side;
