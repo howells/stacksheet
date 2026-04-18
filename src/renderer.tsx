@@ -5,7 +5,7 @@ declare global {
     | undefined;
 }
 
-import FocusTrap from "focus-trap-react";
+import { FocusTrap } from "focus-trap-react";
 import { AnimatePresence, motion as m, useReducedMotion } from "motion/react";
 import {
   type ComponentType,
@@ -57,13 +57,13 @@ function DefaultHeader({
 }: HeaderRenderProps & { className?: string }) {
   return (
     <div
-      className={`flex h-14 shrink-0 items-center justify-between border-b px-6 ${className ?? ""}`}
+      className={`flex shrink-0 items-center justify-between px-4 pt-4 pb-2 ${className ?? ""}`}
     >
       <div className="flex items-center gap-2">
         {isNested && (
           <button
             aria-label="Back"
-            className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100"
+            className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-none bg-black/5 p-0 text-inherit opacity-70 transition-opacity duration-150 hover:opacity-100"
             onClick={onBack}
             type="button"
           >
@@ -73,7 +73,7 @@ function DefaultHeader({
       </div>
       <button
         aria-label="Close"
-        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100"
+        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-none bg-black/5 p-0 text-inherit opacity-70 transition-opacity duration-150 hover:opacity-100"
         onClick={onClose}
         type="button"
       >
@@ -449,12 +449,15 @@ function BottomHandle({ onDismiss }: { onDismiss?: () => void }) {
   return (
     <button
       aria-label="Dismiss"
-      className="absolute inset-x-0 top-0 z-10 flex w-full cursor-grab touch-none items-center justify-center border-none bg-transparent pt-2 pb-1"
+      className="absolute inset-x-0 top-0 z-10 flex w-full cursor-grab touch-none items-center justify-center border-none bg-transparent pt-2.5 pb-2"
       data-stacksheet-handle=""
       onClick={onDismiss}
       type="button"
     >
-      <div aria-hidden="true" className="h-1 w-9 rounded-sm bg-current/25" />
+      <div
+        aria-hidden="true"
+        className="h-[5px] w-9 rounded-full bg-current/15"
+      />
     </button>
   );
 }
@@ -490,10 +493,7 @@ function SideHandle({
       tabIndex={0}
       transition={{ duration: isHovered ? 0.15 : 0.4, ease: "easeOut" }}
     >
-      <div
-        aria-hidden="true"
-        className="h-10 w-[5px] rounded-sm bg-current/35 shadow-sm"
-      />
+      <div aria-hidden="true" className="h-8 w-1 rounded-full bg-current/20" />
     </m.div>
   );
 }
@@ -1007,7 +1007,7 @@ export function SheetRenderer<TMap extends object>({
       config.closeOnBackdrop && config.dismissible ? "pointer" : undefined,
     ...(hasBackdropClass
       ? {}
-      : { background: "var(--overlay, rgba(0, 0, 0, 0.2))" }),
+      : { background: "var(--overlay, rgba(0, 0, 0, 0.15))" }),
   };
 
   // Handle exit complete — fire onCloseComplete when stack is fully empty
@@ -1135,11 +1135,11 @@ function getInitialRadius(side: Side): Record<string, number> {
   return { borderRadius: 0 };
 }
 
-// Collins-style layered shadows — soft, diffused, multi-stop.
+// Layered shadows — soft, diffused, multi-stop.
 const SHADOW_SM =
-  "0px 2px 5px 0px rgba(0,0,0,0.11), 0px 9px 9px 0px rgba(0,0,0,0.1), 0px 21px 13px 0px rgba(0,0,0,0.06)";
+  "0px 1px 3px 0px rgba(0,0,0,0.06), 0px 6px 12px 0px rgba(0,0,0,0.06)";
 const SHADOW_LG =
-  "0px 23px 52px 0px rgba(0,0,0,0.08), 0px 94px 94px 0px rgba(0,0,0,0.07), 0px 211px 127px 0px rgba(0,0,0,0.04)";
+  "0px 8px 24px 0px rgba(0,0,0,0.06), 0px 24px 48px 0px rgba(0,0,0,0.04), 0px 48px 96px 0px rgba(0,0,0,0.03)";
 
 function getShadow(isNested: boolean): string {
   return isNested ? SHADOW_SM : SHADOW_LG;

@@ -5,7 +5,7 @@
       "entry": ["src/**/*.{ts,tsx}", "index.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"],
       "ignore": ["**/*.test.{ts,tsx}"],
-      "ignoreDependencies": ["husky", "tsx", "ultracite", "lint-staged"]
+      "ignoreDependencies": ["husky", "tsx", "lint-staged"]
     },
     "site": {
       "entry": [
@@ -19,5 +19,5 @@
     }
   },
   "ignore": ["**/*.d.ts", "**/*.config.{ts,mjs,js}", "**/*.css"],
-  "ignoreDependencies": ["@types/*", "typescript", "@biomejs/biome", "next"]
+  "ignoreDependencies": ["@types/*", "typescript", "next"]
 }
