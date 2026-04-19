@@ -1,98 +1,99 @@
 {
-  "name": "@howells/stacksheet",
-  "version": "1.2.1",
-  "private": false,
-  "description": "Typed, animated sheet stack system. Zustand store + Motion animations with Apple-style depth stacking.",
-  "type": "module",
-  "sideEffects": false,
-  "license": "MIT",
-  "author": "Daniel Howells",
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/howells/stacksheet.git"
-  },
-  "bugs": {
-    "url": "https://github.com/howells/stacksheet/issues"
-  },
-  "homepage": "https://stacksheet.danielhowells.com",
-  "files": [
-    "dist"
-  ],
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./styles.css": "./dist/styles.css",
-    "./package.json": "./package.json"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "engines": {
-    "node": ">=20"
-  },
-  "scripts": {
-    "build": "tsup && pnpm build:styles",
-    "build:all": "turbo run build",
-    "build:styles": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
-    "dev": "turbo run dev --filter=stacksheet-docs",
-    "dev:lib": "tsup --watch",
-    "format": "howells-format",
-    "lint": "howells-lint",
-    "prepack": "pnpm build:all",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
-    "prepare": "husky",
-    "knip": "knip",
-    "dev:all": "turbo run dev --parallel",
-    "start": "turbo run start --filter=stacksheet-docs",
-    "check": "pnpm typecheck && pnpm lint && pnpm test",
-    "check:all": "turbo run build lint typecheck test",
-    "clean": "turbo clean"
-  },
-  "keywords": [
-    "sheet",
-    "drawer",
-    "modal",
-    "stack",
-    "zustand",
-    "motion",
-    "react",
-    "animation"
-  ],
-  "dependencies": {
-    "@radix-ui/react-portal": "^1.1.10",
-    "@radix-ui/react-scroll-area": "^1.2.10",
-    "@radix-ui/react-slot": "^1.2.4",
-    "focus-trap-react": "^12.0.0",
-    "motion": "^12.38.0",
-    "react-remove-scroll": "^2.7.2",
-    "zustand": "^5.0.12"
-  },
-  "peerDependencies": {
-    "react": "^18.0.0 || ^19.0.0",
-    "react-dom": "^18.0.0 || ^19.0.0"
-  },
-  "devDependencies": {
-    "@howells/lint": "^0.1.3",
-    "@howells/typescript-config": "^0.1.0",
-    "@tailwindcss/cli": "^4.2.2",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "husky": "^9.1.7",
-    "knip": "^6.3.0",
-    "lint-staged": "^16.4.0",
-    "next": "^16.2.2",
-    "tailwindcss": "^4.2.2",
-    "tsup": "^8.5.1",
-    "typescript": "^6.0.2",
-    "vitest": "^4.1.2",
-    "turbo": "2.9.3"
-  },
-  "packageManager": "pnpm@10.23.0",
-  "lint-staged": {
-    "*.{js,ts,jsx,tsx,json,jsonc,css}": "howells-format --no-errors-on-unmatched"
-  }
+	"name": "@howells/stacksheet",
+	"version": "1.2.2",
+	"private": false,
+	"description": "Typed, animated sheet stack system. Zustand store + Motion animations with Apple-style depth stacking.",
+	"type": "module",
+	"sideEffects": false,
+	"license": "MIT",
+	"author": "Daniel Howells",
+	"repository": {
+		"type": "git",
+		"url": "git+ssh://git@github.com/howells/stacksheet.git"
+	},
+	"bugs": {
+		"url": "https://github.com/howells/stacksheet/issues"
+	},
+	"homepage": "https://stacksheet.danielhowells.com",
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.mjs"
+		},
+		"./styles.css": "./dist/styles.css",
+		"./package.json": "./package.json"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"build": "tsdown && tsc --emitDeclarationOnly --declaration --declarationMap --outDir dist --noEmit false && pnpm build:styles",
+		"build:all": "turbo run build",
+		"build:styles": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
+		"dev": "turbo run dev --filter=stacksheet-docs",
+		"dev:lib": "tsdown --watch",
+		"format": "howells-format",
+		"lint": "howells-lint",
+		"prepack": "pnpm build:all",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"typecheck": "tsc --noEmit",
+		"prepare": "husky",
+		"knip": "knip",
+		"dev:all": "turbo run dev --parallel",
+		"start": "turbo run start --filter=stacksheet-docs",
+		"check": "pnpm typecheck && pnpm lint && pnpm test",
+		"check:all": "turbo run build lint typecheck test",
+		"clean": "turbo clean"
+	},
+	"keywords": [
+		"sheet",
+		"drawer",
+		"modal",
+		"stack",
+		"zustand",
+		"motion",
+		"react",
+		"animation"
+	],
+	"dependencies": {
+		"@radix-ui/react-portal": "^1.1.10",
+		"@radix-ui/react-scroll-area": "^1.2.10",
+		"@radix-ui/react-slot": "^1.2.4",
+		"focus-trap-react": "^12.0.0",
+		"motion": "^12.38.0",
+		"react-remove-scroll": "^2.7.2",
+		"zustand": "^5.0.12"
+	},
+	"peerDependencies": {
+		"react": "^18.0.0 || ^19.0.0",
+		"react-dom": "^18.0.0 || ^19.0.0"
+	},
+	"devDependencies": {
+		"@howells/lint": "^0.1.3",
+		"@howells/typescript-config": "^0.1.2",
+		"@tailwindcss/cli": "^4.2.2",
+		"@types/react": "^19.2.14",
+		"@types/react-dom": "^19.2.3",
+		"husky": "^9.1.7",
+		"knip": "^6.4.1",
+		"lint-staged": "^16.4.0",
+		"next": "^16.2.4",
+		"tailwindcss": "^4.2.2",
+		"tsdown": "^0.21.9",
+		"turbo": "2.9.6",
+		"typescript": "^6.0.3",
+		"vite": "8.0.8",
+		"vitest": "^4.1.4"
+	},
+	"packageManager": "pnpm@10.23.0",
+	"lint-staged": {
+		"*.{js,ts,jsx,tsx,json,jsonc,css}": "howells-format --no-errors-on-unmatched"
+	}
 }

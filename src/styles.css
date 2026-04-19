@@ -5,5 +5,5 @@
    content sizing. Stacksheet panels only scroll vertically, so override to
    block to prevent content from expanding beyond the panel width. */
 [data-stacksheet-no-drag] [data-radix-scroll-area-viewport] > div {
-  display: block !important;
+	display: block !important;
 }

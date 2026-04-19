@@ -4,12 +4,12 @@ import { PlaygroundDemo } from "@/components/demos/lazy";
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export default function Home() {
-  return (
-    <main
-      className={`min-h-dvh lg:h-dvh lg:overflow-hidden antialiased ${mono.variable}`}
-      style={{ backgroundColor: "var(--ss-color-canvas)" }}
-    >
-      <PlaygroundDemo />
-    </main>
-  );
+	return (
+		<main
+			className={`min-h-dvh lg:h-dvh lg:overflow-hidden antialiased ${mono.variable}`}
+			style={{ backgroundColor: "var(--ss-color-canvas)" }}
+		>
+			<PlaygroundDemo />
+		</main>
+	);
 }

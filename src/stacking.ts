@@ -4,10 +4,10 @@ import type { ResolvedConfig, Side, StackingConfig } from "./types";
 // ── Depth transforms ────────────────────────────
 
 export interface StackTransform {
-  borderRadius: number;
-  offset: number;
-  opacity: number;
-  scale: number;
+	borderRadius: number;
+	offset: number;
+	opacity: number;
+	scale: number;
 }
 
 /**
@@ -16,25 +16,25 @@ export interface StackTransform {
  * Panels beyond renderThreshold are clamped to the edge position and faded out.
  */
 export function getStackTransform(
-  depth: number,
-  stacking: StackingConfig
+	depth: number,
+	stacking: StackingConfig,
 ): StackTransform {
-  if (depth <= 0) {
-    return { scale: 1, offset: 0, opacity: 1, borderRadius: 0 };
-  }
+	if (depth <= 0) {
+		return { scale: 1, offset: 0, opacity: 1, borderRadius: 0 };
+	}
 
-  const beyondThreshold = depth >= stacking.renderThreshold;
-  // Clamp visual depth so panels beyond threshold stay at the edge position
-  const visualDepth = beyondThreshold ? stacking.renderThreshold - 1 : depth;
+	const beyondThreshold = depth >= stacking.renderThreshold;
+	// Clamp visual depth so panels beyond threshold stay at the edge position
+	const visualDepth = beyondThreshold ? stacking.renderThreshold - 1 : depth;
 
-  return {
-    scale: Math.max(0.5, 1 - visualDepth * stacking.scaleStep),
-    offset: visualDepth * stacking.offsetStep,
-    opacity: beyondThreshold
-      ? 0
-      : Math.max(0, 1 - visualDepth * stacking.opacityStep),
-    borderRadius: stacking.radius,
-  };
+	return {
+		scale: Math.max(0.5, 1 - visualDepth * stacking.scaleStep),
+		offset: visualDepth * stacking.offsetStep,
+		opacity: beyondThreshold
+			? 0
+			: Math.max(0, 1 - visualDepth * stacking.opacityStep),
+		borderRadius: stacking.radius,
+	};
 }
 
 /**
@@ -43,84 +43,84 @@ export function getStackTransform(
  * when panels are scaled. See: https://motion.dev/docs/react-layout-animations#scale-correction
  */
 export function getAnimatedBorderRadius(
-  side: Side,
-  depth: number,
-  stacking: StackingConfig
+	side: Side,
+	depth: number,
+	stacking: StackingConfig,
 ): Record<string, number> {
-  if (side === "bottom") {
-    const radius = depth > 0 ? stacking.radius : 16;
-    return {
-      borderTopLeftRadius: radius,
-      borderTopRightRadius: radius,
-      borderBottomLeftRadius: 0,
-      borderBottomRightRadius: 0,
-    };
-  }
+	if (side === "bottom") {
+		const radius = depth > 0 ? stacking.radius : 16;
+		return {
+			borderTopLeftRadius: radius,
+			borderTopRightRadius: radius,
+			borderBottomLeftRadius: 0,
+			borderBottomRightRadius: 0,
+		};
+	}
 
-  // Left/right panels: stacked panels get uniform radius, top panel gets none
-  if (depth > 0) {
-    return { borderRadius: stacking.radius };
-  }
-  return { borderRadius: 0 };
+	// Left/right panels: stacked panels get uniform radius, top panel gets none
+	if (depth > 0) {
+		return { borderRadius: stacking.radius };
+	}
+	return { borderRadius: 0 };
 }
 
 // ── Slide directions ────────────────────────────
 
 export interface SlideValues {
-  x?: string | number;
-  y?: string | number;
+	x?: string | number;
+	y?: string | number;
 }
 
 /** Motion initial/exit values for sliding from the given side. */
 export function getSlideFrom(side: Side): SlideValues {
-  switch (side) {
-    case "right":
-      return { x: "100%" };
-    case "left":
-      return { x: "-100%" };
-    case "bottom":
-      return { y: "100%" };
-    default:
-      return { x: "100%" };
-  }
+	switch (side) {
+		case "right":
+			return { x: "100%" };
+		case "left":
+			return { x: "-100%" };
+		case "bottom":
+			return { y: "100%" };
+		default:
+			return { x: "100%" };
+	}
 }
 
 /** Motion animate target — the resting position. */
 export function getSlideTarget(): SlideValues {
-  return { x: 0, y: 0 };
+	return { x: 0, y: 0 };
 }
 
 /** Translate offset that pushes stacked panels away from the stack edge. */
 export function getStackOffset(
-  side: Side,
-  offset: number
+	side: Side,
+	offset: number,
 ): { x?: number; y?: number } {
-  if (offset === 0) {
-    return {};
-  }
-  switch (side) {
-    case "right":
-      return { x: -offset };
-    case "left":
-      return { x: offset };
-    case "bottom":
-      return { y: -offset };
-    default:
-      return {};
-  }
+	if (offset === 0) {
+		return {};
+	}
+	switch (side) {
+		case "right":
+			return { x: -offset };
+		case "left":
+			return { x: offset };
+		case "bottom":
+			return { y: -offset };
+		default:
+			return {};
+	}
 }
 
 // ── Transform origin ────────────────────────────
 
 /** Opposite-side origin so stacked panels recede away from the stack edge. */
 function getTransformOrigin(side: Side): string {
-  if (side === "right") {
-    return "left center";
-  }
-  if (side === "left") {
-    return "right center";
-  }
-  return "center top";
+	if (side === "right") {
+		return "left center";
+	}
+	if (side === "left") {
+		return "right center";
+	}
+	return "center top";
 }
 
 // ── Panel positioning ───────────────────────────
@@ -129,43 +129,43 @@ function getTransformOrigin(side: Side): string {
  * Fixed-position styles for a panel, accounting for side, width, and depth.
  */
 export function getPanelStyles(
-  side: Side,
-  config: ResolvedConfig,
-  index: number
+	side: Side,
+	config: ResolvedConfig,
+	index: number,
 ): CSSProperties {
-  const { width, maxWidth, zIndex } = config;
-  const base: CSSProperties = {
-    position: "fixed",
-    zIndex: zIndex + 10 + index,
-    display: "flex",
-    flexDirection: "column",
-    willChange: "transform",
-    transformOrigin: getTransformOrigin(side),
-  };
+	const { width, maxWidth, zIndex } = config;
+	const base: CSSProperties = {
+		position: "fixed",
+		zIndex: zIndex + 10 + index,
+		display: "flex",
+		flexDirection: "column",
+		willChange: "transform",
+		transformOrigin: getTransformOrigin(side),
+	};
 
-  if (side === "bottom") {
-    return {
-      ...base,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      // dvh tracks the dynamic viewport on iOS Safari (accounts for browser chrome).
-      height: "85dvh",
-      maxHeight: "85dvh",
-      // borderRadius is animated via Motion's animate prop for scale correction
-    };
-  }
+	if (side === "bottom") {
+		return {
+			...base,
+			left: 0,
+			right: 0,
+			bottom: 0,
+			// dvh tracks the dynamic viewport on iOS Safari (accounts for browser chrome).
+			height: "85dvh",
+			maxHeight: "85dvh",
+			// borderRadius is animated via Motion's animate prop for scale correction
+		};
+	}
 
-  // Left or right side panel
-  const sideStyles: CSSProperties =
-    side === "right"
-      ? { top: 0, right: 0, bottom: 0 }
-      : { top: 0, left: 0, bottom: 0 };
+	// Left or right side panel
+	const sideStyles: CSSProperties =
+		side === "right"
+			? { top: 0, right: 0, bottom: 0 }
+			: { top: 0, left: 0, bottom: 0 };
 
-  return {
-    ...base,
-    ...sideStyles,
-    width,
-    maxWidth,
-  };
+	return {
+		...base,
+		...sideStyles,
+		width,
+		maxWidth,
+	};
 }

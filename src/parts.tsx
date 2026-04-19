@@ -1,15 +1,15 @@
 import {
-  Root as ScrollAreaRoot,
-  Scrollbar as ScrollAreaScrollbar,
-  Thumb as ScrollAreaThumb,
-  Viewport as ScrollAreaViewport,
+	Root as ScrollAreaRoot,
+	Scrollbar as ScrollAreaScrollbar,
+	Thumb as ScrollAreaThumb,
+	Viewport as ScrollAreaViewport,
 } from "@radix-ui/react-scroll-area";
 import { Slot } from "@radix-ui/react-slot";
 import {
-  type CSSProperties,
-  type KeyboardEvent as ReactKeyboardEvent,
-  type ReactNode,
-  useEffect,
+	type CSSProperties,
+	type KeyboardEvent as ReactKeyboardEvent,
+	type ReactNode,
+	useEffect,
 } from "react";
 import { ArrowLeftIcon, XIcon } from "./icons";
 import { useSheetPanel } from "./panel-context";
@@ -17,244 +17,244 @@ import { useSheetPanel } from "./panel-context";
 // ── Sheet.Handle ────────────────────────────────
 
 export interface SheetHandleProps {
-  /** Render as child element, merging props */
-  asChild?: boolean;
-  /** Custom handle content. Defaults to a centered grab bar. */
-  children?: ReactNode;
-  className?: string;
-  style?: CSSProperties;
+	/** Render as child element, merging props */
+	asChild?: boolean;
+	/** Custom handle content. Defaults to a centered grab bar. */
+	children?: ReactNode;
+	className?: string;
+	style?: CSSProperties;
 }
 
 function SheetHandle({
-  asChild,
-  className,
-  style,
-  children,
+	asChild,
+	className,
+	style,
+	children,
 }: SheetHandleProps) {
-  const { close, back, isNested } = useSheetPanel();
-  const dismiss = isNested ? back : close;
-  const Comp = asChild ? Slot : "div";
-  return (
-    <Comp
-      aria-label="Dismiss"
-      className={`flex shrink-0 cursor-grab touch-none items-center justify-center pt-4 pb-1 ${className ?? ""}`}
-      data-stacksheet-handle=""
-      onClick={dismiss}
-      onKeyDown={(e: ReactKeyboardEvent) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          dismiss();
-        }
-      }}
-      role="button"
-      style={style}
-      tabIndex={0}
-    >
-      {children ?? (
-        <div aria-hidden="true" className="h-1 w-9 rounded-sm bg-current/25" />
-      )}
-    </Comp>
-  );
+	const { close, back, isNested } = useSheetPanel();
+	const dismiss = isNested ? back : close;
+	const Comp = asChild ? Slot : "div";
+	return (
+		<Comp
+			aria-label="Dismiss"
+			className={`flex shrink-0 cursor-grab touch-none items-center justify-center pt-4 pb-1 ${className ?? ""}`}
+			data-stacksheet-handle=""
+			onClick={dismiss}
+			onKeyDown={(e: ReactKeyboardEvent) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					dismiss();
+				}
+			}}
+			role="button"
+			style={style}
+			tabIndex={0}
+		>
+			{children ?? (
+				<div aria-hidden="true" className="h-1 w-9 rounded-sm bg-current/25" />
+			)}
+		</Comp>
+	);
 }
 
 // ── Sheet.Header ────────────────────────────────
 
 export interface SheetHeaderProps {
-  asChild?: boolean;
-  children: ReactNode;
-  className?: string;
-  style?: CSSProperties;
+	asChild?: boolean;
+	children: ReactNode;
+	className?: string;
+	style?: CSSProperties;
 }
 
 function SheetHeader({
-  asChild,
-  className,
-  style,
-  children,
+	asChild,
+	className,
+	style,
+	children,
 }: SheetHeaderProps) {
-  const Comp = asChild ? Slot : "header";
-  return (
-    <Comp
-      className={`flex h-14 shrink-0 items-center justify-between border-b px-6 ${className ?? ""}`}
-      style={style}
-    >
-      {children}
-    </Comp>
-  );
+	const Comp = asChild ? Slot : "header";
+	return (
+		<Comp
+			className={`flex h-14 shrink-0 items-center justify-between border-b px-6 ${className ?? ""}`}
+			style={style}
+		>
+			{children}
+		</Comp>
+	);
 }
 
 // ── Sheet.Title ─────────────────────────────────
 
 export interface SheetTitleProps {
-  asChild?: boolean;
-  children: ReactNode;
-  className?: string;
-  style?: CSSProperties;
+	asChild?: boolean;
+	children: ReactNode;
+	className?: string;
+	style?: CSSProperties;
 }
 
 function SheetTitle({ asChild, className, style, children }: SheetTitleProps) {
-  const { panelId } = useSheetPanel();
-  const Comp = asChild ? Slot : "h2";
-  return (
-    <Comp
-      className={`font-semibold text-sm ${className ?? ""}`}
-      id={`${panelId}-title`}
-      style={style}
-    >
-      {children}
-    </Comp>
-  );
+	const { panelId } = useSheetPanel();
+	const Comp = asChild ? Slot : "h2";
+	return (
+		<Comp
+			className={`font-semibold text-sm ${className ?? ""}`}
+			id={`${panelId}-title`}
+			style={style}
+		>
+			{children}
+		</Comp>
+	);
 }
 
 // ── Sheet.Description ───────────────────────────
 
 export interface SheetDescriptionProps {
-  asChild?: boolean;
-  children: ReactNode;
-  className?: string;
-  style?: CSSProperties;
+	asChild?: boolean;
+	children: ReactNode;
+	className?: string;
+	style?: CSSProperties;
 }
 
 function SheetDescription({
-  asChild,
-  className,
-  style,
-  children,
+	asChild,
+	className,
+	style,
+	children,
 }: SheetDescriptionProps) {
-  const { panelId, registerDescription } = useSheetPanel();
+	const { panelId, registerDescription } = useSheetPanel();
 
-  useEffect(() => registerDescription(), [registerDescription]);
-  const Comp = asChild ? Slot : "p";
-  return (
-    <Comp className={className} id={`${panelId}-desc`} style={style}>
-      {children}
-    </Comp>
-  );
+	useEffect(() => registerDescription(), [registerDescription]);
+	const Comp = asChild ? Slot : "p";
+	return (
+		<Comp className={className} id={`${panelId}-desc`} style={style}>
+			{children}
+		</Comp>
+	);
 }
 
 // ── Sheet.Body ──────────────────────────────────
 
 export interface SheetBodyProps {
-  /** When true, renders child element directly instead of ScrollArea */
-  asChild?: boolean;
-  children: ReactNode;
-  className?: string;
-  style?: CSSProperties;
+	/** When true, renders child element directly instead of ScrollArea */
+	asChild?: boolean;
+	children: ReactNode;
+	className?: string;
+	style?: CSSProperties;
 }
 
 function SheetBody({ asChild, className, style, children }: SheetBodyProps) {
-  if (asChild) {
-    return (
-      <Slot
-        className={`relative min-h-0 flex-1 ${className ?? ""}`}
-        data-stacksheet-no-drag=""
-        style={style}
-      >
-        {children}
-      </Slot>
-    );
-  }
+	if (asChild) {
+		return (
+			<Slot
+				className={`relative min-h-0 flex-1 ${className ?? ""}`}
+				data-stacksheet-no-drag=""
+				style={style}
+			>
+				{children}
+			</Slot>
+		);
+	}
 
-  return (
-    <ScrollAreaRoot
-      className={`relative flex min-h-0 flex-1 flex-col overflow-hidden ${className ?? ""}`}
-      data-stacksheet-no-drag=""
-      style={style}
-    >
-      <ScrollAreaViewport className="min-h-0 w-full flex-1 overscroll-contain">
-        {children}
-      </ScrollAreaViewport>
-      <ScrollAreaScrollbar
-        className="flex w-2 touch-none select-none p-0.5"
-        orientation="vertical"
-      >
-        <ScrollAreaThumb className="relative flex-1 rounded bg-current/15" />
-      </ScrollAreaScrollbar>
-    </ScrollAreaRoot>
-  );
+	return (
+		<ScrollAreaRoot
+			className={`relative flex min-h-0 flex-1 flex-col overflow-hidden ${className ?? ""}`}
+			data-stacksheet-no-drag=""
+			style={style}
+		>
+			<ScrollAreaViewport className="min-h-0 w-full flex-1 overscroll-contain">
+				{children}
+			</ScrollAreaViewport>
+			<ScrollAreaScrollbar
+				className="flex w-2 touch-none select-none p-0.5"
+				orientation="vertical"
+			>
+				<ScrollAreaThumb className="relative flex-1 rounded bg-current/15" />
+			</ScrollAreaScrollbar>
+		</ScrollAreaRoot>
+	);
 }
 
 // ── Sheet.Footer ────────────────────────────────
 
 export interface SheetFooterProps {
-  asChild?: boolean;
-  children: ReactNode;
-  className?: string;
-  style?: CSSProperties;
+	asChild?: boolean;
+	children: ReactNode;
+	className?: string;
+	style?: CSSProperties;
 }
 
 function SheetFooter({
-  asChild,
-  className,
-  style,
-  children,
+	asChild,
+	className,
+	style,
+	children,
 }: SheetFooterProps) {
-  const Comp = asChild ? Slot : "footer";
-  return (
-    <Comp
-      className={`flex shrink-0 items-center gap-2 border-t px-6 py-3 ${className ?? ""}`}
-      style={style}
-    >
-      {children}
-    </Comp>
-  );
+	const Comp = asChild ? Slot : "footer";
+	return (
+		<Comp
+			className={`flex shrink-0 items-center gap-2 border-t px-6 py-3 ${className ?? ""}`}
+			style={style}
+		>
+			{children}
+		</Comp>
+	);
 }
 
 // ── Sheet.Close ─────────────────────────────────
 
 export interface SheetCloseProps {
-  asChild?: boolean;
-  /** Custom content. Defaults to an X icon. */
-  children?: ReactNode;
-  className?: string;
-  style?: CSSProperties;
+	asChild?: boolean;
+	/** Custom content. Defaults to an X icon. */
+	children?: ReactNode;
+	className?: string;
+	style?: CSSProperties;
 }
 
 function SheetClose({ asChild, className, style, children }: SheetCloseProps) {
-  const { close } = useSheetPanel();
-  const Comp = asChild ? Slot : "button";
-  return (
-    <Comp
-      aria-label={children ? undefined : "Close"}
-      className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100 ${className ?? ""}`}
-      onClick={close}
-      style={style}
-      type={asChild ? undefined : "button"}
-    >
-      {children ?? <XIcon />}
-    </Comp>
-  );
+	const { close } = useSheetPanel();
+	const Comp = asChild ? Slot : "button";
+	return (
+		<Comp
+			aria-label={children ? undefined : "Close"}
+			className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100 ${className ?? ""}`}
+			onClick={close}
+			style={style}
+			type={asChild ? undefined : "button"}
+		>
+			{children ?? <XIcon />}
+		</Comp>
+	);
 }
 
 // ── Sheet.Back ──────────────────────────────────
 
 export interface SheetBackProps {
-  asChild?: boolean;
-  /** Custom content. Defaults to an arrow-left icon. */
-  children?: ReactNode;
-  className?: string;
-  style?: CSSProperties;
+	asChild?: boolean;
+	/** Custom content. Defaults to an arrow-left icon. */
+	children?: ReactNode;
+	className?: string;
+	style?: CSSProperties;
 }
 
 function SheetBack({ asChild, className, style, children }: SheetBackProps) {
-  const { back, isNested } = useSheetPanel();
+	const { back, isNested } = useSheetPanel();
 
-  if (!isNested) {
-    return null;
-  }
+	if (!isNested) {
+		return null;
+	}
 
-  const Comp = asChild ? Slot : "button";
-  return (
-    <Comp
-      aria-label={children ? undefined : "Back"}
-      className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100 ${className ?? ""}`}
-      onClick={back}
-      style={style}
-      type={asChild ? undefined : "button"}
-    >
-      {children ?? <ArrowLeftIcon />}
-    </Comp>
-  );
+	const Comp = asChild ? Slot : "button";
+	return (
+		<Comp
+			aria-label={children ? undefined : "Back"}
+			className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100 ${className ?? ""}`}
+			onClick={back}
+			style={style}
+			type={asChild ? undefined : "button"}
+		>
+			{children ?? <ArrowLeftIcon />}
+		</Comp>
+	);
 }
 
 // ── Sheet namespace ─────────────────────────────
@@ -270,12 +270,12 @@ function SheetBack({ asChild, className, style, children }: SheetBackProps) {
  * `aria-labelledby` and `aria-describedby` via matching IDs.
  */
 export const Sheet = {
-  Handle: SheetHandle,
-  Header: SheetHeader,
-  Title: SheetTitle,
-  Description: SheetDescription,
-  Body: SheetBody,
-  Footer: SheetFooter,
-  Close: SheetClose,
-  Back: SheetBack,
+	Handle: SheetHandle,
+	Header: SheetHeader,
+	Title: SheetTitle,
+	Description: SheetDescription,
+	Body: SheetBody,
+	Footer: SheetFooter,
+	Close: SheetClose,
+	Back: SheetBack,
 } as const;

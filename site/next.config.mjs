@@ -1,7 +1,7 @@
 import { createMDX } from "fumadocs-mdx/next";
 
 const config = {
-  reactStrictMode: true,
+	reactStrictMode: true,
 };
 
 const withMDX = createMDX();

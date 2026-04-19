@@ -1,24 +1,24 @@
 {
-  "title": "Docs",
-  "pages": [
-    "---Basics---",
-    "index",
-    "installation",
-    "---API---",
-    "create-sheet",
-    "provider",
-    "hooks",
-    "config",
-    "---Features---",
-    "composable-parts",
-    "drag-to-dismiss",
-    "snap-points",
-    "non-modal",
-    "body-scale",
-    "---Guides---",
-    "styling",
-    "accessibility",
-    "callbacks",
-    "type-registry"
-  ]
+	"title": "Docs",
+	"pages": [
+		"---Basics---",
+		"index",
+		"installation",
+		"---API---",
+		"create-sheet",
+		"provider",
+		"hooks",
+		"config",
+		"---Features---",
+		"composable-parts",
+		"drag-to-dismiss",
+		"snap-points",
+		"non-modal",
+		"body-scale",
+		"---Guides---",
+		"styling",
+		"accessibility",
+		"callbacks",
+		"type-registry"
+	]
 }

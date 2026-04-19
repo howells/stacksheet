@@ -1,21 +1,21 @@
 // CloseWatcher — ambient type for browsers that support it (Chromium 120+)
 declare global {
-  var CloseWatcher:
-    | (new () => { onclose: (() => void) | null; destroy: () => void })
-    | undefined;
+	var CloseWatcher:
+		| (new () => { onclose: (() => void) | null; destroy: () => void })
+		| undefined;
 }
 
 import { FocusTrap } from "focus-trap-react";
 import { AnimatePresence, motion as m, useReducedMotion } from "motion/react";
 import {
-  type ComponentType,
-  type CSSProperties,
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+	type ComponentType,
+	type CSSProperties,
+	memo,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
 } from "react";
 import { RemoveScroll } from "react-remove-scroll";
 import type { StoreApi } from "zustand";
@@ -25,62 +25,62 @@ import { useResolvedSide } from "./media";
 import { SheetPanelContext } from "./panel-context";
 import { getSnapOffset, resolveSnapPoints } from "./snap-points";
 import {
-  getAnimatedBorderRadius,
-  getPanelStyles,
-  getSlideFrom,
-  getSlideTarget,
-  getStackOffset,
-  getStackTransform,
-  type SlideValues,
+	getAnimatedBorderRadius,
+	getPanelStyles,
+	getSlideFrom,
+	getSlideTarget,
+	getStackOffset,
+	getStackTransform,
+	type SlideValues,
 } from "./stacking";
 import type {
-  CloseReason,
-  ContentMap,
-  HeaderRenderProps,
-  ResolvedConfig,
-  SheetActions,
-  SheetItem,
-  Side,
-  StacksheetClassNames,
-  StacksheetLayout,
-  StacksheetSnapshot,
+	CloseReason,
+	ContentMap,
+	HeaderRenderProps,
+	ResolvedConfig,
+	SheetActions,
+	SheetItem,
+	Side,
+	StacksheetClassNames,
+	StacksheetLayout,
+	StacksheetSnapshot,
 } from "./types";
 import { type DragState, useDrag } from "./use-drag";
 
 // ── Default header ──────────────────────────────
 
 function DefaultHeader({
-  isNested,
-  onBack,
-  onClose,
-  className,
+	isNested,
+	onBack,
+	onClose,
+	className,
 }: HeaderRenderProps & { className?: string }) {
-  return (
-    <div
-      className={`flex shrink-0 items-center justify-between px-4 pt-4 pb-2 ${className ?? ""}`}
-    >
-      <div className="flex items-center gap-2">
-        {isNested && (
-          <button
-            aria-label="Back"
-            className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-none bg-black/5 p-0 text-inherit opacity-70 transition-opacity duration-150 hover:opacity-100"
-            onClick={onBack}
-            type="button"
-          >
-            <ArrowLeftIcon />
-          </button>
-        )}
-      </div>
-      <button
-        aria-label="Close"
-        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-none bg-black/5 p-0 text-inherit opacity-70 transition-opacity duration-150 hover:opacity-100"
-        onClick={onClose}
-        type="button"
-      >
-        <XIcon />
-      </button>
-    </div>
-  );
+	return (
+		<div
+			className={`flex shrink-0 items-center justify-between px-4 pt-4 pb-2 ${className ?? ""}`}
+		>
+			<div className="flex items-center gap-2">
+				{isNested && (
+					<button
+						aria-label="Back"
+						className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-none bg-black/5 p-0 text-inherit opacity-70 transition-opacity duration-150 hover:opacity-100"
+						onClick={onBack}
+						type="button"
+					>
+						<ArrowLeftIcon />
+					</button>
+				)}
+			</div>
+			<button
+				aria-label="Close"
+				className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-none bg-black/5 p-0 text-inherit opacity-70 transition-opacity duration-150 hover:opacity-100"
+				onClick={onClose}
+				type="button"
+			>
+				<XIcon />
+			</button>
+		</div>
+	);
 }
 
 // ── Resolved classNames ─────────────────────────
@@ -88,718 +88,718 @@ function DefaultHeader({
 type ResolvedClassNames = Required<StacksheetClassNames>;
 
 const EMPTY_CLASSNAMES: ResolvedClassNames = {
-  backdrop: "",
-  panel: "",
-  header: "",
+	backdrop: "",
+	panel: "",
+	header: "",
 };
 
 function resolveClassNames(cn?: StacksheetClassNames): ResolvedClassNames {
-  if (!cn) {
-    return EMPTY_CLASSNAMES;
-  }
-  return {
-    backdrop: cn.backdrop ?? "",
-    panel: cn.panel ?? "",
-    header: cn.header ?? "",
-  };
+	if (!cn) {
+		return EMPTY_CLASSNAMES;
+	}
+	return {
+		backdrop: cn.backdrop ?? "",
+		panel: cn.panel ?? "",
+		header: cn.header ?? "",
+	};
 }
 
 // ── Helpers ──────────────────────────────────────
 
 function buildAriaProps(
-  isTop: boolean,
-  isModal: boolean,
-  isComposable: boolean,
-  ariaLabel: string,
-  panelId: string,
-  hasDescription: boolean
+	isTop: boolean,
+	isModal: boolean,
+	isComposable: boolean,
+	ariaLabel: string,
+	panelId: string,
+	hasDescription: boolean,
 ): Record<string, string | undefined> {
-  if (!isTop) {
-    return {};
-  }
-  const props: Record<string, string | undefined> = { role: "dialog" };
-  if (isModal) {
-    props["aria-modal"] = "true";
-  }
-  if (isComposable) {
-    props["aria-labelledby"] = `${panelId}-title`;
-    if (hasDescription) {
-      props["aria-describedby"] = `${panelId}-desc`;
-    }
-  } else {
-    props["aria-label"] = ariaLabel;
-  }
-  return props;
+	if (!isTop) {
+		return {};
+	}
+	const props: Record<string, string | undefined> = { role: "dialog" };
+	if (isModal) {
+		props["aria-modal"] = "true";
+	}
+	if (isComposable) {
+		props["aria-labelledby"] = `${panelId}-title`;
+		if (hasDescription) {
+			props["aria-describedby"] = `${panelId}-desc`;
+		}
+	} else {
+		props["aria-label"] = ariaLabel;
+	}
+	return props;
 }
 
 function getDragTransform(
-  side: Side,
-  offset: number
+	side: Side,
+	offset: number,
 ): { x?: number; y?: number } {
-  if (offset === 0) {
-    return {};
-  }
-  switch (side) {
-    case "right":
-      return { x: offset };
-    case "left":
-      return { x: -offset };
-    case "bottom":
-      return { y: offset };
-    default:
-      return {};
-  }
+	if (offset === 0) {
+		return {};
+	}
+	switch (side) {
+		case "right":
+			return { x: offset };
+		case "left":
+			return { x: -offset };
+		case "bottom":
+			return { y: offset };
+		default:
+			return {};
+	}
 }
 
 /** Shared tween config for non-spring animated properties (border radius, box shadow) */
 const VISUAL_TWEEN = {
-  type: "tween" as const,
-  duration: 0.25,
-  ease: "easeOut" as const,
+	type: "tween" as const,
+	duration: 0.25,
+	ease: "easeOut" as const,
 };
 
 // ── Panel helpers (extracted to reduce SheetPanel complexity) ──
 
 /** Measure panel height via ResizeObserver for snap point calculations */
 function usePanelHeight(
-  panelRef: React.RefObject<HTMLDivElement | null>,
-  hasSnapPoints: boolean
+	panelRef: React.RefObject<HTMLDivElement | null>,
+	hasSnapPoints: boolean,
 ): number {
-  const [height, setHeight] = useState(0);
+	const [height, setHeight] = useState(0);
 
-  useEffect(() => {
-    const el = panelRef.current;
-    if (!(el && hasSnapPoints)) {
-      return;
-    }
-    setHeight(el.offsetHeight);
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry) {
-        setHeight(entry.contentRect.height);
-      }
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [panelRef, hasSnapPoints]);
+	useEffect(() => {
+		const el = panelRef.current;
+		if (!(el && hasSnapPoints)) {
+			return;
+		}
+		setHeight(el.offsetHeight);
+		const observer = new ResizeObserver(([entry]) => {
+			if (entry) {
+				setHeight(entry.contentRect.height);
+			}
+		});
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, [panelRef, hasSnapPoints]);
 
-  return height;
+	return height;
 }
 
 function useViewportHeight(active: boolean): number {
-  const getHeight = useCallback(
-    () =>
-      typeof window === "undefined"
-        ? 0
-        : (window.visualViewport?.height ?? window.innerHeight),
-    []
-  );
-  const [height, setHeight] = useState(() => getHeight());
+	const getHeight = useCallback(
+		() =>
+			typeof window === "undefined"
+				? 0
+				: (window.visualViewport?.height ?? window.innerHeight),
+		[],
+	);
+	const [height, setHeight] = useState(() => getHeight());
 
-  useEffect(() => {
-    if (!active || typeof window === "undefined") {
-      return;
-    }
+	useEffect(() => {
+		if (!active || typeof window === "undefined") {
+			return;
+		}
 
-    const update = () => setHeight(getHeight());
-    update();
+		const update = () => setHeight(getHeight());
+		update();
 
-    window.addEventListener("resize", update);
-    window.visualViewport?.addEventListener("resize", update);
+		window.addEventListener("resize", update);
+		window.visualViewport?.addEventListener("resize", update);
 
-    return () => {
-      window.removeEventListener("resize", update);
-      window.visualViewport?.removeEventListener("resize", update);
-    };
-  }, [active, getHeight]);
+		return () => {
+			window.removeEventListener("resize", update);
+			window.visualViewport?.removeEventListener("resize", update);
+		};
+	}, [active, getHeight]);
 
-  return height;
+	return height;
 }
 
 /** Build the panel's inline style object */
 function buildPanelStyle(
-  panelStyles: CSSProperties,
-  isTop: boolean,
-  hasPanelClass: boolean,
-  isDragging: boolean
+	panelStyles: CSSProperties,
+	isTop: boolean,
+	hasPanelClass: boolean,
+	isDragging: boolean,
 ): CSSProperties {
-  return {
-    ...panelStyles,
-    pointerEvents: isTop ? "auto" : "none",
-    ...(isTop ? {} : { contain: "layout style paint" }),
-    ...(isDragging ? { transition: "none" } : {}),
-    ...(hasPanelClass
-      ? {}
-      : {
-          background: "var(--background, #fff)",
-          borderColor: "var(--border, transparent)",
-        }),
-  };
+	return {
+		...panelStyles,
+		pointerEvents: isTop ? "auto" : "none",
+		...(isTop ? {} : { contain: "layout style paint" }),
+		...(isDragging ? { transition: "none" } : {}),
+		...(hasPanelClass
+			? {}
+			: {
+					background: "var(--background, #fff)",
+					borderColor: "var(--border, transparent)",
+				}),
+	};
 }
 
 /** Build per-property transition config */
 function buildPanelTransition(
-  isDragging: boolean,
-  isTop: boolean,
-  spring: Record<string, unknown>,
-  stackSpring: Record<string, unknown>
+	isDragging: boolean,
+	isTop: boolean,
+	spring: Record<string, unknown>,
+	stackSpring: Record<string, unknown>,
 ) {
-  if (isDragging) {
-    return { type: "tween" as const, duration: 0 };
-  }
+	if (isDragging) {
+		return { type: "tween" as const, duration: 0 };
+	}
 
-  const base = isTop ? spring : stackSpring;
-  return { ...base, borderRadius: VISUAL_TWEEN, boxShadow: VISUAL_TWEEN };
+	const base = isTop ? spring : stackSpring;
+	return { ...base, borderRadius: VISUAL_TWEEN, boxShadow: VISUAL_TWEEN };
 }
 
 /** Compute the Y offset for the current snap point */
 function computeSnapYOffset(
-  side: Side,
-  snapHeights: number[],
-  activeSnapIndex: number,
-  measuredHeight: number
+	side: Side,
+	snapHeights: number[],
+	activeSnapIndex: number,
+	measuredHeight: number,
 ): number {
-  if (side !== "bottom" || snapHeights.length === 0 || measuredHeight <= 0) {
-    return 0;
-  }
-  return getSnapOffset(activeSnapIndex, snapHeights, measuredHeight);
+	if (side !== "bottom" || snapHeights.length === 0 || measuredHeight <= 0) {
+		return 0;
+	}
+	return getSnapOffset(activeSnapIndex, snapHeights, measuredHeight);
 }
 
 function getBottomSlideDistance(measuredHeight: number): number {
-  if (measuredHeight > 0) {
-    return measuredHeight;
-  }
-  if (typeof window !== "undefined") {
-    return window.innerHeight;
-  }
-  return 1000;
+	if (measuredHeight > 0) {
+		return measuredHeight;
+	}
+	if (typeof window !== "undefined") {
+		return window.innerHeight;
+	}
+	return 1000;
 }
 
 function resolveSlideFrom(
-  side: Side,
-  slideFrom: SlideValues,
-  measuredHeight: number
+	side: Side,
+	slideFrom: SlideValues,
+	measuredHeight: number,
 ): SlideValues {
-  if (side !== "bottom") {
-    return slideFrom;
-  }
-  return { y: getBottomSlideDistance(measuredHeight) };
+	if (side !== "bottom") {
+		return slideFrom;
+	}
+	return { y: getBottomSlideDistance(measuredHeight) };
 }
 
 function buildAnimateTarget(
-  slideTarget: SlideValues,
-  stackOffset: { x?: number; y?: number },
-  dragOffset: { x?: number; y?: number },
-  transform: ReturnType<typeof getStackTransform>,
-  animatedRadius: Record<string, number>,
-  transition: Record<string, unknown>,
-  snapYOffset: number,
-  isTop: boolean
+	slideTarget: SlideValues,
+	stackOffset: { x?: number; y?: number },
+	dragOffset: { x?: number; y?: number },
+	transform: ReturnType<typeof getStackTransform>,
+	animatedRadius: Record<string, number>,
+	transition: Record<string, unknown>,
+	snapYOffset: number,
+	isTop: boolean,
 ) {
-  const base = {
-    ...slideTarget,
-    ...stackOffset,
-    ...dragOffset,
-    scale: transform.scale,
-    opacity: transform.opacity,
-    ...animatedRadius,
-    boxShadow: getShadow(!isTop),
-    transition,
-  };
+	const base = {
+		...slideTarget,
+		...stackOffset,
+		...dragOffset,
+		scale: transform.scale,
+		opacity: transform.opacity,
+		...animatedRadius,
+		boxShadow: getShadow(!isTop),
+		transition,
+	};
 
-  if (snapYOffset > 0) {
-    return { ...base, y: (dragOffset.y ?? 0) + snapYOffset };
-  }
-  return base;
+	if (snapYOffset > 0) {
+		return { ...base, y: (dragOffset.y ?? 0) + snapYOffset };
+	}
+	return base;
 }
 
 // ── Modal focus trap wrapper ────────────────────
 
 /** Wraps children in a focus trap when modal mode is enabled. */
 function ModalFocusTrap({
-  enabled,
-  active,
-  fallbackRef,
-  children,
+	enabled,
+	active,
+	fallbackRef,
+	children,
 }: {
-  enabled: boolean;
-  active: boolean;
-  fallbackRef: React.RefObject<HTMLElement | null>;
-  children: React.ReactNode;
+	enabled: boolean;
+	active: boolean;
+	fallbackRef: React.RefObject<HTMLElement | null>;
+	children: React.ReactNode;
 }) {
-  if (!enabled) {
-    return children;
-  }
-  return (
-    <FocusTrap
-      active={active}
-      focusTrapOptions={{
-        initialFocus: false,
-        returnFocusOnDeactivate: true,
-        escapeDeactivates: false,
-        allowOutsideClick: true,
-        checkCanFocusTrap: () =>
-          new Promise<void>((resolve) =>
-            requestAnimationFrame(() => resolve())
-          ),
-        fallbackFocus: () => {
-          if (fallbackRef.current) {
-            return fallbackRef.current;
-          }
-          return document.body;
-        },
-      }}
-    >
-      {children}
-    </FocusTrap>
-  );
+	if (!enabled) {
+		return children;
+	}
+	return (
+		<FocusTrap
+			active={active}
+			focusTrapOptions={{
+				initialFocus: false,
+				returnFocusOnDeactivate: true,
+				escapeDeactivates: false,
+				allowOutsideClick: true,
+				checkCanFocusTrap: () =>
+					new Promise<void>((resolve) =>
+						requestAnimationFrame(() => resolve()),
+					),
+				fallbackFocus: () => {
+					if (fallbackRef.current) {
+						return fallbackRef.current;
+					}
+					return document.body;
+				},
+			}}
+		>
+			{children}
+		</FocusTrap>
+	);
 }
 
 // ── SheetPanel ──────────────────────────────────
 
 interface SheetPanelProps {
-  /** Currently active snap index */
-  activeSnapIndex: number;
-  // biome-ignore lint/suspicious/noExplicitAny: heterogeneous content component
-  Content: ComponentType<any> | undefined;
-  classNames: ResolvedClassNames;
-  close: () => void;
-  config: ResolvedConfig;
-  depth: number;
-  index: number;
-  isNested: boolean;
-  isTop: boolean;
-  item: SheetItem;
-  layout?: StacksheetLayout;
-  /** Called when drag release targets a snap point */
-  onSnap: (index: number) => void;
-  pop: () => void;
-  /** Whether the user prefers reduced motion */
-  prefersReducedMotion: boolean;
-  renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
-  shouldRender: boolean;
-  side: Side;
-  slideFrom: SlideValues;
-  slideTarget: SlideValues;
-  /** Resolved snap point heights in px (ascending). Empty = no snaps. */
-  snapHeights: number[];
-  spring: Record<string, unknown>;
-  stackSpring: Record<string, unknown>;
-  /** Swipe-specific close — sets reason to "swipe" */
-  swipeClose: () => void;
-  /** Swipe-specific pop — sets reason to "swipe" */
-  swipePop: () => void;
+	/** Currently active snap index */
+	activeSnapIndex: number;
+	// biome-ignore lint/suspicious/noExplicitAny: heterogeneous content component
+	Content: ComponentType<any> | undefined;
+	classNames: ResolvedClassNames;
+	close: () => void;
+	config: ResolvedConfig;
+	depth: number;
+	index: number;
+	isNested: boolean;
+	isTop: boolean;
+	item: SheetItem;
+	layout?: StacksheetLayout;
+	/** Called when drag release targets a snap point */
+	onSnap: (index: number) => void;
+	pop: () => void;
+	/** Whether the user prefers reduced motion */
+	prefersReducedMotion: boolean;
+	renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
+	shouldRender: boolean;
+	side: Side;
+	slideFrom: SlideValues;
+	slideTarget: SlideValues;
+	/** Resolved snap point heights in px (ascending). Empty = no snaps. */
+	snapHeights: number[];
+	spring: Record<string, unknown>;
+	stackSpring: Record<string, unknown>;
+	/** Swipe-specific close — sets reason to "swipe" */
+	swipeClose: () => void;
+	/** Swipe-specific pop — sets reason to "swipe" */
+	swipePop: () => void;
 }
 
 /** Renders panel inner content — composable mode vs classic (header + scroll) */
 const PanelInnerContent = memo(function PanelInnerContent({
-  isComposable,
-  shouldRender,
-  Content,
-  data,
-  renderHeader,
-  headerProps,
-  headerClassName,
+	isComposable,
+	shouldRender,
+	Content,
+	data,
+	renderHeader,
+	headerProps,
+	headerClassName,
 }: {
-  isComposable: boolean;
-  shouldRender: boolean;
-  // biome-ignore lint/suspicious/noExplicitAny: heterogeneous content component
-  Content: ComponentType<any> | undefined;
-  data: Record<string, unknown>;
-  renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
-  headerProps: HeaderRenderProps;
-  headerClassName: string | undefined;
+	isComposable: boolean;
+	shouldRender: boolean;
+	// biome-ignore lint/suspicious/noExplicitAny: heterogeneous content component
+	Content: ComponentType<any> | undefined;
+	data: Record<string, unknown>;
+	renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
+	headerProps: HeaderRenderProps;
+	headerClassName: string | undefined;
 }) {
-  if (isComposable) {
-    return shouldRender && Content ? <Content {...data} /> : null;
-  }
+	if (isComposable) {
+		return shouldRender && Content ? <Content {...data} /> : null;
+	}
 
-  return (
-    <>
-      {renderHeader ? (
-        renderHeader(headerProps)
-      ) : (
-        <DefaultHeader {...headerProps} className={headerClassName} />
-      )}
-      {shouldRender && Content && (
-        <div
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
-          data-stacksheet-no-drag=""
-        >
-          <Content {...data} />
-        </div>
-      )}
-    </>
-  );
+	return (
+		<>
+			{renderHeader ? (
+				renderHeader(headerProps)
+			) : (
+				<DefaultHeader {...headerProps} className={headerClassName} />
+			)}
+			{shouldRender && Content && (
+				<div
+					className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+					data-stacksheet-no-drag=""
+				>
+					<Content {...data} />
+				</div>
+			)}
+		</>
+	);
 });
 
 PanelInnerContent.displayName = "PanelInnerContent";
 
 function resolvePanelLayout(
-  layout: StacksheetLayout | undefined,
-  renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode)
+	layout: StacksheetLayout | undefined,
+	renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode),
 ): StacksheetLayout {
-  if (layout) {
-    return layout;
-  }
-  return renderHeader === false ? "composable" : "classic";
+	if (layout) {
+		return layout;
+	}
+	return renderHeader === false ? "composable" : "classic";
 }
 
 /** Built-in drag handle for bottom panels — always visible on the top sheet */
 function BottomHandle({ onDismiss }: { onDismiss?: () => void }) {
-  return (
-    <button
-      aria-label="Dismiss"
-      className="absolute inset-x-0 top-0 z-10 flex w-full cursor-grab touch-none items-center justify-center border-none bg-transparent pt-2.5 pb-2"
-      data-stacksheet-handle=""
-      onClick={onDismiss}
-      type="button"
-    >
-      <div
-        aria-hidden="true"
-        className="h-[5px] w-9 rounded-full bg-current/15"
-      />
-    </button>
-  );
+	return (
+		<button
+			aria-label="Dismiss"
+			className="absolute inset-x-0 top-0 z-10 flex w-full cursor-grab touch-none items-center justify-center border-none bg-transparent pt-2.5 pb-2"
+			data-stacksheet-handle=""
+			onClick={onDismiss}
+			type="button"
+		>
+			<div
+				aria-hidden="true"
+				className="h-[5px] w-9 rounded-full bg-current/15"
+			/>
+		</button>
+	);
 }
 
 /** Floating drag handle for left/right side panels */
 function SideHandle({
-  side,
-  isHovered,
-  onDismiss,
+	side,
+	isHovered,
+	onDismiss,
 }: {
-  side: Side;
-  isHovered: boolean;
-  onDismiss?: () => void;
+	side: Side;
+	isHovered: boolean;
+	onDismiss?: () => void;
 }) {
-  const position: CSSProperties =
-    side === "right" ? { right: "100%" } : { left: "100%" };
+	const position: CSSProperties =
+		side === "right" ? { right: "100%" } : { left: "100%" };
 
-  return (
-    <m.div
-      animate={{ opacity: isHovered ? 1 : 0 }}
-      aria-label="Dismiss"
-      className="absolute top-0 bottom-0 flex w-6 cursor-grab touch-none items-center justify-center"
-      data-stacksheet-handle=""
-      onClick={onDismiss}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onDismiss?.();
-        }
-      }}
-      role="button"
-      style={position}
-      tabIndex={0}
-      transition={{ duration: isHovered ? 0.15 : 0.4, ease: "easeOut" }}
-    >
-      <div aria-hidden="true" className="h-8 w-1 rounded-full bg-current/20" />
-    </m.div>
-  );
+	return (
+		<m.div
+			animate={{ opacity: isHovered ? 1 : 0 }}
+			aria-label="Dismiss"
+			className="absolute top-0 bottom-0 flex w-6 cursor-grab touch-none items-center justify-center"
+			data-stacksheet-handle=""
+			onClick={onDismiss}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					onDismiss?.();
+				}
+			}}
+			role="button"
+			style={position}
+			tabIndex={0}
+			transition={{ duration: isHovered ? 0.15 : 0.4, ease: "easeOut" }}
+		>
+			<div aria-hidden="true" className="h-8 w-1 rounded-full bg-current/20" />
+		</m.div>
+	);
 }
 
 const SheetPanel = memo(function SheetPanel({
-  item,
-  index,
-  depth,
-  isTop,
-  isNested,
-  side,
-  config,
-  classNames,
-  Content,
-  shouldRender,
-  pop,
-  close,
-  swipeClose,
-  swipePop,
-  snapHeights,
-  activeSnapIndex,
-  onSnap,
-  layout,
-  renderHeader,
-  slideFrom,
-  slideTarget,
-  spring,
-  stackSpring,
-  prefersReducedMotion,
+	item,
+	index,
+	depth,
+	isTop,
+	isNested,
+	side,
+	config,
+	classNames,
+	Content,
+	shouldRender,
+	pop,
+	close,
+	swipeClose,
+	swipePop,
+	snapHeights,
+	activeSnapIndex,
+	onSnap,
+	layout,
+	renderHeader,
+	slideFrom,
+	slideTarget,
+	spring,
+	stackSpring,
+	prefersReducedMotion,
 }: SheetPanelProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const hasEnteredRef = useRef(false);
-  const [dragState, setDragState] = useState<DragState>({
-    offset: 0,
-    isDragging: false,
-  });
-  const [isHovered, setIsHovered] = useState(false);
+	const panelRef = useRef<HTMLDivElement>(null);
+	const hasEnteredRef = useRef(false);
+	const [dragState, setDragState] = useState<DragState>({
+		offset: 0,
+		isDragging: false,
+	});
+	const [isHovered, setIsHovered] = useState(false);
 
-  const measuredHeight = usePanelHeight(panelRef, snapHeights.length > 0);
+	const measuredHeight = usePanelHeight(panelRef, snapHeights.length > 0);
 
-  const transform = getStackTransform(depth, config.stacking);
-  const panelStyles = getPanelStyles(side, config, index);
+	const transform = getStackTransform(depth, config.stacking);
+	const panelStyles = getPanelStyles(side, config, index);
 
-  // Reset entrance flag when panel moves away from top
-  useEffect(() => {
-    if (!isTop) {
-      hasEnteredRef.current = false;
-    }
-  }, [isTop]);
+	// Reset entrance flag when panel moves away from top
+	useEffect(() => {
+		if (!isTop) {
+			hasEnteredRef.current = false;
+		}
+	}, [isTop]);
 
-  const handleAnimationComplete = useCallback(() => {
-    if (isTop && !hasEnteredRef.current) {
-      hasEnteredRef.current = true;
-      config.onOpenComplete?.();
-    }
-  }, [isTop, config]);
+	const handleAnimationComplete = useCallback(() => {
+		if (isTop && !hasEnteredRef.current) {
+			hasEnteredRef.current = true;
+			config.onOpenComplete?.();
+		}
+	}, [isTop, config]);
 
-  // Drag-to-dismiss (only on top panel, disabled when reduced motion is preferred)
-  useDrag(
-    panelRef,
-    {
-      enabled:
-        isTop && config.drag && config.dismissible && !prefersReducedMotion,
-      closeThreshold: config.closeThreshold,
-      velocityThreshold: config.velocityThreshold,
-      side,
-      onClose: swipeClose,
-      onPop: swipePop,
-      isNested,
-      snapHeights,
-      activeSnapIndex,
-      onSnap,
-      sequential: config.snapToSequentialPoints,
-    },
-    setDragState
-  );
+	// Drag-to-dismiss (only on top panel, disabled when reduced motion is preferred)
+	useDrag(
+		panelRef,
+		{
+			enabled:
+				isTop && config.drag && config.dismissible && !prefersReducedMotion,
+			closeThreshold: config.closeThreshold,
+			velocityThreshold: config.velocityThreshold,
+			side,
+			onClose: swipeClose,
+			onPop: swipePop,
+			isNested,
+			snapHeights,
+			activeSnapIndex,
+			onSnap,
+			sequential: config.snapToSequentialPoints,
+		},
+		setDragState,
+	);
 
-  // Prefer explicit per-sheet metadata; keep data.__ariaLabel as a legacy fallback.
-  const ariaLabel =
-    item.ariaLabel ??
-    (typeof item.data?.__ariaLabel === "string"
-      ? item.data.__ariaLabel
-      : undefined) ??
-    config.ariaLabel;
+	// Prefer explicit per-sheet metadata; keep data.__ariaLabel as a legacy fallback.
+	const ariaLabel =
+		item.ariaLabel ??
+		(typeof item.data?.__ariaLabel === "string"
+			? item.data.__ariaLabel
+			: undefined) ??
+		config.ariaLabel;
 
-  // Panel context for composable parts (Sheet.Close, Sheet.Title, etc.)
-  const panelId = `stacksheet-${item.id}`;
-  const [hasDescription, setHasDescription] = useState(false);
-  const registerDescription = useCallback(() => {
-    setHasDescription(true);
-    return () => setHasDescription(false);
-  }, []);
-  const panelContext = useMemo(
-    () => ({
-      close,
-      back: pop,
-      isNested,
-      isTop,
-      panelId,
-      side,
-      hasDescription,
-      registerDescription,
-    }),
-    [
-      close,
-      pop,
-      isNested,
-      isTop,
-      panelId,
-      side,
-      hasDescription,
-      registerDescription,
-    ]
-  );
+	// Panel context for composable parts (Sheet.Close, Sheet.Title, etc.)
+	const panelId = `stacksheet-${item.id}`;
+	const [hasDescription, setHasDescription] = useState(false);
+	const registerDescription = useCallback(() => {
+		setHasDescription(true);
+		return () => setHasDescription(false);
+	}, []);
+	const panelContext = useMemo(
+		() => ({
+			close,
+			back: pop,
+			isNested,
+			isTop,
+			panelId,
+			side,
+			hasDescription,
+			registerDescription,
+		}),
+		[
+			close,
+			pop,
+			isNested,
+			isTop,
+			panelId,
+			side,
+			hasDescription,
+			registerDescription,
+		],
+	);
 
-  const panelLayout = resolvePanelLayout(layout, renderHeader);
-  const isComposable = panelLayout === "composable";
-  const hasPanelClass = classNames.panel !== "";
-  const dragOffset = getDragTransform(side, dragState.offset);
-  const panelStyle = buildPanelStyle(
-    panelStyles,
-    isTop,
-    hasPanelClass,
-    dragState.isDragging
-  );
+	const panelLayout = resolvePanelLayout(layout, renderHeader);
+	const isComposable = panelLayout === "composable";
+	const hasPanelClass = classNames.panel !== "";
+	const dragOffset = getDragTransform(side, dragState.offset);
+	const panelStyle = buildPanelStyle(
+		panelStyles,
+		isTop,
+		hasPanelClass,
+		dragState.isDragging,
+	);
 
-  const headerProps = useMemo<HeaderRenderProps>(
-    () => ({
-      isNested,
-      onBack: pop,
-      onClose: close,
-      side,
-    }),
-    [close, isNested, pop, side]
-  );
+	const headerProps = useMemo<HeaderRenderProps>(
+		() => ({
+			isNested,
+			onBack: pop,
+			onClose: close,
+			side,
+		}),
+		[close, isNested, pop, side],
+	);
 
-  const ariaProps = buildAriaProps(
-    isTop,
-    config.modal,
-    isComposable,
-    ariaLabel,
-    panelId,
-    hasDescription
-  );
+	const ariaProps = buildAriaProps(
+		isTop,
+		config.modal,
+		isComposable,
+		ariaLabel,
+		panelId,
+		hasDescription,
+	);
 
-  const transition = buildPanelTransition(
-    dragState.isDragging,
-    isTop,
-    spring,
-    stackSpring
-  );
+	const transition = buildPanelTransition(
+		dragState.isDragging,
+		isTop,
+		spring,
+		stackSpring,
+	);
 
-  const animatedRadius = getAnimatedBorderRadius(side, depth, config.stacking);
-  const snapYOffset = computeSnapYOffset(
-    side,
-    snapHeights,
-    activeSnapIndex,
-    measuredHeight
-  );
-  const resolvedSlideFrom = resolveSlideFrom(side, slideFrom, measuredHeight);
+	const animatedRadius = getAnimatedBorderRadius(side, depth, config.stacking);
+	const snapYOffset = computeSnapYOffset(
+		side,
+		snapHeights,
+		activeSnapIndex,
+		measuredHeight,
+	);
+	const resolvedSlideFrom = resolveSlideFrom(side, slideFrom, measuredHeight);
 
-  // Merge stack offset + drag offset + snap offset into the animate target.
-  const stackOffset = getStackOffset(side, transform.offset);
-  const animateTarget = buildAnimateTarget(
-    slideTarget,
-    stackOffset,
-    dragOffset,
-    transform,
-    animatedRadius,
-    transition,
-    snapYOffset,
-    isTop
-  );
+	// Merge stack offset + drag offset + snap offset into the animate target.
+	const stackOffset = getStackOffset(side, transform.offset);
+	const animateTarget = buildAnimateTarget(
+		slideTarget,
+		stackOffset,
+		dragOffset,
+		transform,
+		animatedRadius,
+		transition,
+		snapYOffset,
+		isTop,
+	);
 
-  const initialRadius = getInitialRadius(side);
-  const showSideHandle = isTop && side !== "bottom";
-  const showBottomHandle = isTop && side === "bottom";
+	const initialRadius = getInitialRadius(side);
+	const showSideHandle = isTop && side !== "bottom";
+	const showBottomHandle = isTop && side === "bottom";
 
-  const panelContent = (
-    <m.div
-      animate={animateTarget}
-      className={classNames.panel || undefined}
-      exit={{
-        ...resolvedSlideFrom,
-        opacity: 0.6,
-        boxShadow: getShadow(false),
-        transition: {
-          type: "tween",
-          duration: prefersReducedMotion ? 0 : 0.24,
-          ease: "easeOut",
-          boxShadow: VISUAL_TWEEN,
-        },
-      }}
-      initial={{
-        ...resolvedSlideFrom,
-        opacity: 0.8,
-        ...initialRadius,
-        boxShadow: getShadow(false),
-      }}
-      key={item.id}
-      onAnimationComplete={handleAnimationComplete}
-      onBlur={showSideHandle ? () => setIsHovered(false) : undefined}
-      onFocus={showSideHandle ? () => setIsHovered(true) : undefined}
-      onMouseEnter={showSideHandle ? () => setIsHovered(true) : undefined}
-      onMouseLeave={showSideHandle ? () => setIsHovered(false) : undefined}
-      ref={panelRef}
-      style={panelStyle}
-      tabIndex={isTop ? -1 : undefined}
-      {...(isTop ? {} : { "aria-hidden": "true" as const, inert: true })}
-      {...ariaProps}
-    >
-      {showSideHandle && (
-        <SideHandle
-          isHovered={isHovered}
-          onDismiss={isNested ? pop : close}
-          side={side}
-        />
-      )}
-      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
-        {showBottomHandle && (
-          <BottomHandle onDismiss={isNested ? pop : close} />
-        )}
-        <PanelInnerContent
-          Content={Content}
-          data={item.data as Record<string, unknown>}
-          headerClassName={classNames.header || undefined}
-          headerProps={headerProps}
-          isComposable={isComposable}
-          renderHeader={renderHeader}
-          shouldRender={shouldRender}
-        />
-      </div>
-    </m.div>
-  );
+	const panelContent = (
+		<m.div
+			animate={animateTarget}
+			className={classNames.panel || undefined}
+			exit={{
+				...resolvedSlideFrom,
+				opacity: 0.6,
+				boxShadow: getShadow(false),
+				transition: {
+					type: "tween",
+					duration: prefersReducedMotion ? 0 : 0.24,
+					ease: "easeOut",
+					boxShadow: VISUAL_TWEEN,
+				},
+			}}
+			initial={{
+				...resolvedSlideFrom,
+				opacity: 0.8,
+				...initialRadius,
+				boxShadow: getShadow(false),
+			}}
+			key={item.id}
+			onAnimationComplete={handleAnimationComplete}
+			onBlur={showSideHandle ? () => setIsHovered(false) : undefined}
+			onFocus={showSideHandle ? () => setIsHovered(true) : undefined}
+			onMouseEnter={showSideHandle ? () => setIsHovered(true) : undefined}
+			onMouseLeave={showSideHandle ? () => setIsHovered(false) : undefined}
+			ref={panelRef}
+			style={panelStyle}
+			tabIndex={isTop ? -1 : undefined}
+			{...(isTop ? {} : { "aria-hidden": "true" as const, inert: true })}
+			{...ariaProps}
+		>
+			{showSideHandle && (
+				<SideHandle
+					isHovered={isHovered}
+					onDismiss={isNested ? pop : close}
+					side={side}
+				/>
+			)}
+			<div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
+				{showBottomHandle && (
+					<BottomHandle onDismiss={isNested ? pop : close} />
+				)}
+				<PanelInnerContent
+					Content={Content}
+					data={item.data as Record<string, unknown>}
+					headerClassName={classNames.header || undefined}
+					headerProps={headerProps}
+					isComposable={isComposable}
+					renderHeader={renderHeader}
+					shouldRender={shouldRender}
+				/>
+			</div>
+		</m.div>
+	);
 
-  return (
-    <SheetPanelContext.Provider value={panelContext}>
-      <ModalFocusTrap
-        active={isTop}
-        enabled={config.modal}
-        fallbackRef={panelRef}
-      >
-        {panelContent}
-      </ModalFocusTrap>
-    </SheetPanelContext.Provider>
-  );
+	return (
+		<SheetPanelContext.Provider value={panelContext}>
+			<ModalFocusTrap
+				active={isTop}
+				enabled={config.modal}
+				fallbackRef={panelRef}
+			>
+				{panelContent}
+			</ModalFocusTrap>
+		</SheetPanelContext.Provider>
+	);
 });
 
 // ── Body scale effect ───────────────────────────
 
 function useBodyScale(
-  config: ResolvedConfig,
-  isOpen: boolean,
-  prefersReducedMotion: boolean
+	config: ResolvedConfig,
+	isOpen: boolean,
+	prefersReducedMotion: boolean,
 ) {
-  useEffect(() => {
-    if (!config.shouldScaleBackground || prefersReducedMotion) {
-      return;
-    }
+	useEffect(() => {
+		if (!config.shouldScaleBackground || prefersReducedMotion) {
+			return;
+		}
 
-    const wrapper = document.querySelector("[data-stacksheet-wrapper]");
-    if (!(wrapper && wrapper instanceof HTMLElement)) {
-      return;
-    }
+		const wrapper = document.querySelector("[data-stacksheet-wrapper]");
+		if (!(wrapper && wrapper instanceof HTMLElement)) {
+			return;
+		}
 
-    if (isOpen) {
-      const scale = config.scaleBackgroundAmount;
-      wrapper.style.transition =
-        "transform 500ms cubic-bezier(0.32, 0.72, 0, 1), border-radius 500ms cubic-bezier(0.32, 0.72, 0, 1)";
-      wrapper.style.transform = `scale(${scale})`;
-      wrapper.style.borderRadius = "8px";
-      wrapper.style.overflow = "hidden";
-      wrapper.style.transformOrigin = "center top";
-      return;
-    }
+		if (isOpen) {
+			const scale = config.scaleBackgroundAmount;
+			wrapper.style.transition =
+				"transform 500ms cubic-bezier(0.32, 0.72, 0, 1), border-radius 500ms cubic-bezier(0.32, 0.72, 0, 1)";
+			wrapper.style.transform = `scale(${scale})`;
+			wrapper.style.borderRadius = "8px";
+			wrapper.style.overflow = "hidden";
+			wrapper.style.transformOrigin = "center top";
+			return;
+		}
 
-    wrapper.style.transform = "";
-    wrapper.style.borderRadius = "";
-    // Clean up after transition completes
-    const handleEnd = () => {
-      wrapper.style.transition = "";
-      wrapper.style.overflow = "";
-      wrapper.style.transformOrigin = "";
-    };
-    wrapper.addEventListener("transitionend", handleEnd, { once: true });
-    return () => wrapper.removeEventListener("transitionend", handleEnd);
-  }, [
-    isOpen,
-    config.shouldScaleBackground,
-    config.scaleBackgroundAmount,
-    prefersReducedMotion,
-  ]);
+		wrapper.style.transform = "";
+		wrapper.style.borderRadius = "";
+		// Clean up after transition completes
+		const handleEnd = () => {
+			wrapper.style.transition = "";
+			wrapper.style.overflow = "";
+			wrapper.style.transformOrigin = "";
+		};
+		wrapper.addEventListener("transitionend", handleEnd, { once: true });
+		return () => wrapper.removeEventListener("transitionend", handleEnd);
+	}, [
+		isOpen,
+		config.shouldScaleBackground,
+		config.scaleBackgroundAmount,
+		prefersReducedMotion,
+	]);
 }
 
 // ── Renderer ────────────────────────────────────
 
 interface SheetRendererProps<TMap extends object> {
-  classNames?: StacksheetClassNames;
-  /** Ad-hoc component map (type key → component) */
-  // biome-ignore lint/suspicious/noExplicitAny: heterogeneous component storage
-  componentMap: Map<string, ComponentType<any>>;
-  config: ResolvedConfig;
-  layout?: StacksheetLayout;
-  renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
-  sheets: ContentMap<TMap>;
-  store: StoreApi<StacksheetSnapshot<TMap> & SheetActions<TMap>>;
+	classNames?: StacksheetClassNames;
+	/** Ad-hoc component map (type key → component) */
+	// biome-ignore lint/suspicious/noExplicitAny: heterogeneous component storage
+	componentMap: Map<string, ComponentType<any>>;
+	config: ResolvedConfig;
+	layout?: StacksheetLayout;
+	renderHeader?: false | ((props: HeaderRenderProps) => React.ReactNode);
+	sheets: ContentMap<TMap>;
+	store: StoreApi<StacksheetSnapshot<TMap> & SheetActions<TMap>>;
 }
 
 /**
@@ -810,337 +810,336 @@ interface SheetRendererProps<TMap extends object> {
  * Mounted inside a Portal by `StacksheetProvider`.
  */
 export function SheetRenderer<TMap extends object>({
-  store,
-  config,
-  sheets,
-  componentMap,
-  classNames: classNamesProp,
-  layout,
-  renderHeader,
+	store,
+	config,
+	sheets,
+	componentMap,
+	classNames: classNamesProp,
+	layout,
+	renderHeader,
 }: SheetRendererProps<TMap>) {
-  const isOpen = useStore(store, (s) => s.isOpen);
-  const stack = useStore(store, (s) => s.stack);
-  const rawClose = useStore(store, (s) => s.close);
-  const rawPop = useStore(store, (s) => s.pop);
+	const isOpen = useStore(store, (s) => s.isOpen);
+	const stack = useStore(store, (s) => s.stack);
+	const rawClose = useStore(store, (s) => s.close);
+	const rawPop = useStore(store, (s) => s.pop);
 
-  const side = useResolvedSide(config);
-  const prefersReducedMotion = useReducedMotion() ?? false;
-  const classNames = useMemo(
-    () => resolveClassNames(classNamesProp),
-    [classNamesProp]
-  );
-  const viewportHeight = useViewportHeight(
-    isOpen && side === "bottom" && config.snapPoints.length > 0
-  );
+	const side = useResolvedSide(config);
+	const prefersReducedMotion = useReducedMotion() ?? false;
+	const classNames = useMemo(
+		() => resolveClassNames(classNamesProp),
+		[classNamesProp],
+	);
+	const viewportHeight = useViewportHeight(
+		isOpen && side === "bottom" && config.snapPoints.length > 0,
+	);
 
-  // ── Snap points ──────────────────────────────
-  const snapHeights = useMemo(
-    () =>
-      side === "bottom" && config.snapPoints.length > 0
-        ? resolveSnapPoints(config.snapPoints, viewportHeight)
-        : [],
-    [side, config.snapPoints, viewportHeight]
-  );
+	// ── Snap points ──────────────────────────────
+	const snapHeights = useMemo(
+		() =>
+			side === "bottom" && config.snapPoints.length > 0
+				? resolveSnapPoints(config.snapPoints, viewportHeight)
+				: [],
+		[side, config.snapPoints, viewportHeight],
+	);
 
-  // Default to the last snap point (fully open) when snap points are defined
-  const [internalSnapIndex, setInternalSnapIndex] = useState(
-    snapHeights.length > 0 ? snapHeights.length - 1 : 0
-  );
+	// Default to the last snap point (fully open) when snap points are defined
+	const [internalSnapIndex, setInternalSnapIndex] = useState(
+		snapHeights.length > 0 ? snapHeights.length - 1 : 0,
+	);
 
-  // Controlled vs uncontrolled snap index
-  const activeSnapIndex = config.snapPointIndex ?? internalSnapIndex;
+	// Controlled vs uncontrolled snap index
+	const activeSnapIndex = config.snapPointIndex ?? internalSnapIndex;
 
-  const handleSnap = useCallback(
-    (index: number) => {
-      setInternalSnapIndex(index);
-      config.onSnapPointChange?.(index);
-    },
-    [config.onSnapPointChange, config]
-  );
+	const handleSnap = useCallback(
+		(index: number) => {
+			setInternalSnapIndex(index);
+			config.onSnapPointChange?.(index);
+		},
+		[config.onSnapPointChange, config],
+	);
 
-  // Reset snap index when stack opens (start at initial snap point or fully open)
-  useEffect(() => {
-    if (isOpen && snapHeights.length > 0) {
-      const initial = config.snapPointIndex ?? snapHeights.length - 1;
-      setInternalSnapIndex(initial);
-    }
-  }, [isOpen, snapHeights.length, config.snapPointIndex]);
+	// Reset snap index when stack opens (start at initial snap point or fully open)
+	useEffect(() => {
+		if (isOpen && snapHeights.length > 0) {
+			const initial = config.snapPointIndex ?? snapHeights.length - 1;
+			setInternalSnapIndex(initial);
+		}
+	}, [isOpen, snapHeights.length, config.snapPointIndex]);
 
-  // Track why the sheet was closed — ref survives until exit animation completes
-  const closeReasonRef = useRef<CloseReason>("programmatic");
+	// Track why the sheet was closed — ref survives until exit animation completes
+	const closeReasonRef = useRef<CloseReason>("programmatic");
 
-  const closeWith = useCallback(
-    (reason: CloseReason) => {
-      closeReasonRef.current = reason;
-      rawClose();
-    },
-    [rawClose]
-  );
+	const closeWith = useCallback(
+		(reason: CloseReason) => {
+			closeReasonRef.current = reason;
+			rawClose();
+		},
+		[rawClose],
+	);
 
-  const popWith = useCallback(
-    (reason: CloseReason) => {
-      closeReasonRef.current = reason;
-      rawPop();
-    },
-    [rawPop]
-  );
+	const popWith = useCallback(
+		(reason: CloseReason) => {
+			closeReasonRef.current = reason;
+			rawPop();
+		},
+		[rawPop],
+	);
 
-  // Default close/pop (programmatic) for child components
-  const close = useCallback(() => closeWith("programmatic"), [closeWith]);
-  const pop = useCallback(() => popWith("programmatic"), [popWith]);
+	// Default close/pop (programmatic) for child components
+	const close = useCallback(() => closeWith("programmatic"), [closeWith]);
+	const pop = useCallback(() => popWith("programmatic"), [popWith]);
 
-  // Body scale effect
-  useBodyScale(config, isOpen, prefersReducedMotion);
+	// Body scale effect
+	useBodyScale(config, isOpen, prefersReducedMotion);
 
-  // Focus restoration: capture the element that was focused when the stack opens.
-  // When the stack fully closes, return focus to that element.
-  const triggerRef = useRef<Element | null>(null);
-  const wasOpenRef = useRef(false);
+	// Focus restoration: capture the element that was focused when the stack opens.
+	// When the stack fully closes, return focus to that element.
+	const triggerRef = useRef<Element | null>(null);
+	const wasOpenRef = useRef(false);
 
-  useEffect(() => {
-    if (isOpen && !wasOpenRef.current) {
-      triggerRef.current = document.activeElement;
-    } else if (!isOpen && wasOpenRef.current) {
-      const el = triggerRef.current;
-      // Only restore focus to meaningful elements — skip document.body
-      // which happens when sheets are opened programmatically.
-      if (
-        el &&
-        el instanceof HTMLElement &&
-        el !== document.body &&
-        el.tagName !== "BODY"
-      ) {
-        el.focus();
-      }
-      triggerRef.current = null;
-    }
-    wasOpenRef.current = isOpen;
-  }, [isOpen]);
+	useEffect(() => {
+		if (isOpen && !wasOpenRef.current) {
+			triggerRef.current = document.activeElement;
+		} else if (!isOpen && wasOpenRef.current) {
+			const el = triggerRef.current;
+			// Only restore focus to meaningful elements — skip document.body
+			// which happens when sheets are opened programmatically.
+			if (
+				el &&
+				el instanceof HTMLElement &&
+				el !== document.body &&
+				el.tagName !== "BODY"
+			) {
+				el.focus();
+			}
+			triggerRef.current = null;
+		}
+		wasOpenRef.current = isOpen;
+	}, [isOpen]);
 
-  // Ref for stack length — avoids re-subscribing keyboard/CloseWatcher
-  // effects on every push/pop.
-  const stackLengthRef = useRef(stack.length);
-  useEffect(() => {
-    stackLengthRef.current = stack.length;
-  }, [stack.length]);
+	// Ref for stack length — avoids re-subscribing keyboard/CloseWatcher
+	// effects on every push/pop.
+	const stackLengthRef = useRef(stack.length);
+	useEffect(() => {
+		stackLengthRef.current = stack.length;
+	}, [stack.length]);
 
-  // Escape key
-  useEffect(() => {
-    if (!(isOpen && config.closeOnEscape && config.dismissible)) {
-      return;
-    }
+	// Escape key
+	useEffect(() => {
+		if (!(isOpen && config.closeOnEscape && config.dismissible)) {
+			return;
+		}
 
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        if (stackLengthRef.current > 1) {
-          popWith("escape");
-        } else {
-          closeWith("escape");
-        }
-      }
-    }
+		function handleKeyDown(e: KeyboardEvent) {
+			if (e.key === "Escape") {
+				e.preventDefault();
+				if (stackLengthRef.current > 1) {
+					popWith("escape");
+				} else {
+					closeWith("escape");
+				}
+			}
+		}
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, config.closeOnEscape, config.dismissible, popWith, closeWith]);
+		document.addEventListener("keydown", handleKeyDown);
+		return () => document.removeEventListener("keydown", handleKeyDown);
+	}, [isOpen, config.closeOnEscape, config.dismissible, popWith, closeWith]);
 
-  // CloseWatcher — handles Android back gesture (progressive enhancement).
-  // On browsers without support (Safari, Firefox), this is a no-op.
-  useEffect(() => {
-    if (
-      !(isOpen && config.dismissible) ||
-      typeof globalThis.CloseWatcher === "undefined"
-    ) {
-      return;
-    }
+	// CloseWatcher — handles Android back gesture (progressive enhancement).
+	// On browsers without support (Safari, Firefox), this is a no-op.
+	useEffect(() => {
+		if (
+			!(isOpen && config.dismissible) ||
+			typeof globalThis.CloseWatcher === "undefined"
+		) {
+			return;
+		}
 
-    const watcher = new globalThis.CloseWatcher();
-    watcher.onclose = () => {
-      if (stackLengthRef.current > 1) {
-        popWith("escape");
-      } else {
-        closeWith("escape");
-      }
-    };
+		const watcher = new globalThis.CloseWatcher();
+		watcher.onclose = () => {
+			if (stackLengthRef.current > 1) {
+				popWith("escape");
+			} else {
+				closeWith("escape");
+			}
+		};
 
-    return () => watcher.destroy();
-  }, [isOpen, config.dismissible, popWith, closeWith]);
+		return () => watcher.destroy();
+	}, [isOpen, config.dismissible, popWith, closeWith]);
 
-  const slideFrom = useMemo(() => getSlideFrom(side), [side]);
-  const slideTarget = useMemo(() => getSlideTarget(), []);
+	const slideFrom = useMemo(() => getSlideFrom(side), [side]);
+	const slideTarget = useMemo(() => getSlideTarget(), []);
 
-  // Primary spring — drives the top sheet's entrance slide.
-  // When reduced motion is preferred, use instant transitions.
-  const spring = useMemo(
-    () =>
-      prefersReducedMotion
-        ? ({ type: "tween" as const, duration: 0 } as const)
-        : ({
-            type: "spring" as const,
-            damping: config.spring.damping,
-            stiffness: config.spring.stiffness,
-            mass: config.spring.mass,
-          } as const),
-    [
-      prefersReducedMotion,
-      config.spring.damping,
-      config.spring.stiffness,
-      config.spring.mass,
-    ]
-  );
+	// Primary spring — drives the top sheet's entrance slide.
+	// When reduced motion is preferred, use instant transitions.
+	const spring = useMemo(
+		() =>
+			prefersReducedMotion
+				? ({ type: "tween" as const, duration: 0 } as const)
+				: ({
+						type: "spring" as const,
+						damping: config.spring.damping,
+						stiffness: config.spring.stiffness,
+						mass: config.spring.mass,
+					} as const),
+		[
+			prefersReducedMotion,
+			config.spring.damping,
+			config.spring.stiffness,
+			config.spring.mass,
+		],
+	);
 
-  // Same spring for stacking transforms
-  const stackSpring = spring;
+	// Same spring for stacking transforms
+	const stackSpring = spring;
 
-  // Non-modal: skip overlay, skip scroll lock
-  const isModal = config.modal;
-  const showOverlay = isModal && config.showOverlay;
+	// Non-modal: skip overlay, skip scroll lock
+	const isModal = config.modal;
+	const showOverlay = isModal && config.showOverlay;
 
-  // Backdrop: use className if provided, otherwise inline fallback.
-  // will-change hints the compositor to properly manage the layer lifecycle.
-  const hasBackdropClass = classNames.backdrop !== "";
-  const backdropStyle: CSSProperties = {
-    zIndex: config.zIndex,
-    willChange: "opacity",
-    cursor:
-      config.closeOnBackdrop && config.dismissible ? "pointer" : undefined,
-    ...(hasBackdropClass
-      ? {}
-      : { background: "var(--overlay, rgba(0, 0, 0, 0.15))" }),
-  };
+	// Backdrop: use className if provided, otherwise inline fallback.
+	// will-change hints the compositor to properly manage the layer lifecycle.
+	const hasBackdropClass = classNames.backdrop !== "";
+	const backdropStyle: CSSProperties = {
+		zIndex: config.zIndex,
+		willChange: "opacity",
+		cursor:
+			config.closeOnBackdrop && config.dismissible ? "pointer" : undefined,
+		...(hasBackdropClass
+			? {}
+			: { background: "var(--overlay, rgba(0, 0, 0, 0.15))" }),
+	};
 
-  // Handle exit complete — fire onCloseComplete when stack is fully empty
-  const handleExitComplete = useCallback(() => {
-    if (stack.length === 0) {
-      config.onCloseComplete?.(closeReasonRef.current);
-    }
-  }, [stack.length, config]);
+	// Handle exit complete — fire onCloseComplete when stack is fully empty
+	const handleExitComplete = useCallback(() => {
+		if (stack.length === 0) {
+			config.onCloseComplete?.(closeReasonRef.current);
+		}
+	}, [stack.length, config]);
 
-  // Force WebKit repaint after backdrop exit animation completes.
-  // iOS Safari's compositor can retain the visual layer of a fixed-position
-  // element after it's removed from the DOM, leaving a ghost tint.
-  // A layout recalc via offsetHeight forces the compositor to invalidate
-  // stale layers without affecting element positioning.
-  const handleBackdropExitComplete = useCallback(() => {
-    requestAnimationFrame(() => {
-      // Read offsetHeight to force a layout recalc — the value itself is unused.
-      // biome-ignore lint/complexity/noVoid: intentional layout recalc for WebKit
-      void document.body.offsetHeight;
-    });
-  }, []);
+	// Force WebKit repaint after backdrop exit animation completes.
+	// iOS Safari's compositor can retain the visual layer of a fixed-position
+	// element after it's removed from the DOM, leaving a ghost tint.
+	// A layout recalc via offsetHeight forces the compositor to invalidate
+	// stale layers without affecting element positioning.
+	const handleBackdropExitComplete = useCallback(() => {
+		requestAnimationFrame(() => {
+			// Read offsetHeight to force a layout recalc — the value itself is unused.
+			void document.body.offsetHeight;
+		});
+	}, []);
 
-  // Swipe-specific dismiss callbacks
-  const swipeClose = useCallback(() => closeWith("swipe"), [closeWith]);
-  const swipePop = useCallback(() => popWith("swipe"), [popWith]);
+	// Swipe-specific dismiss callbacks
+	const swipeClose = useCallback(() => closeWith("swipe"), [closeWith]);
+	const swipePop = useCallback(() => popWith("swipe"), [popWith]);
 
-  // Non-modal: don't lock scroll
-  const shouldLockScroll = isOpen && isModal && config.lockScroll;
+	// Non-modal: don't lock scroll
+	const shouldLockScroll = isOpen && isModal && config.lockScroll;
 
-  return (
-    <>
-      {/* Backdrop — independent AnimatePresence so it fades on its own.
+	return (
+		<>
+			{/* Backdrop — independent AnimatePresence so it fades on its own.
           onExitComplete forces a WebKit repaint to clear stale compositor layers (iOS Safari). */}
-      {showOverlay && (
-        <AnimatePresence onExitComplete={handleBackdropExitComplete}>
-          {isOpen && (
-            <m.div
-              animate={{ opacity: 1 }}
-              className={`fixed inset-0 ${classNames.backdrop || ""}`}
-              exit={{ opacity: 0 }}
-              initial={{ opacity: 0 }}
-              key="stacksheet-backdrop"
-              onClick={
-                config.closeOnBackdrop && config.dismissible
-                  ? () => closeWith("backdrop")
-                  : undefined
-              }
-              style={backdropStyle}
-              transition={spring}
-            />
-          )}
-        </AnimatePresence>
-      )}
+			{showOverlay && (
+				<AnimatePresence onExitComplete={handleBackdropExitComplete}>
+					{isOpen && (
+						<m.div
+							animate={{ opacity: 1 }}
+							className={`fixed inset-0 ${classNames.backdrop || ""}`}
+							exit={{ opacity: 0 }}
+							initial={{ opacity: 0 }}
+							key="stacksheet-backdrop"
+							onClick={
+								config.closeOnBackdrop && config.dismissible
+									? () => closeWith("backdrop")
+									: undefined
+							}
+							style={backdropStyle}
+							transition={spring}
+						/>
+					)}
+				</AnimatePresence>
+			)}
 
-      {/* Panel clip container — always rendered, invisible when empty */}
-      <RemoveScroll enabled={shouldLockScroll} forwardProps>
-        <div
-          className="pointer-events-none fixed inset-0 overflow-hidden"
-          style={{ zIndex: config.zIndex + 1 }}
-        >
-          <AnimatePresence onExitComplete={handleExitComplete}>
-            {stack.map((item, index) => {
-              const depth = stack.length - 1 - index;
-              const isTop = depth === 0;
-              const isNested = index > 0;
-              // Keep one extra hidden panel mounted as a warm buffer.
-              // Without this, popping from deep stacks can mount content on the
-              // same frame it becomes visible, which can cause a reverse jank.
-              const shouldRender = depth <= config.stacking.renderThreshold;
+			{/* Panel clip container — always rendered, invisible when empty */}
+			<RemoveScroll enabled={shouldLockScroll} forwardProps>
+				<div
+					className="pointer-events-none fixed inset-0 overflow-hidden"
+					style={{ zIndex: config.zIndex + 1 }}
+				>
+					<AnimatePresence onExitComplete={handleExitComplete}>
+						{stack.map((item, index) => {
+							const depth = stack.length - 1 - index;
+							const isTop = depth === 0;
+							const isNested = index > 0;
+							// Keep one extra hidden panel mounted as a warm buffer.
+							// Without this, popping from deep stacks can mount content on the
+							// same frame it becomes visible, which can cause a reverse jank.
+							const shouldRender = depth <= config.stacking.renderThreshold;
 
-              // Ad-hoc components take priority, then fall back to sheets map
-              const Content = (componentMap.get(item.type) ??
-                sheets[item.type as keyof TMap]) as
-                | ComponentType<Record<string, unknown>>
-                | undefined;
+							// Ad-hoc components take priority, then fall back to sheets map
+							const Content = (componentMap.get(item.type) ??
+								sheets[item.type as keyof TMap]) as
+								| ComponentType<Record<string, unknown>>
+								| undefined;
 
-              return (
-                <SheetPanel
-                  activeSnapIndex={activeSnapIndex}
-                  Content={Content}
-                  classNames={classNames}
-                  close={close}
-                  config={config}
-                  depth={depth}
-                  index={index}
-                  isNested={isNested}
-                  isTop={isTop}
-                  item={item}
-                  key={item.id}
-                  layout={layout}
-                  onSnap={handleSnap}
-                  pop={pop}
-                  prefersReducedMotion={prefersReducedMotion}
-                  renderHeader={renderHeader}
-                  shouldRender={shouldRender}
-                  side={side}
-                  slideFrom={slideFrom}
-                  slideTarget={slideTarget}
-                  snapHeights={snapHeights}
-                  spring={spring}
-                  stackSpring={stackSpring}
-                  swipeClose={swipeClose}
-                  swipePop={swipePop}
-                />
-              );
-            })}
-          </AnimatePresence>
-        </div>
-      </RemoveScroll>
-    </>
-  );
+							return (
+								<SheetPanel
+									activeSnapIndex={activeSnapIndex}
+									Content={Content}
+									classNames={classNames}
+									close={close}
+									config={config}
+									depth={depth}
+									index={index}
+									isNested={isNested}
+									isTop={isTop}
+									item={item}
+									key={item.id}
+									layout={layout}
+									onSnap={handleSnap}
+									pop={pop}
+									prefersReducedMotion={prefersReducedMotion}
+									renderHeader={renderHeader}
+									shouldRender={shouldRender}
+									side={side}
+									slideFrom={slideFrom}
+									slideTarget={slideTarget}
+									snapHeights={snapHeights}
+									spring={spring}
+									stackSpring={stackSpring}
+									swipeClose={swipeClose}
+									swipePop={swipePop}
+								/>
+							);
+						})}
+					</AnimatePresence>
+				</div>
+			</RemoveScroll>
+		</>
+	);
 }
 
 // ── Helpers ─────────────────────────────────────
 
 function getInitialRadius(side: Side): Record<string, number> {
-  if (side === "bottom") {
-    return {
-      borderTopLeftRadius: 0,
-      borderTopRightRadius: 0,
-      borderBottomLeftRadius: 0,
-      borderBottomRightRadius: 0,
-    };
-  }
-  return { borderRadius: 0 };
+	if (side === "bottom") {
+		return {
+			borderTopLeftRadius: 0,
+			borderTopRightRadius: 0,
+			borderBottomLeftRadius: 0,
+			borderBottomRightRadius: 0,
+		};
+	}
+	return { borderRadius: 0 };
 }
 
 // Layered shadows — soft, diffused, multi-stop.
 const SHADOW_SM =
-  "0px 1px 3px 0px rgba(0,0,0,0.06), 0px 6px 12px 0px rgba(0,0,0,0.06)";
+	"0px 1px 3px 0px rgba(0,0,0,0.06), 0px 6px 12px 0px rgba(0,0,0,0.06)";
 const SHADOW_LG =
-  "0px 8px 24px 0px rgba(0,0,0,0.06), 0px 24px 48px 0px rgba(0,0,0,0.04), 0px 48px 96px 0px rgba(0,0,0,0.03)";
+	"0px 8px 24px 0px rgba(0,0,0,0.06), 0px 24px 48px 0px rgba(0,0,0,0.04), 0px 48px 96px 0px rgba(0,0,0,0.03)";
 
 function getShadow(isNested: boolean): string {
-  return isNested ? SHADOW_SM : SHADOW_LG;
+	return isNested ? SHADOW_SM : SHADOW_LG;
 }

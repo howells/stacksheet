@@ -6,22 +6,22 @@ import type { ResolvedConfig, Side } from "./types";
  * SSR-safe: defaults to false (desktop).
  */
 export function useIsMobile(breakpoint: number): boolean {
-  const [isMobile, setIsMobile] = useState(false);
+	const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
-    setIsMobile(mql.matches);
+	useEffect(() => {
+		const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+		setIsMobile(mql.matches);
 
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, [breakpoint]);
+		const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+		mql.addEventListener("change", handler);
+		return () => mql.removeEventListener("change", handler);
+	}, [breakpoint]);
 
-  return isMobile;
+	return isMobile;
 }
 
 /** Resolve the current side from config + viewport. */
 export function useResolvedSide(config: ResolvedConfig): Side {
-  const isMobile = useIsMobile(config.breakpoint);
-  return isMobile ? config.side.mobile : config.side.desktop;
+	const isMobile = useIsMobile(config.breakpoint);
+	return isMobile ? config.side.mobile : config.side.desktop;
 }

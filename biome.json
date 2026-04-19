@@ -2,8 +2,22 @@
 	"$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
 	"extends": ["@howells/lint/biome/react"],
 	"root": true,
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
 	"files": {
-		"includes": ["!!**/node_modules"]
+		"includes": [
+			"**",
+			"!!**/node_modules",
+			"!!dist",
+			"!!dist",
+			"!!site/.next",
+			"!!site/.next",
+			"!!.vercel",
+			"!!.vercel"
+		]
 	},
 	"overrides": [
 		{

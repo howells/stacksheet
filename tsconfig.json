@@ -1,13 +1,13 @@
 {
-  "extends": "@howells/typescript-config/react-library",
-  "compilerOptions": {
-    "declaration": true,
-    "declarationMap": true,
-    "ignoreDeprecations": "6.0",
-    "sourceMap": true,
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src"],
-  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
+	"extends": "@howells/typescript-config/react-library",
+	"compilerOptions": {
+		"declaration": true,
+		"declarationMap": true,
+		"ignoreDeprecations": "6.0",
+		"sourceMap": true,
+		"outDir": "dist",
+		"rootDir": "src"
+	},
+	"include": ["src"],
+	"exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }
