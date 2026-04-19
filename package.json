@@ -93,6 +93,6 @@
   },
   "packageManager": "pnpm@10.23.0",
   "lint-staged": {
-    "*.{js,ts,jsx,tsx,json,jsonc,css}": "howells-format"
+    "*.{js,ts,jsx,tsx,json,jsonc,css}": "howells-format --no-errors-on-unmatched"
   }
 }
