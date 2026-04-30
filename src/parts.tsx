@@ -14,6 +14,21 @@ import {
 import { ArrowLeftIcon, XIcon } from "./icons";
 import { useSheetPanel } from "./panel-context";
 
+/**
+ * Compose className strings without injecting defaults the caller didn't ask
+ * for. When `asChild` is set, the parts in this file render via Radix Slot
+ * onto a consumer-supplied element — so any default visual classes the
+ * library applies would clash with the consumer's own styling (e.g. our
+ * `rounded-md` would override their `rounded-full`). We solve this by
+ * dropping decorative defaults entirely on `asChild`, while keeping
+ * structural classes (e.g. `shrink-0`, `min-h-0 flex-1`) that the
+ * panel layout depends on.
+ */
+function joinClasses(...parts: Array<string | undefined>): string | undefined {
+	const out = parts.filter(Boolean).join(" ").trim();
+	return out.length > 0 ? out : undefined;
+}
+
 // ── Sheet.Handle ────────────────────────────────
 
 export interface SheetHandleProps {
@@ -34,10 +49,13 @@ function SheetHandle({
 	const { close, back, isNested } = useSheetPanel();
 	const dismiss = isNested ? back : close;
 	const Comp = asChild ? Slot : "div";
+	const defaults = asChild
+		? undefined
+		: "flex shrink-0 cursor-grab touch-none items-center justify-center pt-4 pb-1";
 	return (
 		<Comp
 			aria-label="Dismiss"
-			className={`flex shrink-0 cursor-grab touch-none items-center justify-center pt-4 pb-1 ${className ?? ""}`}
+			className={joinClasses(defaults, className)}
 			data-stacksheet-handle=""
 			onClick={dismiss}
 			onKeyDown={(e: ReactKeyboardEvent) => {
@@ -73,11 +91,13 @@ function SheetHeader({
 	children,
 }: SheetHeaderProps) {
 	const Comp = asChild ? Slot : "header";
+	// Keep `shrink-0` even on asChild — without it, header collapses in a
+	// flex-column panel layout. Drop the rest (decorative).
+	const defaults = asChild
+		? "shrink-0"
+		: "flex h-14 shrink-0 items-center justify-between border-b px-6";
 	return (
-		<Comp
-			className={`flex h-14 shrink-0 items-center justify-between border-b px-6 ${className ?? ""}`}
-			style={style}
-		>
+		<Comp className={joinClasses(defaults, className)} style={style}>
 			{children}
 		</Comp>
 	);
@@ -95,9 +115,10 @@ export interface SheetTitleProps {
 function SheetTitle({ asChild, className, style, children }: SheetTitleProps) {
 	const { panelId } = useSheetPanel();
 	const Comp = asChild ? Slot : "h2";
+	const defaults = asChild ? undefined : "font-semibold text-sm";
 	return (
 		<Comp
-			className={`font-semibold text-sm ${className ?? ""}`}
+			className={joinClasses(defaults, className)}
 			id={`${panelId}-title`}
 			style={style}
 		>
@@ -144,9 +165,12 @@ export interface SheetBodyProps {
 
 function SheetBody({ asChild, className, style, children }: SheetBodyProps) {
 	if (asChild) {
+		// `relative min-h-0 flex-1` is structural — required for the panel's
+		// flex-column layout to give the body the remaining height. Kept on
+		// asChild because dropping it would break the layout silently.
 		return (
 			<Slot
-				className={`relative min-h-0 flex-1 ${className ?? ""}`}
+				className={joinClasses("relative min-h-0 flex-1", className)}
 				data-stacksheet-no-drag=""
 				style={style}
 			>
@@ -157,7 +181,10 @@ function SheetBody({ asChild, className, style, children }: SheetBodyProps) {
 
 	return (
 		<ScrollAreaRoot
-			className={`relative flex min-h-0 flex-1 flex-col overflow-hidden ${className ?? ""}`}
+			className={joinClasses(
+				"relative flex min-h-0 flex-1 flex-col overflow-hidden",
+				className,
+			)}
 			data-stacksheet-no-drag=""
 			style={style}
 		>
@@ -190,11 +217,12 @@ function SheetFooter({
 	children,
 }: SheetFooterProps) {
 	const Comp = asChild ? Slot : "footer";
+	// Same logic as Header: keep `shrink-0` for layout integrity.
+	const defaults = asChild
+		? "shrink-0"
+		: "flex shrink-0 items-center gap-2 border-t px-6 py-3";
 	return (
-		<Comp
-			className={`flex shrink-0 items-center gap-2 border-t px-6 py-3 ${className ?? ""}`}
-			style={style}
-		>
+		<Comp className={joinClasses(defaults, className)} style={style}>
 			{children}
 		</Comp>
 	);
@@ -213,10 +241,13 @@ export interface SheetCloseProps {
 function SheetClose({ asChild, className, style, children }: SheetCloseProps) {
 	const { close } = useSheetPanel();
 	const Comp = asChild ? Slot : "button";
+	const defaults = asChild
+		? undefined
+		: "flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100";
 	return (
 		<Comp
 			aria-label={children ? undefined : "Close"}
-			className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100 ${className ?? ""}`}
+			className={joinClasses(defaults, className)}
 			onClick={close}
 			style={style}
 			type={asChild ? undefined : "button"}
@@ -244,10 +275,13 @@ function SheetBack({ asChild, className, style, children }: SheetBackProps) {
 	}
 
 	const Comp = asChild ? Slot : "button";
+	const defaults = asChild
+		? undefined
+		: "flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100";
 	return (
 		<Comp
 			aria-label={children ? undefined : "Back"}
-			className={`flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0 text-inherit opacity-60 transition-opacity duration-150 hover:opacity-100 ${className ?? ""}`}
+			className={joinClasses(defaults, className)}
 			onClick={back}
 			style={style}
 			type={asChild ? undefined : "button"}
@@ -268,6 +302,13 @@ function SheetBack({ asChild, className, style, children }: SheetBackProps) {
  *
  * `Sheet.Title` and `Sheet.Description` are linked to the panel's
  * `aria-labelledby` and `aria-describedby` via matching IDs.
+ *
+ * **`asChild` contract:** when `asChild` is set, the library passes through
+ * onClick handlers, aria attributes, IDs and data-attrs only — decorative
+ * defaults like `rounded-md`, `h-8 w-8`, `font-semibold`, opacity, etc.
+ * are dropped so the consumer's element fully controls its own visuals.
+ * Structural classes required for the panel layout to function (e.g.
+ * `shrink-0` on Header/Footer, `min-h-0 flex-1` on Body) are kept.
  */
 export const Sheet = {
 	Handle: SheetHandle,
