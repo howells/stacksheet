@@ -314,6 +314,58 @@ function buildAnimateTarget(
 
 // ── Modal focus trap wrapper ────────────────────
 
+/**
+ * Selectors for "layered modal" surfaces that should be allowed to take focus
+ * away from the sheet's panel without the trap snatching it back. Covers
+ * Radix Dialog/AlertDialog and any Radix Popper-based layer (Popover,
+ * DropdownMenu, Select, Combobox, Tooltip with portal, etc.).
+ *
+ * If a focused element matches one of these (or has an ancestor that does),
+ * the focus trap pauses so the layered modal can manage focus itself.
+ */
+const LAYERED_MODAL_SELECTORS = [
+	'[role="dialog"][data-state="open"]',
+	'[role="alertdialog"][data-state="open"]',
+	"[data-radix-popper-content-wrapper]",
+	"[data-radix-focus-guard]",
+].join(", ");
+
+/**
+ * Returns true while the focused element lives inside a layered modal that
+ * should take precedence over the stacksheet panel's focus trap.
+ *
+ * Implemented as a focusin listener on the document — fires whenever focus
+ * moves anywhere on the page, in either direction (into the layered modal,
+ * or back out into the sheet).
+ */
+function useLayeredModalFocused(active: boolean): boolean {
+	const [layered, setLayered] = useState(false);
+
+	useEffect(() => {
+		if (!active) {
+			setLayered(false);
+			return;
+		}
+		const evaluate = () => {
+			const target = document.activeElement;
+			if (!target || target === document.body) {
+				setLayered(false);
+				return;
+			}
+			const inLayer =
+				target instanceof Element &&
+				target.closest(LAYERED_MODAL_SELECTORS) !== null;
+			setLayered(inLayer);
+		};
+		evaluate();
+		const handler = () => evaluate();
+		document.addEventListener("focusin", handler, true);
+		return () => document.removeEventListener("focusin", handler, true);
+	}, [active]);
+
+	return layered;
+}
+
 /** Wraps children in a focus trap when modal mode is enabled. */
 function ModalFocusTrap({
 	enabled,
@@ -326,12 +378,15 @@ function ModalFocusTrap({
 	fallbackRef: React.RefObject<HTMLElement | null>;
 	children: React.ReactNode;
 }) {
+	const paused = useLayeredModalFocused(enabled && active);
+
 	if (!enabled) {
 		return children;
 	}
 	return (
 		<FocusTrap
 			active={active}
+			paused={paused}
 			focusTrapOptions={{
 				initialFocus: false,
 				returnFocusOnDeactivate: true,
