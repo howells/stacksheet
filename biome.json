@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
 	"extends": ["@howells/lint/biome/react"],
 	"root": true,
 	"vcs": {
@@ -8,16 +8,7 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": [
-			"**",
-			"!!**/node_modules",
-			"!!dist",
-			"!!dist",
-			"!!site/.next",
-			"!!site/.next",
-			"!!.vercel",
-			"!!.vercel"
-		]
+		"includes": ["!!**/node_modules", "!!dist", "!!site/.next", "!!.vercel"]
 	},
 	"overrides": [
 		{
