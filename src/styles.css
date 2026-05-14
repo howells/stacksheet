@@ -1,4 +1,4 @@
-@import "tailwindcss" source(none);
+@import "tailwindcss/utilities" source(none);
 @source "./**/*.{ts,tsx}";
 
 /* Radix ScrollArea uses display:table on the viewport inner div for horizontal
