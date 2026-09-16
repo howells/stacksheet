@@ -6,11 +6,11 @@ import { setTimeout as wait } from "node:timers/promises";
 
 const manifestPath = process.argv.at(2);
 if (manifestPath === undefined) {
-  throw new TypeError("Pass the package.json path to verify");
+	throw new TypeError("Pass the package.json path to verify");
 }
 const { name, version } = JSON.parse(await readFile(manifestPath, "utf-8"));
 if (typeof name !== "string" || typeof version !== "string") {
-  throw new TypeError("Package name and version are required");
+	throw new TypeError("Package name and version are required");
 }
 
 // npm ingests a publish asynchronously and says so: "Your package is being
@@ -27,67 +27,67 @@ const deadline = Date.now() + TIMEOUT_MS;
 const url = `https://registry.npmjs.org/${encodeURIComponent(name)}/${version}`;
 let published;
 for (;;) {
-  const response = await fetch(url, { cache: "no-store" });
-  if (response.ok) {
-    published = await response.json();
-    break;
-  }
-  if (response.status !== 404) {
-    throw new Error(
-      `Registry returned ${response.status} for ${name}@${version}`
-    );
-  }
-  if (Date.now() >= deadline) {
-    throw new Error(
-      `${name}@${version} was still 404 after ${TIMEOUT_MS / 60_000} minutes`
-    );
-  }
-  console.log(`Waiting for ${name}@${version} to become available...`);
-  await wait(INTERVAL_MS);
+	const response = await fetch(url, { cache: "no-store" });
+	if (response.ok) {
+		published = await response.json();
+		break;
+	}
+	if (response.status !== 404) {
+		throw new Error(
+			`Registry returned ${response.status} for ${name}@${version}`,
+		);
+	}
+	if (Date.now() >= deadline) {
+		throw new Error(
+			`${name}@${version} was still 404 after ${TIMEOUT_MS / 60_000} minutes`,
+		);
+	}
+	console.log(`Waiting for ${name}@${version} to become available...`);
+	await wait(INTERVAL_MS);
 }
 if (published.name !== name || published.version !== version) {
-  throw new Error(`Registry metadata does not match ${name}@${version}`);
+	throw new Error(`Registry metadata does not match ${name}@${version}`);
 }
 const consumerRoot = await mkdtemp(
-  join(tmpdir(), "howells-stacksheet-published-consumer-")
+	join(tmpdir(), "howells-stacksheet-published-consumer-"),
 );
 try {
-  await writeFile(
-    join(consumerRoot, "package.json"),
-    JSON.stringify({ private: true })
-  );
-  // The resolver lags the packument: npm reported ETARGET for a version the
-  // registry document already listed. Same window, same treatment.
-  for (;;) {
-    try {
-      execFileSync(
-        "npm",
-        [
-          "install",
-          "--ignore-scripts",
-          "--no-audit",
-          "--no-fund",
-          "--no-package-lock",
-          `${name}@${version}`,
-        ],
-        { cwd: consumerRoot, stdio: "pipe" }
-      );
-      break;
-    } catch (error) {
-      const output = `${error?.stdout ?? ""}${error?.stderr ?? ""}`;
-      if (!output.includes("ETARGET") && !output.includes("notarget")) {
-        throw error;
-      }
-      if (Date.now() >= deadline) {
-        throw new Error(`${name}@${version} never became installable`, {
-          cause: error,
-        });
-      }
-      console.log(`Waiting for ${name}@${version} to become installable...`);
-      await wait(INTERVAL_MS);
-    }
-  }
+	await writeFile(
+		join(consumerRoot, "package.json"),
+		JSON.stringify({ private: true }),
+	);
+	// The resolver lags the packument: npm reported ETARGET for a version the
+	// registry document already listed. Same window, same treatment.
+	for (;;) {
+		try {
+			execFileSync(
+				"npm",
+				[
+					"install",
+					"--ignore-scripts",
+					"--no-audit",
+					"--no-fund",
+					"--no-package-lock",
+					`${name}@${version}`,
+				],
+				{ cwd: consumerRoot, stdio: "pipe" },
+			);
+			break;
+		} catch (error) {
+			const output = `${error?.stdout ?? ""}${error?.stderr ?? ""}`;
+			if (!output.includes("ETARGET") && !output.includes("notarget")) {
+				throw error;
+			}
+			if (Date.now() >= deadline) {
+				throw new Error(`${name}@${version} never became installable`, {
+					cause: error,
+				});
+			}
+			console.log(`Waiting for ${name}@${version} to become installable...`);
+			await wait(INTERVAL_MS);
+		}
+	}
 } finally {
-  await rm(consumerRoot, { force: true, recursive: true });
+	await rm(consumerRoot, { force: true, recursive: true });
 }
 console.log(`Verified public npm release ${name}@${version}`);
